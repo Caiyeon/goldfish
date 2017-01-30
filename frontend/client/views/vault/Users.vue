@@ -2,27 +2,37 @@
   <div>
 
     <div class="tile is-ancestor">
-      <div class="tile is-parent">
+      <div class="tile is-parent is-vertical">
         <article class="tile is-child box">
-          <h4 class="title">Tokens</h4>
-          <div class="table-responsive">
-            <table class="table is-bordered is-striped is-narrow">
-              <thead>
-                <tr>
-                  <th v-for="key in gridColumns">
-                  {{ key }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="entry in gridData">
-                  <td v-for="key in gridColumns">
-                  {{ entry[key] }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+
+          <tabs type="boxed" :is-fullwidth="true" alignment="centered" size="medium">
+
+            <tab-pane label="Tokens">
+              <div class="table-responsive">
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th v-for="key in gridColumns">
+                        {{ key }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="entry in gridData">
+                      <td v-for="key in gridColumns">
+                        {{ entry[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </tab-pane>
+
+            <tab-pane label="Userpass">Music Tab</tab-pane>
+            <tab-pane label="AppRole">Video Tab</tab-pane>
+            <tab-pane label="Certificates">Document Tab</tab-pane>
+          </tabs>
+
         </article>
       </div>
     </div>
@@ -31,7 +41,13 @@
 </template>
 
 <script>
+  import { Tabs, TabPane } from 'vue-bulma-tabs'
+
   export default {
+    components: {
+      Tabs,
+      TabPane
+    },
     data () {
       return {
         searchQuery: '',
@@ -42,7 +58,7 @@
           'Num_Uses',
           'Orphan',
           'Path',
-          'Policies"',
+          'Policies',
           'TTL'
         ]
       }

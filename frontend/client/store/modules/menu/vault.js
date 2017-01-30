@@ -8,11 +8,6 @@ export default {
   },
   children: [
     {
-      name: 'Buttons',
-      path: '/buttons2',
-      component: lazyLoading('vault/Buttons')
-    },
-    {
       name: 'Login',
       path: '/login',
       component: lazyLoading('vault/Login')
