@@ -28,36 +28,39 @@ func init() {
 }
 
 func Login() echo.HandlerFunc {
+	// error handler should print error in server log
+	// but return no unnecessary server info to client
+	returnError := func(s string) {
+		log.Println("[ERROR]: Login:", s)
+		return c.JSON(http.StatusInternalServerError, H{
+			"status": "Login failed",
+		})
+	}
+
 	return func(c echo.Context) error {
+		// read form data
 		conf := new(vaultConfig)
 		if err := c.Bind(conf); err != nil {
-			log.Println(err)
-			return err
+			returnError(err.Error())
 		}
 		if conf.Addr == "" || conf.Token == "" {
-			log.Println("Invalid authentication")
-			return errors.New("Invalid authentication")
+			returnError(errors.New("Invalid authentication"))
 		}
 
 		// check authentication
 		l, err := lukko.NewLukko(conf.Addr, conf.Token)
 		if err != nil {
-			log.Println(err)
-			return nil
+			returnError(err.Error())
 		}
 		defer l.Close()
-
 		if err = l.CheckAuth(); err != nil {
-			log.Println(conf)
-			log.Println(err)
-			return nil
+			returnError(err.Error())
 		}
 
 		// store items in session
 		session, err := store.Get(c.Request(), "session-id")
 		if err != nil {
-			log.Println(err)
-			return err
+			returnError(err.Error())
 		}
 		session.Values["vaultConfig"] = conf
 		session.Save(c.Request(), c.Response().Writer)
