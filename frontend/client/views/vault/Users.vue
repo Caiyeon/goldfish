@@ -12,15 +12,27 @@
                 <table class="table is-striped is-narrow">
                   <thead>
                     <tr>
+                      <th></th>
                       <th v-for="key in gridColumns">
                         {{ key }}
                       </th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="entry in gridData">
+                      <td class="is-icon">
+                        <a href="#">
+                          <i class="fa fa-info"></i>
+                        </a>
+                      </td>
                       <td v-for="key in gridColumns">
                         {{ entry[key] }}
+                      </td>
+                      <td class="is-icon">
+                        <a href="#">
+                          <i class="fa fa-trash-o"></i>
+                        </a>
                       </td>
                     </tr>
                   </tbody>
@@ -80,5 +92,13 @@
 
   .control .button {
     margin: inherit;
+  }
+
+  .fa-trash-o {
+    color: red;
+  }
+
+  .fa-info {
+    color: lightskyblue;
   }
 </style>
