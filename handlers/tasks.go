@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"net/http"
 	"errors"
+	"log"
 
 	"github.com/labstack/echo"
 	"github.com/gorilla/sessions"
@@ -30,26 +31,32 @@ func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conf := new(vaultConfig)
 		if err := c.Bind(conf); err != nil {
+			log.Println(err)
 			return err
 		}
 		if conf.Addr == "" || conf.Token == "" {
+			log.Println("Invalid authentication")
 			return errors.New("Invalid authentication")
 		}
 
 		// check authentication
 		l, err := lukko.NewLukko(conf.Addr, conf.Token)
 		if err != nil {
+			log.Println(err)
 			return nil
 		}
 		defer l.Close()
 
 		if err = l.CheckAuth(); err != nil {
+			log.Println(conf)
+			log.Println(err)
 			return nil
 		}
 
 		// store items in session
 		session, err := store.Get(c.Request(), "session-id")
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 		session.Values["vaultConfig"] = conf
