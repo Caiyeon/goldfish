@@ -6,7 +6,6 @@ export default {
     icon: 'fa-lock',
     expanded: true
   },
-
   children: [
     {
       name: 'Buttons',
@@ -17,6 +16,11 @@ export default {
       name: 'Login',
       path: '/login',
       component: lazyLoading('vault/Login')
+    },
+    {
+      name: 'Users',
+      path: '/users',
+      component: lazyLoading('vault/Users')
     }
   ]
 }

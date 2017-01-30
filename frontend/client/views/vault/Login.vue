@@ -48,10 +48,10 @@
         }
         this.$http.post('/api/login', payload).then(function (response) {
           console.log(response.data.status)
-          // this.$router.push({
-          //   name: 'Users'
-          // })
-          // this.$router.go(0)
+          this.$router.push({
+            name: 'Users'
+          })
+          this.$router.go(0)
         }, function (err) {
           this.statusText = err.statusText
           console.log(err.statusText)
