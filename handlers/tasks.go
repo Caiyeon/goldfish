@@ -28,23 +28,23 @@ func init() {
 }
 
 func Login() echo.HandlerFunc {
-	// error handler should print error in server log
-	// but return no unnecessary server info to client
-	returnError := func(s string) {
-		log.Println("[ERROR]: Login:", s)
-		return c.JSON(http.StatusInternalServerError, H{
-			"status": "Login failed",
-		})
-	}
-
 	return func(c echo.Context) error {
+		// error handler should print error in server log
+		// but return no unnecessary server info to client
+		returnError := func(s string) error {
+			log.Println("[ERROR]: Login:", s)
+			return c.JSON(http.StatusInternalServerError, H{
+				"status": "Login failed",
+			})
+		}
+
 		// read form data
 		conf := new(vaultConfig)
 		if err := c.Bind(conf); err != nil {
 			returnError(err.Error())
 		}
 		if conf.Addr == "" || conf.Token == "" {
-			returnError(errors.New("Invalid authentication"))
+			returnError("Invalid authentication")
 		}
 
 		// check authentication
@@ -74,6 +74,11 @@ func Login() echo.HandlerFunc {
 
 func Users() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		authtype := c.QueryParam("type")
+		if authtype == "" {
+			return errors.New("type must be non-empty")
+		}
+
 		// check session for authentication status
 		session, err := store.Get(c.Request(), "session-id")
 		if err != nil {
@@ -99,12 +104,12 @@ func Users() echo.HandlerFunc {
 		defer l.Close()
 
 		// return all tokens
-		result, err := l.ListAuth("token")
+		result, err := l.ListAuth(authtype)
 		if err != nil {
 			return err
 		}
 		return c.JSON(http.StatusOK, H{
-			"tokens": result,
+			"result": result,
 		})
 	}
 }
