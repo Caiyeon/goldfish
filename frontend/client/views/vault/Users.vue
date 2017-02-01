@@ -30,7 +30,7 @@
                         {{ entry[key] }}
                       </td>
                       <td class="is-icon">
-                        <a href="#">
+                        <a @click="openDeleteModal(index)">
                           <i class="fa fa-trash-o"></i>
                         </a>
                       </td>
@@ -63,7 +63,7 @@
                         {{ entry[key] }}
                       </td>
                       <td class="is-icon">
-                        <a href="#">
+                        <a @click="deleteItem(index)">
                           <i class="fa fa-trash-o"></i>
                         </a>
                       </td>
@@ -72,8 +72,10 @@
                 </table>
               </div>
             </tab-pane>
-            <tab-pane label="AppRole" disabled>Video Tab</tab-pane>
-            <tab-pane label="Certificates" disabled>Document Tab</tab-pane>
+
+            <tab-pane label="AppRole" disabled>Disabled</tab-pane>
+            <tab-pane label="Certificates" disabled>Disabled</tab-pane>
+
           </tabs>
 
         </article>
@@ -82,12 +84,15 @@
 
     <modal :visible="showModal" :title="selectedItemTitle" :info="selectedItemInfo" @close="closeModalBasic"></modal>
 
+    <confirmModal :visible="showDeleteModal" :title="selectedItemTitle" :info="selectedItemInfo" @close="closeDeleteModal" @confirmed="deleteItem(selectedIndex)"></confirmModal>
+
   </div>
 </template>
 
 <script>
   import { Tabs, TabPane } from './vue-bulma-tabs'
   import Modal from './modals/InfoModal'
+  import ConfirmModal from './modals/ConfirmModal'
 
   var TabNames = ['token', 'userpass']
   var TabColumns = [
@@ -112,11 +117,13 @@
     components: {
       Tabs,
       TabPane,
-      Modal
+      Modal,
+      ConfirmModal
     },
 
     data () {
       return {
+        tabName: 'token',
         tableData: [],
         tableColumns: [
           'Token_Accessor',
@@ -128,6 +135,7 @@
           'TTL'
         ],
         showModal: false,
+        showDeleteModal: false,
         selectedIndex: -1
       }
     },
@@ -141,7 +149,7 @@
       },
       selectedItemInfo: function () {
         if (this.selectedIndex !== -1) {
-          return this.tableData[this.selectedIndex][this.tableColumns[1]]
+          return String(this.tableData[this.selectedIndex][this.tableColumns[1]])
         }
         return ''
       }
@@ -151,9 +159,10 @@
       switchTab: function (index) {
         // on swap, clear data and load new column names
         this.tableData = []
+        this.tabName = TabNames[index]
         this.tableColumns = TabColumns[index]
         // populate new table data according to tab name
-        this.$http.post('/api/users?type=' + TabNames[index]).then(function (response) {
+        this.$http.get('/api/users?type=' + this.tabName).then(function (response) {
           this.tableData = response['data']['result']
         }, function (err) {
           console.log(err)
@@ -167,6 +176,23 @@
       closeModalBasic () {
         this.selectedIndex = -1
         this.showModal = false
+      },
+      openDeleteModal (index) {
+        this.selectedIndex = index
+        this.showDeleteModal = true
+      },
+      closeDeleteModal () {
+        this.selectedIndex = -1
+        this.showDeleteModal = false
+      },
+
+      deleteItem (index) {
+        this.$http.delete('/api/users?type=' + this.tabName + '&id=' + this.tableData[index][this.tableColumns[0]]).then(function (response) {
+          this.tableData.splice(index, 1)
+        }, function (err) {
+          console.log(err)
+        })
+        this.showDeleteModal = false
       }
 
     }

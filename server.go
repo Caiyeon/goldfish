@@ -18,7 +18,8 @@ func main() {
 	e.Static("/", "public")
 
 	e.POST("/login", handlers.Login())
-	e.POST("/users", handlers.Users())
+	e.GET("/users", handlers.Users())
+	e.DELETE("/users", handlers.DeleteUser())
 
 	// Start a web server
 	e.Logger.Fatal(e.Start(":8000"))

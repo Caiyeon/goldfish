@@ -113,3 +113,63 @@ func Users() echo.HandlerFunc {
 		})
 	}
 }
+
+func DeleteUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		authtype := c.QueryParam("type")
+		id := c.QueryParam("id")
+		if authtype == "" || id == "" {
+			log.Println("type must be non-empty")
+			return errors.New("type must be non-empty")
+		}
+
+		var path string
+		switch authtype {
+		case "token":
+			path = "/auth/token/revoke-accessor/" + id
+		case "userpass":
+			path = "/auth/userpass/users/" + id
+		default:
+			log.Println("Authtype not supported")
+			return errors.New("Authtype not supported")
+		}
+
+		// check session for authentication status
+		session, err := store.Get(c.Request(), "session-id")
+		if err != nil {
+			log.Println(err.Error())
+			return err
+		}
+
+		// extract config from session cookie
+		raw := session.Values["vaultConfig"]
+		var conf = &vaultConfig{}
+		conf, ok := raw.(*vaultConfig)
+		if !ok {
+			log.Println("Failed to read session cookie")
+			return errors.New("Failed to read session cookie")
+		}
+
+		// check authentication
+		l, err := lukko.NewLukko(conf.Addr, conf.Token)
+		if err != nil {
+			log.Println(err.Error())
+			return nil
+		}
+		if err = l.CheckAuth(); err != nil {
+			log.Println(err.Error())
+			return nil
+		}
+		defer l.Close()
+
+		resp, err := l.Delete(authtype, path)
+		if err != nil {
+			log.Println(err.Error())
+			return err
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": resp,
+		})
+	}
+}
