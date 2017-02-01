@@ -20,9 +20,9 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="entry in tableData">
+                    <tr v-for="(entry, index) in tableData">
                       <td class="is-icon">
-                        <a href="#">
+                        <a @click="openModalBasic(index)">
                           <i class="fa fa-info"></i>
                         </a>
                       </td>
@@ -53,9 +53,9 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="entry in tableData">
+                    <tr v-for="(entry, index) in tableData">
                       <td class="is-icon">
-                        <a href="#">
+                        <a a @click="openModalBasic(index)">
                           <i class="fa fa-info"></i>
                         </a>
                       </td>
@@ -80,11 +80,14 @@
       </div>
     </div>
 
+    <modal :visible="showModal" :title="selectedItemTitle" :info="selectedItemInfo" @close="closeModalBasic"></modal>
+
   </div>
 </template>
 
 <script>
   import { Tabs, TabPane } from './vue-bulma-tabs'
+  import Modal from './modals/InfoModal'
 
   var TabNames = ['token', 'userpass']
   var TabColumns = [
@@ -108,11 +111,12 @@
   export default {
     components: {
       Tabs,
-      TabPane
+      TabPane,
+      Modal
     },
+
     data () {
       return {
-        searchQuery: '',
         tableData: [],
         tableColumns: [
           'Token_Accessor',
@@ -122,9 +126,27 @@
           'Path',
           'Policies',
           'TTL'
-        ]
+        ],
+        showModal: false,
+        selectedIndex: -1
       }
     },
+
+    computed: {
+      selectedItemTitle: function () {
+        if (this.selectedIndex !== -1) {
+          return this.tableData[this.selectedIndex][this.tableColumns[0]]
+        }
+        return ''
+      },
+      selectedItemInfo: function () {
+        if (this.selectedIndex !== -1) {
+          return this.tableData[this.selectedIndex][this.tableColumns[1]]
+        }
+        return ''
+      }
+    },
+
     methods: {
       switchTab: function (index) {
         // on swap, clear data and load new column names
@@ -136,7 +158,17 @@
         }, function (err) {
           console.log(err)
         })
+      },
+
+      openModalBasic (index) {
+        this.selectedIndex = index
+        this.showModal = true
+      },
+      closeModalBasic () {
+        this.selectedIndex = -1
+        this.showModal = false
       }
+
     }
 
   }
