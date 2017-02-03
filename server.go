@@ -28,7 +28,6 @@ func main() {
 		csrf.Protect(
 			[]byte(securecookie.GenerateRandomKey(32)),
 			csrf.Secure(false),
-			csrf.HttpOnly(false),
 		)))
 
 	// Start a web server

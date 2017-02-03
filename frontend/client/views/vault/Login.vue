@@ -64,7 +64,7 @@
           this.$router.push({
             name: 'Users'
           })
-          this.$router.go(0)
+          this.$router.go(1)
         }, function (err) {
           this.statusText = err.statusText
           console.log(err.statusText)
