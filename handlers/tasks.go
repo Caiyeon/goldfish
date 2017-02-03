@@ -7,7 +7,9 @@ import (
 	"log"
 
 	"github.com/labstack/echo"
-	"github.com/gorilla/sessions"
+	// uuid "github.com/hashicorp/go-uuid"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/csrf"
 	"github.com/caiyeon/lukko"
 )
 
@@ -15,7 +17,8 @@ import (
 type H map[string]interface{}
 
 // for storing session data
-var store = sessions.NewCookieStore([]byte("to-be-made-secret"))
+// var store = sessions.NewCookieStore([]byte("to-be-made-secret"))
+var scookie = &securecookie.SecureCookie{}
 
 // for binding login info
 type vaultConfig struct {
@@ -25,6 +28,26 @@ type vaultConfig struct {
 
 func init() {
 	gob.Register(&vaultConfig{})
+
+	hashKey := securecookie.GenerateRandomKey(64)
+	blockKey := securecookie.GenerateRandomKey(32)
+	if hashKey == nil || blockKey == nil {
+		panic("Failed to generate random hashkey")
+	}
+	scookie = securecookie.New(hashKey, blockKey)
+	scookie = scookie.MaxAge(300)
+	if scookie == nil {
+		panic("Failed to initialize gorilla/securecookie")
+	}
+}
+
+func FetchCSRF() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+		return c.JSON(http.StatusOK, H{
+			"status": "fetched",
+		})
+	}
 }
 
 func Login() echo.HandlerFunc {
@@ -57,13 +80,16 @@ func Login() echo.HandlerFunc {
 			returnError(err.Error())
 		}
 
-		// store items in session
-		session, err := store.Get(c.Request(), "session-id")
-		if err != nil {
+		if encoded, err := scookie.Encode("auth", conf); err == nil {
+			cookie := &http.Cookie{
+				Name: "auth",
+				Value: encoded,
+				Path: "/",
+			}
+			http.SetCookie(c.Response().Writer, cookie)
+		} else {
 			returnError(err.Error())
 		}
-		session.Values["vaultConfig"] = conf
-		session.Save(c.Request(), c.Response().Writer)
 
 		// return display name
 		return c.JSON(http.StatusOK, H{
@@ -76,29 +102,28 @@ func Users() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authtype := c.QueryParam("type")
 		if authtype == "" {
+			log.Println("type empty")
 			return errors.New("type must be non-empty")
 		}
 
-		// check session for authentication status
-		session, err := store.Get(c.Request(), "session-id")
-		if err != nil {
-			return err
-		}
-
-		// extract config from session cookie
-		raw := session.Values["vaultConfig"]
 		var conf = &vaultConfig{}
-		conf, ok := raw.(*vaultConfig)
-		if !ok {
-			return errors.New("Failed to read session cookie")
+		if cookie, err := c.Request().Cookie("auth"); err == nil {
+			if err = scookie.Decode("auth", cookie.Value, &conf); err != nil {
+				log.Println(err.Error())
+			}
+		} else {
+			log.Println(err.Error())
 		}
 
 		// check authentication
 		l, err := lukko.NewLukko(conf.Addr, conf.Token)
 		if err != nil {
+			log.Println(err.Error())
 			return nil
 		}
 		if err = l.CheckAuth(); err != nil {
+			log.Println(err.Error())
+			log.Println("token:", conf.Token)
 			return nil
 		}
 		defer l.Close()
@@ -106,6 +131,7 @@ func Users() echo.HandlerFunc {
 		// return all tokens
 		result, err := l.ListAuth(authtype)
 		if err != nil {
+			log.Println(err.Error())
 			return err
 		}
 		return c.JSON(http.StatusOK, H{
@@ -134,20 +160,11 @@ func DeleteUser() echo.HandlerFunc {
 			return errors.New("Authtype not supported")
 		}
 
-		// check session for authentication status
-		session, err := store.Get(c.Request(), "session-id")
-		if err != nil {
-			log.Println(err.Error())
-			return err
-		}
-
-		// extract config from session cookie
-		raw := session.Values["vaultConfig"]
 		var conf = &vaultConfig{}
-		conf, ok := raw.(*vaultConfig)
-		if !ok {
-			log.Println("Failed to read session cookie")
-			return errors.New("Failed to read session cookie")
+		if cookie, err := c.Request().Cookie("auth"); err != nil {
+			if err = scookie.Decode("auth", cookie.Value, &conf); err != nil {
+				log.Println(err.Error())
+			}
 		}
 
 		// check authentication

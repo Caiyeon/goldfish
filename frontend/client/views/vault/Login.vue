@@ -30,6 +30,8 @@
 </template>
 
 <script>
+  import Vue from 'vue'
+
   export default {
     data () {
       return {
@@ -38,7 +40,18 @@
         statusText: ''
       }
     },
-
+    created: function () {
+      // fetch CSRF token and push it as an interceptor for POST request upon login
+      this.$http.get('/api/login/csrf').then(function (response) {
+        Vue.http.interceptors.push((request, next) => {
+          request.headers.set('X-CSRF-Token', response.headers.get('x-csrf-token'))
+          next()
+        })
+      }, function (err) {
+        this.statusText = err.statusText
+        console.log(err.statusText)
+      })
+    },
     methods: {
       login: function () {
         this.statusText = ''
