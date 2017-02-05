@@ -3,32 +3,37 @@ package handlers
 import (
 	"encoding/gob"
 	"net/http"
-	"errors"
+	// "errors"
 	"log"
+	"flag"
 
 	"github.com/labstack/echo"
-	// uuid "github.com/hashicorp/go-uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/csrf"
-	"github.com/caiyeon/lukko"
+	// "github.com/caiyeon/lukko"
+	vaultapi "github.com/hashicorp/vault/api"
 )
 
 // for returning JSON bodies
 type H map[string]interface{}
 
-// for storing session data
-// var store = sessions.NewCookieStore([]byte("to-be-made-secret"))
 var scookie = &securecookie.SecureCookie{}
 
+// for authenticating this web server with vault
+var vaultAddress = ""
+var vaultToken = ""
+var vaultClient *vaultapi.Client
+
 // for binding login info
-type vaultConfig struct {
-	Addr  string `json:"addr" form:"addr" query:"addr"`
-	Token string `json:"token" form:"token" query:"addr"`
+type AuthInfo struct {
+	Type  string `json:"Type" form:"Type" query:"Type"`
+	ID    string `json:"ID" form:"ID" query:"ID"`
 }
 
 func init() {
-	gob.Register(&vaultConfig{})
+	gob.Register(&AuthInfo{})
 
+	// setup cookie encryption keys
 	hashKey := securecookie.GenerateRandomKey(64)
 	blockKey := securecookie.GenerateRandomKey(32)
 	if hashKey == nil || blockKey == nil {
@@ -39,6 +44,27 @@ func init() {
 	if scookie == nil {
 		panic("Failed to initialize gorilla/securecookie")
 	}
+
+	// read vault token and addr for web server
+	// to do: change token to approle
+	flag.StringVar(&vaultAddress, "addr", "http://127.0.0.1:8200", "Vault address")
+	flag.StringVar(&vaultToken, "token", "", "Vault token")
+	flag.Parse()
+	if vaultAddress == "" || vaultToken == "" {
+		panic("Invalid vault credentials")
+	}
+	if setupClient() != nil {
+		panic("Failed to setup vault client for web server")
+	}
+}
+
+// error handler should print error in server log
+// but return no unnecessary server info to client
+func handleError(c echo.Context, logstring string, responsestring string) error {
+	log.Println("[ERROR]:", logstring)
+	return c.JSON(http.StatusInternalServerError, H{
+		"error": responsestring,
+	})
 }
 
 func FetchCSRF() echo.HandlerFunc {
@@ -52,35 +78,28 @@ func FetchCSRF() echo.HandlerFunc {
 
 func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// error handler should print error in server log
-		// but return no unnecessary server info to client
-		returnError := func(s string) error {
-			log.Println("[ERROR]: Login:", s)
-			return c.JSON(http.StatusInternalServerError, H{
-				"status": "Login failed",
-			})
-		}
-
 		// read form data
-		conf := new(vaultConfig)
-		if err := c.Bind(conf); err != nil {
-			returnError(err.Error())
+		auth := new(AuthInfo)
+		if err := c.Bind(auth); err != nil {
+			return handleError(c, err.Error(), "Invalid format")
 		}
-		if conf.Addr == "" || conf.Token == "" {
-			returnError("Invalid authentication")
+		if auth.Type == "" || auth.ID == "" {
+			return handleError(c, "Empty authentication", "Empty authentication")
 		}
 
-		// check authentication
-		l, err := lukko.NewLukko(conf.Addr, conf.Token)
+		// verify auth details are ok
+		if err := auth.check(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// store auth in vault cubbyhole
+		path, err := auth.store()
 		if err != nil {
-			returnError(err.Error())
-		}
-		defer l.Close()
-		if err = l.CheckAuth(); err != nil {
-			returnError(err.Error())
+			return handleError(c, err.Error(), "Invalid authentication")
 		}
 
-		if encoded, err := scookie.Encode("auth", conf); err == nil {
+		// store cubbyhole's path in securecookie
+		if encoded, err := scookie.Encode("auth", path); err == nil {
 			cookie := &http.Cookie{
 				Name: "auth",
 				Value: encoded,
@@ -88,105 +107,107 @@ func Login() echo.HandlerFunc {
 			}
 			http.SetCookie(c.Response().Writer, cookie)
 		} else {
-			returnError(err.Error())
+			return handleError(c, err.Error(),
+				"Please clear site-related cookie and storage",
+			)
 		}
 
-		// return display name
+		// success
 		return c.JSON(http.StatusOK, H{
 			"status": "Logged in",
 		})
 	}
 }
 
-func Users() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		authtype := c.QueryParam("type")
-		if authtype == "" {
-			log.Println("type empty")
-			return errors.New("type must be non-empty")
-		}
+// func Users() echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+// 		authtype := c.QueryParam("type")
+// 		if authtype == "" {
+// 			log.Println("type empty")
+// 			return errors.New("type must be non-empty")
+// 		}
 
-		var conf = &vaultConfig{}
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &conf); err != nil {
-				log.Println(err.Error())
-			}
-		} else {
-			log.Println(err.Error())
-		}
+// 		var conf = &vaultConfig{}
+// 		if cookie, err := c.Request().Cookie("auth"); err == nil {
+// 			if err = scookie.Decode("auth", cookie.Value, &conf); err != nil {
+// 				log.Println(err.Error())
+// 			}
+// 		} else {
+// 			log.Println(err.Error())
+// 		}
 
-		// check authentication
-		l, err := lukko.NewLukko(conf.Addr, conf.Token)
-		if err != nil {
-			log.Println(err.Error())
-			return nil
-		}
-		if err = l.CheckAuth(); err != nil {
-			log.Println(err.Error())
-			log.Println("token:", conf.Token)
-			return nil
-		}
-		defer l.Close()
+// 		// check authentication
+// 		l, err := lukko.NewLukko(conf.Addr, conf.Token)
+// 		if err != nil {
+// 			log.Println(err.Error())
+// 			return nil
+// 		}
+// 		if err = l.CheckAuth(); err != nil {
+// 			log.Println(err.Error())
+// 			log.Println("token:", conf.Token)
+// 			return nil
+// 		}
+// 		defer l.Close()
 
-		// return all tokens
-		result, err := l.ListAuth(authtype)
-		if err != nil {
-			log.Println(err.Error())
-			return err
-		}
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
+// 		// return all tokens
+// 		result, err := l.ListAuth(authtype)
+// 		if err != nil {
+// 			log.Println(err.Error())
+// 			return err
+// 		}
+// 		return c.JSON(http.StatusOK, H{
+// 			"result": result,
+// 		})
+// 	}
+// }
 
-func DeleteUser() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		authtype := c.QueryParam("type")
-		id := c.QueryParam("id")
-		if authtype == "" || id == "" {
-			log.Println("type must be non-empty")
-			return errors.New("type must be non-empty")
-		}
+// func DeleteUser() echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+// 		authtype := c.QueryParam("type")
+// 		id := c.QueryParam("id")
+// 		if authtype == "" || id == "" {
+// 			log.Println("type must be non-empty")
+// 			return errors.New("type must be non-empty")
+// 		}
 
-		var path string
-		switch authtype {
-		case "token":
-			path = "/auth/token/revoke-accessor/" + id
-		case "userpass":
-			path = "/auth/userpass/users/" + id
-		default:
-			log.Println("Authtype not supported")
-			return errors.New("Authtype not supported")
-		}
+// 		var path string
+// 		switch authtype {
+// 		case "token":
+// 			path = "/auth/token/revoke-accessor/" + id
+// 		case "userpass":
+// 			path = "/auth/userpass/users/" + id
+// 		default:
+// 			log.Println("Authtype not supported")
+// 			return errors.New("Authtype not supported")
+// 		}
 
-		var conf = &vaultConfig{}
-		if cookie, err := c.Request().Cookie("auth"); err != nil {
-			if err = scookie.Decode("auth", cookie.Value, &conf); err != nil {
-				log.Println(err.Error())
-			}
-		}
+// 		var conf = &vaultConfig{}
+// 		if cookie, err := c.Request().Cookie("auth"); err != nil {
+// 			if err = scookie.Decode("auth", cookie.Value, &conf); err != nil {
+// 				log.Println(err.Error())
+// 			}
+// 		}
 
-		// check authentication
-		l, err := lukko.NewLukko(conf.Addr, conf.Token)
-		if err != nil {
-			log.Println(err.Error())
-			return nil
-		}
-		if err = l.CheckAuth(); err != nil {
-			log.Println(err.Error())
-			return nil
-		}
-		defer l.Close()
+// 		// check authentication
+// 		l, err := lukko.NewLukko(conf.Addr, conf.Token)
+// 		if err != nil {
+// 			log.Println(err.Error())
+// 			return nil
+// 		}
+// 		if err = l.CheckAuth(); err != nil {
+// 			log.Println(err.Error())
+// 			return nil
+// 		}
+// 		defer l.Close()
 
-		resp, err := l.Delete(authtype, path)
-		if err != nil {
-			log.Println(err.Error())
-			return err
-		}
+// 		resp, err := l.Delete(authtype, path)
+// 		if err != nil {
+// 			log.Println(err.Error())
+// 			return err
+// 		}
 
-		return c.JSON(http.StatusOK, H{
-			"result": resp,
-		})
-	}
-}
+// 		return c.JSON(http.StatusOK, H{
+// 			"result": resp,
+// 		})
+// 	}
+// }

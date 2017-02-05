@@ -21,8 +21,8 @@ func main() {
 
 	e.GET("/login/csrf", handlers.FetchCSRF())
 	e.POST("/login", handlers.Login())
-	e.GET("/users", handlers.Users())
-	e.DELETE("/users", handlers.DeleteUser())
+	// e.GET("/users", handlers.Users())
+	// e.DELETE("/users", handlers.DeleteUser())
 
 	e.Use(echo.WrapMiddleware(
 		csrf.Protect(

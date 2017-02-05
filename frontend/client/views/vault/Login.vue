@@ -7,10 +7,18 @@
           <h1 class="title">Vault Login</h1>
           <div class="block">
             <form id="form" v-on:submit.prevent="login">
-              <p class="control has-icon">
-                <input class="input" type="url" placeholder="http://127.0.0.1:8200" v-model="vaultAddress">
-                <i class="fa fa-location-arrow"></i>
-              </p>
+
+              <!-- to do: display server vault address -->
+
+              <div class="control">
+                <label class="label">Authentication Type</label>
+                <div class="select is-fullwidth">
+                  <select v-model="type">
+                    <option>Token</option>
+                  </select>
+                </div>
+              </div>
+
               <p class="control has-icon">
                 <input class="input" type="password" placeholder="Vault Token" v-model="vaultToken">
                 <i class="fa fa-lock"></i>
@@ -20,6 +28,7 @@
                   Login
                 </button>
               </p>
+
             </form>
           </div>
         </article>
@@ -35,7 +44,7 @@
   export default {
     data () {
       return {
-        vaultAddress: '',
+        type: 'Token',
         vaultToken: '',
         statusText: ''
       }
@@ -56,8 +65,8 @@
       login: function () {
         this.statusText = ''
         var payload = {
-          addr: this.vaultAddress,
-          token: this.vaultToken
+          Type: this.type.toLowerCase(),
+          ID: this.vaultToken
         }
         this.$http.post('/api/login', payload).then(function (response) {
           console.log(response.data.status)
