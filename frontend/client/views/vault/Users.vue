@@ -14,7 +14,7 @@
                     <tr>
                       <th></th>
                       <th v-for="key in tableColumns">
-                        {{ key }}
+                        {{ key | capitalize }}
                       </th>
                       <th></th>
                     </tr>
@@ -97,13 +97,12 @@
   var TabNames = ['token', 'userpass']
   var TabColumns = [
     [
-      'Token_Accessor',
-      'Display_Name',
-      'Num_Uses',
-      'Orphan',
-      'Path',
-      'Policies',
-      'TTL'
+      'accessor',
+      'display_name',
+      'num_uses',
+      'orphan',
+      'policies',
+      'ttl'
     ],
     [
       'Name',
@@ -123,6 +122,7 @@
 
     data () {
       return {
+        csrf: '',
         tabName: 'token',
         tableData: [],
         tableColumns: [
@@ -155,6 +155,12 @@
       }
     },
 
+    filters: {
+      capitalize: function (str) {
+        return str.charAt(0).toUpperCase() + str.slice(1)
+      }
+    },
+
     methods: {
       switchTab: function (index) {
         // on swap, clear data and load new column names
@@ -163,9 +169,10 @@
         this.tableColumns = TabColumns[index]
         // populate new table data according to tab name
         this.$http.get('/api/users?type=' + this.tabName).then(function (response) {
-          this.tableData = response['data']['result']
+          this.tableData = response.data.result
+          this.csrf = response.headers.get('x-csrf-token')
         }, function (err) {
-          console.log(err)
+          console.log(err.body.error)
         })
       },
 
@@ -187,10 +194,20 @@
       },
 
       deleteItem (index) {
-        this.$http.delete('/api/users?type=' + this.tabName + '&id=' + this.tableData[index][this.tableColumns[0]]).then(function (response) {
+        var payload = {
+          body: {
+            Type: this.tabName.toLowerCase(),
+            ID: this.tableData[index][this.tableColumns[0]]
+          },
+          headers: {
+            'X-CSRF-Token': this.csrf
+          }
+        }
+        this.$http.delete('/api/users', payload).then(function (response) {
           this.tableData.splice(index, 1)
+          console.log(response.data.result)
         }, function (err) {
-          console.log(err)
+          console.log(err.body.error)
         })
         this.showDeleteModal = false
       }

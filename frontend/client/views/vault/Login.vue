@@ -39,44 +39,42 @@
 </template>
 
 <script>
-  import Vue from 'vue'
+  // import Vue from 'vue'
 
   export default {
     data () {
       return {
         type: 'Token',
         vaultToken: '',
-        statusText: ''
+        csrf: ''
       }
     },
-    created: function () {
-      // fetch CSRF token and push it as an interceptor for POST request upon login
+    updated: function () {
       this.$http.get('/api/login/csrf').then(function (response) {
-        Vue.http.interceptors.push((request, next) => {
-          request.headers.set('X-CSRF-Token', response.headers.get('x-csrf-token'))
-          next()
-        })
+        this.csrf = response.headers.get('x-csrf-token')
       }, function (err) {
-        this.statusText = err.statusText
-        console.log(err.statusText)
+        console.log(err.body.error)
       })
     },
     methods: {
       login: function () {
-        this.statusText = ''
         var payload = {
           Type: this.type.toLowerCase(),
           ID: this.vaultToken
         }
-        this.$http.post('/api/login', payload).then(function (response) {
+        var headers = {
+          headers: {
+            'X-CSRF-Token': this.csrf
+          }
+        }
+        this.$http.post('/api/login', payload, headers).then(function (response) {
           console.log(response.data.status)
           this.$router.push({
             name: 'Users'
           })
           this.$router.go(1)
         }, function (err) {
-          this.statusText = err.statusText
-          console.log(err.statusText)
+          console.log(err.body.error)
         })
       }
     }
