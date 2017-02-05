@@ -1,22 +1,22 @@
 {
-  "name": "vue-admin",
-  "version": "0.1.12",
-  "description": "Vue Admin Panel Framework",
-  "repository": "vue-bulma/vue-admin",
-  "homepage": "https://admin.vuebulma.com",
-  "license": "MIT",
+  "name": "goldfish",
+  "version": "0.0.1",
+  "description": "Vault Admin Panel",
+  "repository": "caiyeon/goldfish",
+  "homepage": "",
+  "license": "MPL 2.0",
   "author": {
-    "name": "Fangdun Cai",
-    "email": "cfddream@gmail.com",
-    "url": "fundon.me"
+    "name": "Tony Cai",
+    "email": "081099@gmail.com",
+    "url": ""
   },
   "keywords": [
-    "admin",
+    "vue-admin",
+    "vault",
     "bulma",
     "dashboard",
-    "data",
-    "visualization",
-    "vue"
+    "vue",
+    "golang"
   ],
   "engines": {
     "node": ">=4",
