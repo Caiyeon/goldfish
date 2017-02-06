@@ -8,8 +8,6 @@
           <div class="block">
             <form id="form" v-on:submit.prevent="login">
 
-              <!-- to do: display server vault address -->
-
               <div class="control">
                 <label class="label">Authentication Type</label>
                 <div class="select is-fullwidth">
@@ -49,7 +47,7 @@
         csrf: ''
       }
     },
-    updated: function () {
+    mounted: function () {
       this.$http.get('/api/login/csrf').then(function (response) {
         this.csrf = response.headers.get('x-csrf-token')
       }, function (err) {

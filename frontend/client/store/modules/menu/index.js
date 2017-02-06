@@ -1,6 +1,6 @@
 import * as types from '../../mutation-types'
 import lazyLoading from './lazyLoading'
-import vault from './vault'
+import admin from './admin'
 
 // defaults
 import charts from './charts'
@@ -22,7 +22,15 @@ const state = {
       },
       component: lazyLoading('dashboard', true)
     },
-    vault,
+    {
+      name: 'Login',
+      path: '/login',
+      meta: {
+        icon: 'fa-lock'
+      },
+      component: lazyLoading('login', true)
+    },
+    admin,
     charts,
     uifeatures,
     components,
