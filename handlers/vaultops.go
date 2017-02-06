@@ -193,3 +193,14 @@ func (auth AuthInfo) getpolicy(name string) (string, error) {
 	}
 	return client.Sys().GetPolicy(name)
 }
+
+func (auth AuthInfo) deletepolicy(name string) error {
+	client, err := auth.client()
+	if err != nil {
+		return err
+	}
+	if name == "" {
+		return errors.New("Invalid policy name")
+	}
+	return client.Sys().DeletePolicy(name)
+}

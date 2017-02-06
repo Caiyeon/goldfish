@@ -288,3 +288,40 @@ func GetPolicy() echo.HandlerFunc {
 		})
 	}
 }
+
+func DeletePolicy() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		if cookie, err := c.Request().Cookie("auth"); err == nil {
+			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
+				return handleError(c, err.Error(), "Please clear cookies and login again")
+			}
+		} else {
+			return handleError(c, err.Error(), "Please clear cookies and login again")
+		}
+
+		// decode auth's ID with vault transit backend
+		if err := auth.decrypt(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// verify auth details
+		if _, err := auth.client(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// fetch results
+		if err := auth.deletepolicy(c.Param("policyname")); err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": "Policy deleted",
+		})
+	}
+}
+

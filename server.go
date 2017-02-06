@@ -32,6 +32,7 @@ func main() {
 
 	e.GET("/policies", handlers.GetPolicies())
 	e.GET("/policies/:policyname", handlers.GetPolicy())
+	e.DELETE("/policies/:policyname", handlers.DeletePolicy())
 
 	// start the server
 	e.Logger.Fatal(e.Start(":8000"))

@@ -24,7 +24,7 @@
                     {{ entry }}
                   </td>
                   <td class="is-icon">
-                    <a>
+                    <a @click="showDeleteModal(index)">
                       <i class="fa fa-trash-o"></i>
                     </a>
                   </td>
@@ -39,33 +39,63 @@
         <article class="tile is-child box">
           <h4 class="title is-4">Policy Rules</h4>
           <p class="control">
-            <textarea class="textarea" placeholder="Select a policy">{{ policyRules }}</textarea>
+            <textarea class="textarea" placeholder="Select a policy" disabled>{{ policyRules }}</textarea>
           </p>
         </article>
       </div>
 
     </div>
+
+    <confirmModal :visible="visibleDeleteModal" :title="deleteTitle" :info="deleteInfo" @close="closeDeleteModal" @confirmed="deletePolicy(selectedIndex)"></confirmModal>
+
   </div>
 </template>
 
 <script>
   import Tooltip from 'vue-bulma-tooltip'
+  import Vue from 'vue'
+  import Notification from 'vue-bulma-notification'
+  import ConfirmModal from './modals/ConfirmModal'
+
+  const NotificationComponent = Vue.extend(Notification)
+
+  const openNotification = (propsData = {
+    title: '',
+    message: '',
+    type: '',
+    direction: '',
+    duration: 4500,
+    container: '.notifications'
+  }) => {
+    return new NotificationComponent({
+      el: document.createElement('div'),
+      propsData
+    })
+  }
 
   export default {
     components: {
-      Tooltip
+      Tooltip,
+      ConfirmModal
     },
 
     data () {
       return {
         csrf: '',
-        selectedIndex: -1,
         policies: [],
-        policyRules: ''
+        policyRules: '',
+        visibleDeleteModal: false,
+        selectedIndex: -1
       }
     },
 
     computed: {
+      deleteTitle: function () {
+        return 'Are you sure you want to delete policy: ' + this.policies[this.selectedIndex]
+      },
+      deleteInfo: function () {
+        return ''
+      }
     },
 
     filters: {
@@ -88,6 +118,30 @@
         }, function (err) {
           console.log(err.body.error)
         })
+      },
+
+      deletePolicy: function (index) {
+        this.$http.delete('/api/policies/' + this.policies[index], { headers: {'X-CSRF-Token': this.csrf} }).then(function (response) {
+          this.visibleDeleteModal = false
+          this.policies.splice(index, 1)
+          openNotification({
+            title: 'Deletion successful',
+            message: '',
+            type: 'success'
+          })
+          console.log(response.data.status)
+        }, function (err) {
+          console.log(err.body.error)
+        })
+      },
+
+      showDeleteModal: function (index) {
+        this.selectedIndex = index
+        this.visibleDeleteModal = true
+      },
+      closeDeleteModal: function () {
+        this.selectedIndex = -1
+        this.visibleDeleteModal = false
       }
     }
   }
