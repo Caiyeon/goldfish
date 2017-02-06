@@ -157,9 +157,13 @@ func (auth AuthInfo) deleteuser(backend string, deleteID string) error {
 	}
 	logical := client.Logical()
 
+	if deleteID == "" {
+		return errors.New("Invalid deletion ID")
+	}
+
 	switch backend {
 	case "token":
-		_, err := logical.Write("/auth/token/revoke-accessor/"+deleteID, nil)
+		_, err := logical.Write("/auth/token/revoke-accessor/" + deleteID, nil)
 		return err
 
 	case "userpass":
@@ -169,4 +173,23 @@ func (auth AuthInfo) deleteuser(backend string, deleteID string) error {
 	default:
 		return errors.New("Unsupported user deletion type")
 	}
+}
+
+func (auth AuthInfo) listpolicies() ([]string, error) {
+	client, err := auth.client()
+	if err != nil {
+		return nil, err
+	}
+	return client.Sys().ListPolicies()
+}
+
+func (auth AuthInfo) getpolicy(name string) (string, error) {
+	client, err := auth.client()
+	if err != nil {
+		return "", err
+	}
+	if name == "" {
+		return "", errors.New("Invalid policy name")
+	}
+	return client.Sys().GetPolicy(name)
 }

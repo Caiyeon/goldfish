@@ -55,7 +55,7 @@
                   <tbody>
                     <tr v-for="(entry, index) in tableData">
                       <td class="is-icon">
-                        <a a @click="openModalBasic(index)">
+                        <a @click="openModalBasic(index)">
                           <i class="fa fa-info"></i>
                         </a>
                       </td>

@@ -125,7 +125,7 @@ func Login() echo.HandlerFunc {
 	}
 }
 
-func Users() echo.HandlerFunc {
+func GetUsers() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var auth = &AuthInfo{}
 		defer auth.clear()
@@ -205,6 +205,86 @@ func DeleteUser() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, H{
 			"result": "User deleted successfully",
+		})
+	}
+}
+
+func GetPolicies() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		if cookie, err := c.Request().Cookie("auth"); err == nil {
+			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
+				return handleError(c, err.Error(), "Please clear cookies and login again")
+			}
+		} else {
+			return handleError(c, err.Error(), "Please clear cookies and login again")
+		}
+
+		// decode auth's ID with vault transit backend
+		if err := auth.decrypt(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// verify auth details
+		if _, err := auth.client(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// fetch results
+		result, err := auth.listpolicies()
+		if err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// give a CSRF token in case a delete request is sent later
+		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": result,
+		})
+	}
+}
+
+func GetPolicy() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		if cookie, err := c.Request().Cookie("auth"); err == nil {
+			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
+				return handleError(c, err.Error(), "Please clear cookies and login again")
+			}
+		} else {
+			return handleError(c, err.Error(), "Please clear cookies and login again")
+		}
+
+		// decode auth's ID with vault transit backend
+		if err := auth.decrypt(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// verify auth details
+		if _, err := auth.client(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// fetch results
+		result, err := auth.getpolicy(c.Param("policyname"))
+		if err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// give a CSRF token in case a delete request is sent later
+		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": result,
 		})
 	}
 }

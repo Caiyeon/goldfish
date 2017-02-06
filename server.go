@@ -23,10 +23,15 @@ func main() {
 
 	// routing
 	e.Static("/", "public")
+
 	e.GET("/login/csrf", handlers.FetchCSRF())
 	e.POST("/login", handlers.Login())
-	e.GET("/users", handlers.Users())
+
+	e.GET("/users", handlers.GetUsers())
 	e.DELETE("/users", handlers.DeleteUser())
+
+	e.GET("/policies", handlers.GetPolicies())
+	e.GET("/policies/:policyname", handlers.GetPolicy())
 
 	// start the server
 	e.Logger.Fatal(e.Start(":8000"))
