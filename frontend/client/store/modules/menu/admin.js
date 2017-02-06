@@ -12,5 +12,10 @@ export default {
       path: '/users',
       component: lazyLoading('admin/Users')
     }
+    // {
+    //   name: 'Policies',
+    //   path: '/policies',
+    //   component: lazyLoading('admin/Policies')
+    // }
   ]
 }

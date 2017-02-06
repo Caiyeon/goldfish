@@ -37,7 +37,24 @@
 </template>
 
 <script>
-  // import Vue from 'vue'
+  import Vue from 'vue'
+  import Notification from 'vue-bulma-notification'
+
+  const NotificationComponent = Vue.extend(Notification)
+
+  const openNotification = (propsData = {
+    title: '',
+    message: '',
+    type: '',
+    direction: '',
+    duration: 4500,
+    container: '.notifications'
+  }) => {
+    return new NotificationComponent({
+      el: document.createElement('div'),
+      propsData
+    })
+  }
 
   export default {
     data () {
@@ -67,10 +84,12 @@
         }
         this.$http.post('/api/login', payload, headers).then(function (response) {
           console.log(response.data.status)
-          this.$router.push({
-            name: 'Users'
+          openNotification({
+            title: 'Login success!',
+            message: '',
+            type: 'success'
           })
-          this.$router.go(1)
+          this.vaultToken = ''
         }, function (err) {
           console.log(err.body.error)
         })

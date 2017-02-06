@@ -63,7 +63,7 @@
                         {{ entry[key] }}
                       </td>
                       <td class="is-icon">
-                        <a @click="deleteItem(index)">
+                        <a @click="openDeleteModal(index)">
                           <i class="fa fa-trash-o"></i>
                         </a>
                       </td>
@@ -84,7 +84,7 @@
 
     <modal :visible="showModal" :title="selectedItemTitle" :info="selectedItemInfo" @close="closeModalBasic"></modal>
 
-    <confirmModal :visible="showDeleteModal" :title="selectedItemTitle" :info="selectedItemInfo" @close="closeDeleteModal" @confirmed="deleteItem(selectedIndex)"></confirmModal>
+    <confirmModal :visible="showDeleteModal" :title="confirmDeletionTitle" :info="selectedItemInfo" @close="closeDeleteModal" @confirmed="deleteItem(selectedIndex)"></confirmModal>
 
   </div>
 </template>
@@ -93,6 +93,24 @@
   import { Tabs, TabPane } from './vue-bulma-tabs'
   import Modal from './modals/InfoModal'
   import ConfirmModal from './modals/ConfirmModal'
+  import Vue from 'vue'
+  import Notification from 'vue-bulma-notification'
+
+  const NotificationComponent = Vue.extend(Notification)
+
+  const openNotification = (propsData = {
+    title: '',
+    message: '',
+    type: '',
+    direction: '',
+    duration: 4500,
+    container: '.notifications'
+  }) => {
+    return new NotificationComponent({
+      el: document.createElement('div'),
+      propsData
+    })
+  }
 
   var TabNames = ['token', 'userpass']
   var TabColumns = [
@@ -143,15 +161,18 @@
     computed: {
       selectedItemTitle: function () {
         if (this.selectedIndex !== -1) {
-          return this.tableData[this.selectedIndex][this.tableColumns[0]]
+          return String(this.tableData[this.selectedIndex][this.tableColumns[1]])
         }
         return ''
       },
       selectedItemInfo: function () {
         if (this.selectedIndex !== -1) {
-          return String(this.tableData[this.selectedIndex][this.tableColumns[1]])
+          return this.tableData[this.selectedIndex][this.tableColumns[0]]
         }
         return ''
+      },
+      confirmDeletionTitle: function () {
+        return 'Are you sure you want to delete this?'
       }
     },
 
@@ -205,6 +226,11 @@
         }
         this.$http.delete('/api/users', payload).then(function (response) {
           this.tableData.splice(index, 1)
+          openNotification({
+            title: 'Deletion successful',
+            message: '',
+            type: 'success'
+          })
           console.log(response.data.result)
         }, function (err) {
           console.log(err.body.error)
@@ -213,7 +239,6 @@
       }
 
     }
-
   }
 </script>
 
