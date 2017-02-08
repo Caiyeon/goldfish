@@ -34,6 +34,10 @@ func main() {
 	e.GET("/policies/:policyname", handlers.GetPolicy())
 	e.DELETE("/policies/:policyname", handlers.DeletePolicy())
 
+	e.GET("/transit", handlers.FetchCSRF())
+	e.POST("/transit/encrypt", handlers.TransitEncrypt())
+	e.POST("/transit/decrypt", handlers.TransitDecrypt())
+
 	// start the server
 	e.Logger.Fatal(e.Start(":8000"))
 }

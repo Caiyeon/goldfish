@@ -29,6 +29,10 @@ type AuthInfo struct {
 	ID   string `json:"ID" form:"ID" query:"ID"`
 }
 
+type StringBind struct {
+	Str string `json:"Str" form:"Str" query:"Str"`
+}
+
 func init() {
 	gob.Register(&AuthInfo{})
 
@@ -325,3 +329,87 @@ func DeletePolicy() echo.HandlerFunc {
 	}
 }
 
+func TransitEncrypt() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		if cookie, err := c.Request().Cookie("auth"); err == nil {
+			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
+				return handleError(c, err.Error(), "Please clear cookies and login again")
+			}
+		} else {
+			return handleError(c, err.Error(), "Please clear cookies and login again")
+		}
+
+		// decode auth's ID with vault transit backend
+		if err := auth.decrypt(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// verify auth details
+		if _, err := auth.client(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		var plaintext = &StringBind{}
+		if err := c.Bind(plaintext); err != nil {
+			return handleError(c, err.Error(), "Invalid format")
+		}
+		log.Printf("plaintext: %s\n", plaintext)
+
+		// fetch results
+		cipher, err := auth.encryptstring(plaintext.Str)
+		if err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": cipher,
+		})
+	}
+}
+
+func TransitDecrypt() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		if cookie, err := c.Request().Cookie("auth"); err == nil {
+			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
+				return handleError(c, err.Error(), "Please clear cookies and login again")
+			}
+		} else {
+			return handleError(c, err.Error(), "Please clear cookies and login again")
+		}
+
+		// decode auth's ID with vault transit backend
+		if err := auth.decrypt(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		// verify auth details
+		if _, err := auth.client(); err != nil {
+			return handleError(c, err.Error(), "Invalid authentication")
+		}
+
+		var cipher = &StringBind{}
+		if err := c.Bind(cipher); err != nil {
+			return handleError(c, err.Error(), "Invalid format")
+		}
+
+		// fetch results
+		plaintext, err := auth.decryptstring(cipher.Str)
+		if err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": plaintext,
+		})
+	}
+}

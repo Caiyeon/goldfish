@@ -1,6 +1,7 @@
 import * as types from '../../mutation-types'
 import lazyLoading from './lazyLoading'
 import admin from './admin'
+import tools from './tools'
 
 // defaults
 import charts from './charts'
@@ -31,6 +32,7 @@ const state = {
       component: lazyLoading('login', true)
     },
     admin,
+    tools,
     charts,
     uifeatures,
     components,
