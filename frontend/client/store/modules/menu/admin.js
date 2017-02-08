@@ -16,6 +16,11 @@ export default {
       name: 'Policies',
       path: '/policies',
       component: lazyLoading('admin/Policies')
+    },
+    {
+      name: 'Health',
+      path: '/health',
+      component: lazyLoading('admin/Health')
     }
   ]
 }

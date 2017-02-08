@@ -24,6 +24,14 @@ const state = {
       component: lazyLoading('login', true)
     },
     admin,
+    {
+      name: 'Secrets',
+      path: '/secrets',
+      meta: {
+        icon: 'fa-list'
+      },
+      component: lazyLoading('secrets', true)
+    },
     tools
   ]
 }
