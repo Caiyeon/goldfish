@@ -33,7 +33,7 @@ module.exports = merge(baseWebpackConfig, {
     }),
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
-      title: 'Vue Admin',
+      title: 'Goldfish',
       filename: 'index.html',
       template: 'index.html',
       inject: true,

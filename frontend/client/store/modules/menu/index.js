@@ -4,10 +4,10 @@ import admin from './admin'
 import tools from './tools'
 
 // defaults
-import charts from './charts'
-import uifeatures from './uifeatures'
-import components from './components'
-import tables from './tables'
+// import charts from './charts'
+// import uifeatures from './uifeatures'
+// import components from './components'
+// import tables from './tables'
 
 // show: meta.label -> name
 // name: component name
@@ -15,14 +15,6 @@ import tables from './tables'
 
 const state = {
   items: [
-    {
-      name: 'Dashboard',
-      path: '/dashboard',
-      meta: {
-        icon: 'fa-tachometer'
-      },
-      component: lazyLoading('dashboard', true)
-    },
     {
       name: 'Login',
       path: '/login',
@@ -32,11 +24,7 @@ const state = {
       component: lazyLoading('login', true)
     },
     admin,
-    tools,
-    charts,
-    uifeatures,
-    components,
-    tables
+    tools
   ]
 }
 
