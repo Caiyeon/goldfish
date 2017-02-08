@@ -106,6 +106,11 @@
       this.$http.get('/api/transit').then(function (response) {
         this.csrf = response.headers.get('x-csrf-token')
       }, function (err) {
+        openNotification({
+          title: 'Error',
+          message: err.body.error,
+          type: 'danger'
+        })
         console.log(err.body.error)
       })
     },
@@ -129,6 +134,11 @@
             type: 'success'
           })
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
       },
@@ -151,6 +161,11 @@
             type: 'success'
           })
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
       },

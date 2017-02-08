@@ -193,6 +193,11 @@
           this.tableData = response.data.result
           this.csrf = response.headers.get('x-csrf-token')
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
       },
@@ -227,12 +232,16 @@
         this.$http.delete('/api/users', payload).then(function (response) {
           this.tableData.splice(index, 1)
           openNotification({
-            title: 'Deletion successful',
-            message: '',
+            title: 'Success',
+            message: 'Deletion successful',
             type: 'success'
           })
-          console.log(response.data.result)
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
         this.showDeleteModal = false

@@ -68,6 +68,11 @@
       this.$http.get('/api/login/csrf').then(function (response) {
         this.csrf = response.headers.get('x-csrf-token')
       }, function (err) {
+        openNotification({
+          title: 'Error',
+          message: err.body.error,
+          type: 'danger'
+        })
         console.log(err.body.error)
       })
     },
@@ -91,6 +96,11 @@
           })
           this.vaultToken = ''
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
       }

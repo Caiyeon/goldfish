@@ -106,6 +106,11 @@
         this.policies = response.data.result
         this.csrf = response.headers.get('x-csrf-token')
       }, function (err) {
+        openNotification({
+          title: 'Error',
+          message: err.body.error,
+          type: 'danger'
+        })
         console.log(err.body.error)
       })
     },
@@ -116,6 +121,11 @@
         this.$http.get('/api/policies/' + this.policies[index]).then(function (response) {
           this.policyRules = response.data.result
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
       },
@@ -131,6 +141,11 @@
           })
           console.log(response.data.status)
         }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
           console.log(err.body.error)
         })
       },
