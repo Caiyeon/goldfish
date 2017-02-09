@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"log"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -259,8 +258,6 @@ func (auth AuthInfo) decryptstring(cipher string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	log.Println("Decoded", "string:", string(rawbytes))
 
 	return string(rawbytes), nil
 }

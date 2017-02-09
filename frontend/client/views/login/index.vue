@@ -2,10 +2,10 @@
   <div>
     <div class="tile is-ancestor">
 
-      <div id="loginapp" class="tile is-parent is-6">
-        <article class="tile is-child box">
+      <div class="tile is-parent box">
+        <article class="tile is-parent is-child is-5">
           <h1 class="title">Vault Login</h1>
-          <div class="block">
+          <div class="box is-parent is-6">
             <form id="form" v-on:submit.prevent="login">
 
               <div class="control">
@@ -30,7 +30,35 @@
             </form>
           </div>
         </article>
+
+        <article class="tile is-parent is-child is-7">
+          <h1 class="title">Vault Health</h1>
+          <div class="box">
+            <div class="table-responsive">
+              <table class="table is-striped is-narrow">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="key in healthKeys">
+                    <td>
+                      {{ key }}
+                    </td>
+                    <td>
+                      {{ healthData[key] }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
       </div>
+
+
 
     </div>
   </div>
@@ -59,12 +87,14 @@
   export default {
     data () {
       return {
+        csrf: '',
         type: 'Token',
         vaultToken: '',
-        csrf: ''
+        healthData: {}
       }
     },
     mounted: function () {
+      // fetch csrf for login post request later
       this.$http.get('/api/login/csrf').then(function (response) {
         this.csrf = response.headers.get('x-csrf-token')
       }, function (err) {
@@ -75,7 +105,26 @@
         })
         console.log(err.body.error)
       })
+
+      // fetch vault cluster details
+      this.$http.get('/api/health').then(function (response) {
+        this.healthData = JSON.parse(response.data.result)
+      }, function (err) {
+        openNotification({
+          title: 'Error',
+          message: err.body.error,
+          type: 'danger'
+        })
+        console.log(err.body.error)
+      })
     },
+
+    computed: {
+      healthKeys: function () {
+        return Object.keys(this.healthData)
+      }
+    },
+
     methods: {
       login: function () {
         var payload = {

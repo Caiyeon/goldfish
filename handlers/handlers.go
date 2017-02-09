@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"flag"
 	"log"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/csrf"
@@ -81,6 +82,25 @@ func FetchCSRF() echo.HandlerFunc {
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 		return c.JSON(http.StatusOK, H{
 			"status": "fetched",
+		})
+	}
+}
+
+func GetHealth() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		resp, err := http.Get(vaultAddress + "/v1/sys/health")
+		if err != nil {
+			return handleError(c, "Could not GET /sys/health", "Vault server not responding")
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return handleError(c, "Could not GET /sys/health", "Vault server not responding")
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": string(body),
 		})
 	}
 }

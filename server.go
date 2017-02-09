@@ -24,6 +24,8 @@ func main() {
 	// routing
 	e.Static("/", "public")
 
+	e.GET("/health", handlers.GetHealth())
+
 	e.GET("/login/csrf", handlers.FetchCSRF())
 	e.POST("/login", handlers.Login())
 
