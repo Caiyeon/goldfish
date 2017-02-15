@@ -149,29 +149,35 @@ func Login() echo.HandlerFunc {
 	}
 }
 
+func getSession(c echo.Context, auth *AuthInfo) error {
+	// fetch auth from cookie
+	if cookie, err := c.Request().Cookie("auth"); err == nil {
+		if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
+			return handleError(c, err.Error(), "Please clear cookies and login again")
+		}
+	} else {
+		return handleError(c, err.Error(), "Please clear cookies and login again")
+	}
+
+	// decode auth's ID with vault transit backend
+	if err := auth.decrypt(); err != nil {
+		return handleError(c, err.Error(), "Invalid authentication")
+	}
+
+	// verify auth details
+	if _, err := auth.client(); err != nil {
+		return handleError(c, err.Error(), "Invalid authentication")
+	}
+	return nil
+}
+
 func GetUsers() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var auth = &AuthInfo{}
 		defer auth.clear()
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		// fetch results
 		result, err := auth.listusers(c.QueryParam("type"))
@@ -194,7 +200,7 @@ func DeleteUser() echo.HandlerFunc {
 		var auth = &AuthInfo{}
 		defer auth.clear()
 
-		// read form data
+		// verify form data
 		var deleteTarget = &AuthInfo{}
 		if err := c.Bind(deleteTarget); err != nil {
 			return handleError(c, err.Error(), "Invalid format")
@@ -204,23 +210,7 @@ func DeleteUser() echo.HandlerFunc {
 		}
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		// delete user
 		if err := auth.deleteuser(deleteTarget.Type, deleteTarget.ID); err != nil {
@@ -239,23 +229,7 @@ func GetPolicies() echo.HandlerFunc {
 		defer auth.clear()
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		// fetch results
 		result, err := auth.listpolicies()
@@ -279,23 +253,7 @@ func GetPolicy() echo.HandlerFunc {
 		defer auth.clear()
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		// fetch results
 		result, err := auth.getpolicy(c.Param("policyname"))
@@ -319,23 +277,7 @@ func DeletePolicy() echo.HandlerFunc {
 		defer auth.clear()
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		// fetch results
 		if err := auth.deletepolicy(c.Param("policyname")); err != nil {
@@ -355,23 +297,7 @@ func TransitEncrypt() echo.HandlerFunc {
 		defer auth.clear()
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		var plaintext = &StringBind{}
 		if err := c.Bind(plaintext); err != nil {
@@ -398,23 +324,7 @@ func TransitDecrypt() echo.HandlerFunc {
 		defer auth.clear()
 
 		// fetch auth from cookie
-		if cookie, err := c.Request().Cookie("auth"); err == nil {
-			if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-				return handleError(c, err.Error(), "Please clear cookies and login again")
-			}
-		} else {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
-		}
-
-		// decode auth's ID with vault transit backend
-		if err := auth.decrypt(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
-
-		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
-		}
+		getSession(c, auth)
 
 		var cipher = &StringBind{}
 		if err := c.Bind(cipher); err != nil {
