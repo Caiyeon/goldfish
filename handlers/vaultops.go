@@ -261,3 +261,51 @@ func (auth AuthInfo) decryptstring(cipher string) (string, error) {
 
 	return string(rawbytes), nil
 }
+
+// returns list of current mounts, if authorized
+func (auth AuthInfo) listmounts() (map[string]*api.MountOutput, error) {
+	client, err := auth.client()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Sys().ListMounts()
+}
+
+func (auth AuthInfo) listpath(path string) (interface{}, error) {
+	client, err := auth.client()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Logical().List(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil || resp.Data == nil {
+		// invalid handler (i.e. invalid request)
+		return nil, errors.New("Invalid path")
+	} else {
+		return resp.Data["keys"], nil
+	}
+}
+
+func (auth AuthInfo) readpath(path string) (interface{}, error) {
+	client, err := auth.client()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Logical().Read(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil {
+		// invalid handler (i.e. invalid request)
+		return nil, errors.New("Invalid path")
+	} else {
+		return resp.Data, nil
+	}
+}

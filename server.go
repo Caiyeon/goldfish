@@ -40,6 +40,10 @@ func main() {
 	e.POST("/transit/encrypt", handlers.TransitEncrypt())
 	e.POST("/transit/decrypt", handlers.TransitDecrypt())
 
+	e.GET("/mounts", handlers.GetMounts())
+
+	e.GET("/secrets", handlers.GetSecrets())
+
 	// start the server
 	e.Logger.Fatal(e.Start(":8000"))
 }
