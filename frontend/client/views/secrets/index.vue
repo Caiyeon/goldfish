@@ -1,33 +1,43 @@
 <template>
   <div>
     <div class="tile is-ancestor">
-
       <div class="tile is-parent">
         <article class="tile is-child box">
-
-          <div class="control has-icon is-horizontal">
-            <span class="icon is-medium">
-              <i class="fa fa-angle-up"></i>
-            </span>
-            <h3 class="title is-3">
-              {{ currentPath }}
-            </h3>
-          </div>
-
           <div class="box">
+
+            <div class="columns">
+              <div class="column is-12">
+                <p class="control has-addons">
+
+                  <a class="button is-medium is-primary is-paddingless is-marginless" @click="changePathUp()">
+                    <span class="icon is-paddingless is-marginless">
+                      <i class="fa fa-angle-up is-paddingless is-marginless"></i>
+                    </span>
+                  </a>
+
+                  <input class="input is-medium is-expanded" type="text"
+                  placeholder="Enter the path of a secret or directory"
+                  v-model="currentPath"
+                  @keyup.enter="changePath(currentPath)">
+
+                </p>
+              </div>
+            </div>
+
             <div class="table-responsive">
               <table class="table is-striped is-narrow">
                 <thead>
                   <tr>
-                    <th>Directory</th>
+                    <!-- <th>Directory</th>
                     <th>Description</th>
-                    <th></th>
+                    <th></th> -->
+                    <th v-for="header in tableHeaders">{{ header }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(entry, index) in tableData">
                     <td>
-                      <a @click="changePath(entry.path)">
+                      <a v-bind:class="type(index)" @click="changePath(currentPath + entry.path)">
                         {{ entry.path }}
                       </a>
                     </td>
@@ -43,10 +53,10 @@
                 </tbody>
               </table>
             </div>
+
           </div>
         </article>
       </div>
-
     </div>
   </div>
 </template>
@@ -76,38 +86,13 @@
       return {
         csrf: '',
         currentPath: '',
+        tableHeaders: [],
         tableData: []
       }
     },
 
     mounted: function () {
-      openNotification({
-        title: 'Under construction',
-        message: 'Page is not implemented yet',
-        type: 'danger'
-      })
-
-      this.$http.get('/api/mounts').then(function (response) {
-        this.tableData = []
-        this.csrf = response.headers.get('x-csrf-token')
-
-        var keys = Object.keys(response.data.result)
-        for (var i = 0; i < keys.length; i++) {
-          this.tableData.push({
-            path: keys[i],
-            type: response.data.result[keys[i]]['type'],
-            desc: response.data.result[keys[i]]['description'],
-            conf: response.data.result[keys[i]]['config']
-          })
-        }
-      }, function (err) {
-        openNotification({
-          title: 'Error',
-          message: err.body.error,
-          type: 'danger'
-        })
-        console.log(err.body.error)
-      })
+      this.getMounts()
     },
 
     computed: {
@@ -125,28 +110,60 @@
         })
       },
 
-      changePath: function (path) {
-        this.$http.get('/api/secrets?path=' + this.currentPath + path).then(function (response) {
+      getMounts: function () {
+        this.$http.get('/api/mounts').then(function (response) {
           this.tableData = []
-          this.currentPath = this.currentPath + path
+          this.csrf = response.headers.get('x-csrf-token')
+          var keys = Object.keys(response.data.result)
+          for (var i = 0; i < keys.length; i++) {
+            this.tableData.push({
+              path: keys[i],
+              type: 'mount',
+              desc: response.data.result[keys[i]]['description'],
+              conf: response.data.result[keys[i]]['config']
+            })
+          }
+          this.tableHeaders = ['Mounts', 'Description', '']
+        }, function (err) {
+          openNotification({
+            title: 'Error',
+            message: err.body.error,
+            type: 'danger'
+          })
+          console.log(err.body.error)
+        })
+      },
 
+      changePath: function (path) {
+        if (path === '' || path === '/') {
+          this.currentPath = ''
+          this.getMounts()
+          return
+        }
+
+        this.$http.get('/api/secrets?path=' + path).then(function (response) {
+          this.tableData = []
+          this.currentPath = path
           if (path.slice(-1) === '/') {
             // listing subdirectories
             for (var i = 0; i < response.data.result.length; i++) {
               this.tableData.push({
                 path: response.data.result[i],
-                desc: response.data.result[i].slice(-1) === '/' ? '' : 'secret'
+                type: response.data.result[i].slice(-1) === '/' ? 'directory' : 'secret'
               })
             }
+            this.tableHeaders = ['Subpaths', 'Description', '']
           } else {
             // listing key value pairs
             var keys = Object.keys(response.data.result)
             for (var j = 0; j < keys.length; j++) {
               this.tableData.push({
                 path: keys[j],
+                type: 'key',
                 desc: response.data.result[keys[j]]
               })
             }
+            this.tableHeaders = ['Key', 'Value', '']
           }
         }, function (err) {
           openNotification({
@@ -156,6 +173,29 @@
           })
           console.log(err.body.error)
         })
+      },
+
+      changePathUp: function () {
+        var noTrailingSlash = this.currentPath
+        if (this.currentPath.slice(-1) === '/') {
+          noTrailingSlash = this.currentPath.substring(0, this.currentPath.length - 1)
+        }
+        this.currentPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+        this.changePath(this.currentPath)
+      },
+
+      type: function (index) {
+        switch (this.tableData[index].type) {
+          case 'mount':
+            return { 'tag': true, 'is-danger': true }
+          case 'directory':
+            return { 'tag': true, 'is-primary': true }
+          case 'secret':
+            return { 'tag': true, 'is-warning': true }
+          case 'key':
+          default:
+            return { 'is-disabled': true }
+        }
       }
     }
   }
