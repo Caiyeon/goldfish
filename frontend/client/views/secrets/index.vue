@@ -28,9 +28,6 @@
               <table class="table is-striped is-narrow">
                 <thead>
                   <tr>
-                    <!-- <th>Directory</th>
-                    <th>Description</th>
-                    <th></th> -->
                     <th v-for="header in tableHeaders">{{ header }}</th>
                   </tr>
                 </thead>
