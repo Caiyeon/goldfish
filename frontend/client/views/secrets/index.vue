@@ -3,10 +3,11 @@
     <div class="tile is-ancestor">
       <div class="tile is-parent">
         <article class="tile is-child box">
-          <div class="box">
+
+          <div class="box is-clearfix">
 
             <div class="columns">
-              <div class="column is-12">
+              <div class="column is-fullw">
                 <p class="control has-addons">
 
                   <a class="button is-medium is-primary is-paddingless is-marginless" @click="changePathUp()">
@@ -24,34 +25,39 @@
               </div>
             </div>
 
-            <div class="table-responsive">
-              <table class="table is-striped is-narrow">
-                <thead>
-                  <tr>
-                    <th v-for="header in tableHeaders">{{ header }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(entry, index) in tableData">
-                    <td>
-                      <a v-bind:class="type(index)" @click="changePath(currentPath + entry.path)">
-                        {{ entry.path }}
-                      </a>
-                    </td>
-                    <td>
-                      {{ entry.desc }}
-                    </td>
-                    <td class="is-icon">
-                      <a @click="deleteItem">
-                        <i class="fa fa-trash-o"></i>
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <a class="tag is-danger is-unselectable is-disabled is-pulled-right">Mount</a>
+            <a class="tag is-primary is-unselectable is-disabled is-pulled-right">Subdirectory</a>
+            <a class="tag is-warning is-unselectable is-disabled is-pulled-right">Secret</a>
 
           </div>
+
+          <div class="table-responsive">
+            <table class="table is-striped is-narrow">
+              <thead>
+                <tr>
+                  <th v-for="header in tableHeaders">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(entry, index) in tableData">
+                  <td>
+                    <a v-bind:class="type(index)" @click="changePath(currentPath + entry.path)">
+                      {{ entry.path }}
+                    </a>
+                  </td>
+                  <td>
+                    {{ entry.desc }}
+                  </td>
+                  <td class="is-icon">
+                    <a @click="deleteItem">
+                      <i class="fa fa-trash-o"></i>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
         </article>
       </div>
     </div>
