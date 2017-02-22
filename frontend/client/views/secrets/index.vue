@@ -35,13 +35,19 @@
             <table class="table is-striped is-narrow">
               <thead>
                 <tr>
+                  <th>Type</th>
                   <th v-for="header in tableHeaders">{{ header }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(entry, index) in tableData">
+                  <td class="is-icon">
+                    <a class="tag is-disabled is-pulled-left" v-bind:class="type(index)">
+                      {{ entry.type }}
+                    </a>
+                  </td>
                   <td>
-                    <a v-bind:class="type(index)" @click="changePath(currentPath + entry.path)">
+                    <a v-bind:class="entry.type === 'Key' ? 'is-disabled' : ''" @click="changePath(currentPath + entry.path)">
                       {{ entry.path }}
                     </a>
                   </td>
@@ -121,7 +127,7 @@
           for (var i = 0; i < keys.length; i++) {
             this.tableData.push({
               path: keys[i],
-              type: 'mount',
+              type: response.data.result[keys[i]]['type'],
               desc: response.data.result[keys[i]]['description'],
               conf: response.data.result[keys[i]]['config']
             })
@@ -152,7 +158,7 @@
             for (var i = 0; i < response.data.result.length; i++) {
               this.tableData.push({
                 path: response.data.result[i],
-                type: response.data.result[i].slice(-1) === '/' ? 'directory' : 'secret'
+                type: response.data.result[i].slice(-1) === '/' ? 'Path' : 'Secret'
               })
             }
             this.tableHeaders = ['Subpaths', 'Description', '']
@@ -162,7 +168,7 @@
             for (var j = 0; j < keys.length; j++) {
               this.tableData.push({
                 path: keys[j],
-                type: 'key',
+                type: 'Key',
                 desc: response.data.result[keys[j]]
               })
             }
@@ -189,15 +195,14 @@
 
       type: function (index) {
         switch (this.tableData[index].type) {
-          case 'mount':
-            return { 'tag': true, 'is-danger': true }
-          case 'directory':
+          case 'Path':
             return { 'tag': true, 'is-primary': true }
-          case 'secret':
+          case 'Secret':
             return { 'tag': true, 'is-warning': true }
-          case 'key':
+          case 'Key':
+            return { 'tag': true, 'is-success': true }
           default:
-            return { 'is-disabled': true }
+            return { 'tag': true, 'is-danger': true }
         }
       }
     }
