@@ -42,6 +42,7 @@ func main() {
 
 	e.GET("/mounts", handlers.GetMounts())
 	e.GET("/mounts/:mountname", handlers.GetMount())
+	e.POST("/mounts/:mountname", handlers.ConfigMount())
 
 	e.GET("/secrets", handlers.GetSecrets())
 

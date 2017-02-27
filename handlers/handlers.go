@@ -303,7 +303,6 @@ func TransitEncrypt() echo.HandlerFunc {
 		if err := c.Bind(plaintext); err != nil {
 			return handleError(c, err.Error(), "Invalid format")
 		}
-		log.Printf("plaintext: %s\n", plaintext)
 
 		// fetch results
 		cipher, err := auth.encryptstring(plaintext.Str)
@@ -384,6 +383,32 @@ func GetMount() echo.HandlerFunc {
 		// return result
 		return c.JSON(http.StatusOK, H{
 			"result": result,
+		})
+	}
+}
+
+func ConfigMount() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		var config *vaultapi.MountConfigInput
+		if err := c.Bind(&config); err != nil {
+			return handleError(c, err.Error(), "Invalid format")
+		}
+
+		// fetch results
+		err := auth.configmount(c.Param("mountname"), *config)
+		if err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": "ok",
 		})
 	}
 }
