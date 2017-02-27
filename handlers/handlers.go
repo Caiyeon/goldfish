@@ -357,9 +357,33 @@ func GetMounts() echo.HandlerFunc {
 			return handleError(c, err.Error(), "Unauthorized")
 		}
 
+		// give a CSRF token in case a delete request is sent later
+		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+
 		// return mounts
 		return c.JSON(http.StatusOK, H{
 			"result": mounts,
+		})
+	}
+}
+
+func GetMount() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &AuthInfo{}
+		defer auth.clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		// fetch results
+		result, err := auth.getmount(c.Param("mountname"))
+		if err != nil {
+			return handleError(c, err.Error(), "Internal error")
+		}
+
+		// return result
+		return c.JSON(http.StatusOK, H{
+			"result": result,
 		})
 	}
 }

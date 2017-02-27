@@ -41,6 +41,7 @@ func main() {
 	e.POST("/transit/decrypt", handlers.TransitDecrypt())
 
 	e.GET("/mounts", handlers.GetMounts())
+	e.GET("/mounts/:mountname", handlers.GetMount())
 
 	e.GET("/secrets", handlers.GetSecrets())
 

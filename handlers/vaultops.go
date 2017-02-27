@@ -272,6 +272,15 @@ func (auth AuthInfo) listmounts() (map[string]*api.MountOutput, error) {
 	return client.Sys().ListMounts()
 }
 
+func (auth AuthInfo) getmount(path string) (*api.MountConfigOutput, error) {
+	client, err := auth.client()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Sys().MountConfig(path + "/")
+}
+
 func (auth AuthInfo) listpath(path string) (interface{}, error) {
 	client, err := auth.client()
 	if err != nil {

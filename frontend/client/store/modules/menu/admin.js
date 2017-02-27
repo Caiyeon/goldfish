@@ -16,6 +16,11 @@ export default {
       name: 'Policies',
       path: '/policies',
       component: lazyLoading('admin/Policies')
+    },
+    {
+      name: 'Mounts',
+      path: '/mounts',
+      component: lazyLoading('admin/Mounts')
     }
   ]
 }
