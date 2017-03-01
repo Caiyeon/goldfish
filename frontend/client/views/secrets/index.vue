@@ -4,18 +4,21 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
 
+          <!-- navigation box -->
           <div class="box is-clearfix">
 
             <div class="columns">
-              <div class="column is-fullw">
+              <div class="column is-fullwidth">
                 <p class="control has-addons">
 
+                  <!-- up button -->
                   <a class="button is-medium is-primary is-paddingless is-marginless" @click="changePathUp()">
                     <span class="icon is-paddingless is-marginless">
                       <i class="fa fa-angle-up is-paddingless is-marginless"></i>
                     </span>
                   </a>
 
+                  <!-- navigation input -->
                   <input class="input is-medium is-expanded" type="text"
                   placeholder="Enter the path of a secret or directory"
                   v-model="currentPath"
@@ -25,20 +28,34 @@
               </div>
             </div>
 
-            <a class="tag is-danger is-unselectable is-disabled is-pulled-right">Mount</a>
-            <a class="tag is-primary is-unselectable is-disabled is-pulled-right">Subdirectory</a>
-            <a class="tag is-warning is-unselectable is-disabled is-pulled-right">Secret</a>
+            <!-- manual insertion button: to be implemented later -->
+            <!-- <a class="button is-primary is-outlined">
+              <span class="icon is-small">
+                <i class="fa fa-plus"></i>
+              </span>
+              <span>Insert Secret</span>
+            </a> -->
 
+            <!-- legend -->
+            <a class="tag is-danger is-unselectable is-disabled is-pulled-right">Mount</a>
+            <a class="tag is-primary is-unselectable is-disabled is-pulled-right">Path</a>
+            <a class="tag is-info is-unselectable is-disabled is-pulled-right">Secret</a>
+            <a class="tag is-success is-unselectable is-disabled is-pulled-right">Key</a>
           </div>
 
+          <!-- data table -->
           <div class="table-responsive">
             <table class="table is-striped is-narrow">
+
+              <!-- headers -->
               <thead>
                 <tr>
                   <th>Type</th>
                   <th v-for="header in tableHeaders">{{ header }}</th>
                 </tr>
               </thead>
+
+              <!-- body -->
               <tbody>
                 <tr v-for="(entry, index) in tableData">
                   <td class="is-icon">
@@ -60,7 +77,50 @@
                     </a>
                   </td>
                 </tr>
+
+                <!-- new key value pair insertion row -->
+                <tr
+                  v-show="currentPathType === 'Secret'"
+                  @keyup.enter="addKeyValue()"
+                >
+                  <td class="is-icon">
+                  </td>
+                  <td>
+                    <p class="control">
+                    <input
+                      class="input is-small"
+                      type="text"
+                      placeholder="Add a key"
+                      v-model="newKey"
+                      v-bind:class="[
+                        newKey === '' ? '' : 'is-success',
+                        newKeyExists ? 'is-danger' : '']"
+                    >
+                    </p>
+                  </td>
+                  <td>
+                    <p class="control">
+                    <input
+                      class="input is-small"
+                      type="text"
+                      placeholder="Add a value"
+                      v-model="newValue"
+                      v-bind:class="[newValue === '' ? '' : 'is-success']"
+                    >
+                    </p>
+                  </td>
+                </tr>
+
               </tbody>
+
+              <!-- footer only shows beyond a certain amount of data -->
+              <tfoot v-show="tableData.length > 10">
+                <tr>
+                  <th>Type</th>
+                  <th v-for="header in tableHeaders">{{ header }}</th>
+                </tr>
+              </tfoot>
+
             </table>
           </div>
 
@@ -94,19 +154,37 @@
     data () {
       return {
         csrf: '',
-        currentPath: '',
+        currentPath: 'data/',
         tableHeaders: [],
-        tableData: []
+        tableData: [],
+        newKey: '',
+        newValue: ''
       }
     },
 
     mounted: function () {
-      this.getMounts()
+      this.changePath(this.currentPath)
     },
 
     computed: {
-      tableKeys: function (index) {
-        return Object.keys(this.tableData)[index]
+      currentPathType: function () {
+        if (this.currentPath === '' || this.currentPath === '/') {
+          return 'Mount'
+        }
+        if (this.currentPath.slice(-1) === '/') {
+          return 'Path'
+        } else {
+          return 'Secret'
+        }
+      },
+
+      newKeyExists: function () {
+        for (var i = 0; i < this.tableData.length; i++) {
+          if (this.tableData[i].path === this.newKey) {
+            return true
+          }
+        }
+        return false
       }
     },
 
@@ -144,6 +222,9 @@
       },
 
       changePath: function (path) {
+        this.newKey = ''
+        this.newValue = ''
+
         if (path === '' || path === '/') {
           this.currentPath = ''
           this.getMounts()
@@ -152,7 +233,6 @@
 
         this.$http.get('/api/secrets?path=' + path).then(function (response) {
           this.tableData = []
-          this.currentPath = path
           if (path.slice(-1) === '/') {
             // listing subdirectories
             for (var i = 0; i < response.data.result.length; i++) {
@@ -174,6 +254,7 @@
             }
             this.tableHeaders = ['Key', 'Value', '']
           }
+          this.currentPath = path
         }, function (err) {
           openNotification({
             title: 'Error',
@@ -185,26 +266,56 @@
       },
 
       changePathUp: function () {
+        // cut the trailing slash off if it exists
         var noTrailingSlash = this.currentPath
         if (this.currentPath.slice(-1) === '/') {
           noTrailingSlash = this.currentPath.substring(0, this.currentPath.length - 1)
         }
+        // remove up to the last slash if it exists
         this.currentPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+        // fetch data again
         this.changePath(this.currentPath)
       },
 
       type: function (index) {
         switch (this.tableData[index].type) {
+          case 'Secret':
+            return { 'tag': true, 'is-info': true }
           case 'Path':
             return { 'tag': true, 'is-primary': true }
-          case 'Secret':
-            return { 'tag': true, 'is-warning': true }
           case 'Key':
             return { 'tag': true, 'is-success': true }
           default:
             return { 'tag': true, 'is-danger': true }
         }
+      },
+
+      addKeyValue: function () {
+        if (this.newKey === '' || this.newValue === '') {
+          openNotification({
+            title: 'Invalid',
+            message: 'key and value must be non-empty',
+            type: 'warning'
+          })
+          return
+        }
+
+        if (this.newKeyExists) {
+          openNotification({
+            title: 'Invalid',
+            message: 'key already exists',
+            type: 'warning'
+          })
+          return
+        }
+
+        openNotification({
+          title: 'SoonTM',
+          message: 'insertion not yet implemented',
+          type: 'danger'
+        })
       }
+
     }
   }
 </script>
