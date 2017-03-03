@@ -1,15 +1,12 @@
 package handlers
 
 import (
-	"encoding/gob"
-	"flag"
 	"log"
-	"io/ioutil"
 	"net/http"
 
+	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/securecookie"
-	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
 )
 
@@ -19,24 +16,12 @@ type H map[string]interface{}
 // for storing ciphers of user credentials
 var scookie = &securecookie.SecureCookie{}
 
-// for authenticating this web server with vault
-var vaultAddress = ""
-var vaultToken = ""
-var vaultClient *vaultapi.Client
-
-// for binding login info
-type AuthInfo struct {
-	Type string `json:"Type" form:"Type" query:"Type"`
-	ID   string `json:"ID" form:"ID" query:"ID"`
-}
-
+// constraint by vue-resource. Will not need if/when switched to axios
 type StringBind struct {
 	Str string `json:"Str" form:"Str" query:"Str"`
 }
 
 func init() {
-	gob.Register(&AuthInfo{})
-
 	// setup cookie encryption keys
 	hashKey := securecookie.GenerateRandomKey(64)
 	blockKey := securecookie.GenerateRandomKey(32)
@@ -48,29 +33,9 @@ func init() {
 	if scookie == nil {
 		panic("Failed to initialize gorilla/securecookie")
 	}
-
-	// read vault token and addr for web server
-	// to do: change token to approle
-	flag.StringVar(&vaultAddress, "addr", "http://127.0.0.1:8200", "Vault address")
-	flag.StringVar(&vaultToken, "token", "", "Vault token")
-	flag.Parse()
-	if vaultAddress == "" || vaultToken == "" {
-		panic("Invalid vault credentials")
-	}
-
-	// set up web server's vault client
-	client, err := vaultapi.NewClient(vaultapi.DefaultConfig())
-	client.SetAddress(vaultAddress)
-	client.SetToken(vaultToken)
-	if _, err = client.Auth().Token().LookupSelf(); err != nil {
-		panic(err)
-	}
-	vaultClient = client
 }
 
-// error handler should print error in server log
-// but return no unnecessary server info to client
-func handleError(c echo.Context, logstring string, responsestring string) error {
+func logError(c echo.Context, logstring string, responsestring string) error {
 	log.Println("[ERROR]:", logstring)
 	return c.JSON(http.StatusInternalServerError, H{
 		"error": responsestring,
@@ -86,46 +51,39 @@ func FetchCSRF() echo.HandlerFunc {
 	}
 }
 
-func GetHealth() echo.HandlerFunc {
+func VaultHealth() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		resp, err := http.Get(vaultAddress + "/v1/sys/health")
+		resp, err := vault.VaultHealth()
 		if err != nil {
-			return handleError(c, "Could not GET /sys/health", "Vault server not responding")
+			return logError(c, "Failed to reach vault health endpoint", "Internal error")
 		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			return handleError(c, "Could not GET /sys/health", "Vault server not responding")
-		}
-
 		return c.JSON(http.StatusOK, H{
-			"result": string(body),
+			"result": string(resp),
 		})
 	}
 }
 
 func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		auth := new(AuthInfo)
-		defer auth.clear()
+		auth := new(vault.AuthInfo)
+		defer auth.Clear()
 
 		// read form data
 		if err := c.Bind(auth); err != nil {
-			return handleError(c, err.Error(), "Invalid format")
+			return logError(c, err.Error(), "Invalid format")
 		}
 		if auth.Type == "" || auth.ID == "" {
-			return handleError(c, "Empty authentication", "Empty authentication")
+			return logError(c, "Empty authentication", "Empty authentication")
 		}
 
 		// verify auth details
-		if _, err := auth.client(); err != nil {
-			return handleError(c, err.Error(), "Invalid authentication")
+		if _, err := auth.Client(); err != nil {
+			return logError(c, err.Error(), "Invalid authentication")
 		}
 
 		// encrypt auth.ID with vault's transit backend
-		if err := auth.encrypt(); err != nil {
-			return handleError(c, err.Error(), "Internal error")
+		if err := auth.EncryptAuth(); err != nil {
+			return logError(c, err.Error(), "Internal error")
 		}
 
 		// store auth.Type and auth.ID (now a cipher) in cookie
@@ -137,313 +95,31 @@ func Login() echo.HandlerFunc {
 			}
 			http.SetCookie(c.Response().Writer, cookie)
 		} else {
-			return handleError(c, err.Error(),
+			return logError(c, err.Error(),
 				"Please clear site-related cookie and storage",
 			)
 		}
 
-		// success
+		// To do: return list of policies
 		return c.JSON(http.StatusOK, H{
 			"status": "Logged in",
 		})
 	}
 }
 
-func getSession(c echo.Context, auth *AuthInfo) error {
+func getSession(c echo.Context, auth *vault.AuthInfo) error {
 	// fetch auth from cookie
 	if cookie, err := c.Request().Cookie("auth"); err == nil {
 		if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-			return handleError(c, err.Error(), "Please clear cookies and login again")
+			return logError(c, err.Error(), "Please clear cookies and login again")
 		}
 	} else {
-		return handleError(c, err.Error(), "Please clear cookies and login again")
+		return logError(c, err.Error(), "Please clear cookies and login again")
 	}
 
 	// decode auth's ID with vault transit backend
-	if err := auth.decrypt(); err != nil {
-		return handleError(c, err.Error(), "Invalid authentication")
-	}
-
-	// verify auth details
-	if _, err := auth.client(); err != nil {
-		return handleError(c, err.Error(), "Invalid authentication")
+	if err := auth.DecryptAuth(); err != nil {
+		return logError(c, err.Error(), "Invalid authentication")
 	}
 	return nil
-}
-
-func GetUsers() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// fetch results
-		result, err := auth.listusers(c.QueryParam("type"))
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// give a CSRF token in case a delete request is sent later
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
-
-func DeleteUser() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// verify form data
-		var deleteTarget = &AuthInfo{}
-		if err := c.Bind(deleteTarget); err != nil {
-			return handleError(c, err.Error(), "Invalid format")
-		}
-		if deleteTarget.Type == "" || deleteTarget.ID == "" {
-			return handleError(c, "Received empty delete request", "Invalid format")
-		}
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// delete user
-		if err := auth.deleteuser(deleteTarget.Type, deleteTarget.ID); err != nil {
-			return handleError(c, err.Error(), "Deletion error")
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": "User deleted successfully",
-		})
-	}
-}
-
-func GetPolicies() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// fetch results
-		result, err := auth.listpolicies()
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// give a CSRF token in case a delete request is sent later
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
-
-func GetPolicy() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// fetch results
-		result, err := auth.getpolicy(c.Param("policyname"))
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// give a CSRF token in case a delete request is sent later
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
-
-func DeletePolicy() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// fetch results
-		if err := auth.deletepolicy(c.Param("policyname")); err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": "Policy deleted",
-		})
-	}
-}
-
-func TransitEncrypt() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		var plaintext = &StringBind{}
-		if err := c.Bind(plaintext); err != nil {
-			return handleError(c, err.Error(), "Invalid format")
-		}
-
-		// fetch results
-		cipher, err := auth.encryptstring(plaintext.Str)
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": cipher,
-		})
-	}
-}
-
-func TransitDecrypt() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		var cipher = &StringBind{}
-		if err := c.Bind(cipher); err != nil {
-			return handleError(c, err.Error(), "Invalid format")
-		}
-
-		// fetch results
-		plaintext, err := auth.decryptstring(cipher.Str)
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": plaintext,
-		})
-	}
-}
-
-func GetMounts() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		mounts, err := auth.listmounts()
-		if err != nil {
-			return handleError(c, err.Error(), "Unauthorized")
-		}
-
-		// give a CSRF token in case a delete request is sent later
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-
-		// return mounts
-		return c.JSON(http.StatusOK, H{
-			"result": mounts,
-		})
-	}
-}
-
-func GetMount() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// fetch results
-		result, err := auth.getmount(c.Param("mountname"))
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
-
-func ConfigMount() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		var config *vaultapi.MountConfigInput
-		if err := c.Bind(&config); err != nil {
-			return handleError(c, err.Error(), "Invalid format")
-		}
-
-		// fetch results
-		err := auth.configmount(c.Param("mountname"), *config)
-		if err != nil {
-			return handleError(c, err.Error(), "Internal error")
-		}
-
-		// return result
-		return c.JSON(http.StatusOK, H{
-			"result": "ok",
-		})
-	}
-}
-
-func GetSecrets() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var auth = &AuthInfo{}
-		defer auth.clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		path := c.QueryParam("path")
-		if path == "" {
-			return handleError(c, "Empty path parameter in getting secrets", "Invalid parameter")
-		}
-
-		if path[len(path)-1:] == "/" {
-			// listing a directory
-			if result, err := auth.listpath(path); err != nil {
-				return handleError(c, err.Error(), "Internal error")
-			} else {
-				return c.JSON(http.StatusOK, H{
-					"result": result,
-				})
-			}
-		} else {
-			// reading a specific secret's key value pairs
-			if result, err := auth.readpath(path); err != nil {
-				return handleError(c, err.Error(), "Internal error")
-			} else {
-				return c.JSON(http.StatusOK, H{
-					"result": result,
-				})
-			}
-		}
-	}
 }

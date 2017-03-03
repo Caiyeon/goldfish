@@ -24,7 +24,7 @@ func main() {
 	// routing
 	e.Static("/", "public")
 
-	e.GET("/health", handlers.GetHealth())
+	e.GET("/health", handlers.VaultHealth())
 
 	e.GET("/login/csrf", handlers.FetchCSRF())
 	e.POST("/login", handlers.Login())
@@ -32,13 +32,13 @@ func main() {
 	e.GET("/users", handlers.GetUsers())
 	e.DELETE("/users", handlers.DeleteUser())
 
-	e.GET("/policies", handlers.GetPolicies())
+	e.GET("/policies", handlers.ListPolicies())
 	e.GET("/policies/:policyname", handlers.GetPolicy())
 	e.DELETE("/policies/:policyname", handlers.DeletePolicy())
 
 	e.GET("/transit", handlers.FetchCSRF())
-	e.POST("/transit/encrypt", handlers.TransitEncrypt())
-	e.POST("/transit/decrypt", handlers.TransitDecrypt())
+	e.POST("/transit/encrypt", handlers.EncryptString())
+	e.POST("/transit/decrypt", handlers.DecryptString())
 
 	e.GET("/mounts", handlers.GetMounts())
 	e.GET("/mounts/:mountname", handlers.GetMount())
