@@ -24,27 +24,27 @@ func main() {
 	// routing
 	e.Static("/", "public")
 
-	e.GET("/health", handlers.VaultHealth())
+	e.GET("/api/health", handlers.VaultHealth())
 
-	e.GET("/login/csrf", handlers.FetchCSRF())
-	e.POST("/login", handlers.Login())
+	e.GET("/api/login/csrf", handlers.FetchCSRF())
+	e.POST("/api/login", handlers.Login())
 
-	e.GET("/users", handlers.GetUsers())
-	e.DELETE("/users", handlers.DeleteUser())
+	e.GET("/api/users", handlers.GetUsers())
+	e.DELETE("/api/users", handlers.DeleteUser())
 
-	e.GET("/policies", handlers.ListPolicies())
-	e.GET("/policies/:policyname", handlers.GetPolicy())
-	e.DELETE("/policies/:policyname", handlers.DeletePolicy())
+	e.GET("/api/policies", handlers.ListPolicies())
+	e.GET("/api/policies/:policyname", handlers.GetPolicy())
+	e.DELETE("/api/policies/:policyname", handlers.DeletePolicy())
 
-	e.GET("/transit", handlers.FetchCSRF())
-	e.POST("/transit/encrypt", handlers.EncryptString())
-	e.POST("/transit/decrypt", handlers.DecryptString())
+	e.GET("/api/transit", handlers.FetchCSRF())
+	e.POST("/api/transit/encrypt", handlers.EncryptString())
+	e.POST("/api/transit/decrypt", handlers.DecryptString())
 
-	e.GET("/mounts", handlers.GetMounts())
-	e.GET("/mounts/:mountname", handlers.GetMount())
-	e.POST("/mounts/:mountname", handlers.ConfigMount())
+	e.GET("/api/mounts", handlers.GetMounts())
+	e.GET("/api/mounts/:mountname", handlers.GetMount())
+	e.POST("/api/mounts/:mountname", handlers.ConfigMount())
 
-	e.GET("/secrets", handlers.GetSecrets())
+	e.GET("/api/secrets", handlers.GetSecrets())
 
 	// start the server
 	e.Logger.Fatal(e.Start(":8000"))
