@@ -7,6 +7,7 @@ import (
 	"flag"
 	"net/http"
 	"io/ioutil"
+	"log"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -30,24 +31,54 @@ type AuthInfo struct {
 }
 
 func init() {
+	// for gorilla securecookie to encode and decode
 	gob.Register(&AuthInfo{})
 
-	// to do: change token to approle
+	// read address and wrapping token inputs
+	var wrappingToken, roleID, path string
 	flag.StringVar(&vaultAddress, "addr", "http://127.0.0.1:8200", "Vault address")
-	flag.StringVar(&vaultToken, "token", "", "Vault token")
+	flag.StringVar(&wrappingToken, "token", "", "Wrapping token that should contain a secret_id")
+	flag.StringVar(&roleID, "role_id", "goldfish", "The role_id the secret_id was generated from")
+	flag.StringVar(&path, "approle_path", "auth/approle/login", "The login path of the mount e.g. 'auth/approle/login'")
 	flag.Parse()
-	if vaultAddress == "" || vaultToken == "" {
-		panic("Invalid vault credentials")
+	if vaultAddress == "" || wrappingToken == "" {
+		panic("Provide credentials via -addr and -token (wrapping token only)")
 	}
 
-	// set up web server's vault client
+	// set up vault client
 	client, err := api.NewClient(api.DefaultConfig())
 	client.SetAddress(vaultAddress)
+	client.SetToken(wrappingToken)
+
+	// make a raw unwrap call. This will use the token as a header
+	resp, err := client.Logical().Unwrap("")
+	if err != nil {
+		panic("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+	}
+
+	// verify that a secret_id was wrapped
+	secretID, ok := resp.Data["secret_id"].(string)
+	if !ok {
+		panic("Failed to unwrap provided token, revoke it if possible")
+	}
+
+	// fetch vault token with secret_id
+	resp, err = client.Logical().Write(path,
+		map[string]interface{}{
+			"role_id": roleID,
+			"secret_id": secretID,
+		})
+
+	// verify that the secret_id is valid
+	vaultToken = resp.Auth.ClientToken
 	client.SetToken(vaultToken)
 	if _, err = client.Auth().Token().LookupSelf(); err != nil {
 		panic(err)
 	}
 	vaultClient = client
+
+	// report back the accessor so it may be safekept
+	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
 }
 
 // zeros out credentials, call by defer
