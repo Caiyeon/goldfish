@@ -15,10 +15,7 @@ const isELECTRON = process.env.NODE_ELECTRON === 'true'
 
 const webpackConfig = merge(baseWebpackConfig, {
   module: {
-    loaders: utils.styleLoaders({
-      sourceMap: config.build.productionSourceMap,
-      extract: true
-    })
+    loaders: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap })
   },
   devtool: config.build.productionSourceMap ? '#source-map' : false,
   output: {

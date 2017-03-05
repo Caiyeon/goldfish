@@ -9,7 +9,7 @@
       <p><a href="http://en.wikipedia.org/wiki/One_Ring">http://en.wikipedia.org/wiki/One_Ring</a></p>
       <p><br/></p>
       <p>Three Rings for the <em>Elven-kings</em> under the sky,</p>
-      <p>Seven for the <u>Dwarf-lords</u><span> in halls of stone,</p>
+      <p>Seven for the <u>Dwarf-lords</u></span> in halls of stone,</p>
       <p>Nine for <u>Mortal Men</u>, doomed to die,</p>
       <p>One for the <u>Dark Lord</u> on his dark throne.</p>
       <p><br/></p>

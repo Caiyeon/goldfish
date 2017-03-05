@@ -70,6 +70,7 @@ func init() {
 		})
 
 	// verify that the secret_id is valid
+	log.Println(resp.Auth.ClientToken)
 	vaultToken = resp.Auth.ClientToken
 	client.SetToken(vaultToken)
 	if _, err = client.Auth().Token().LookupSelf(); err != nil {
