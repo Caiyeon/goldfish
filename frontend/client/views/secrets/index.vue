@@ -71,9 +71,11 @@
                   <td>
                     {{ entry.desc }}
                   </td>
-                  <td class="is-icon">
+                  <td width="68">
                     <a @click="deleteItem">
+                    <span class="icon">
                       <i class="fa fa-trash-o"></i>
+                    </span>
                     </a>
                   </td>
                 </tr>
@@ -336,5 +338,9 @@
 
   .control .button {
     margin: inherit;
+  }
+
+  .fa-trash-o {
+    color: red;
   }
 </style>
