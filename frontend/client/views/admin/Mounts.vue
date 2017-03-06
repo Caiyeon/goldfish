@@ -16,7 +16,7 @@
               </thead>
               <tbody>
                 <tr v-for="(mount, index) in mounts">
-                  <td class="is-icon">
+                  <td width="68">
                     <a class="tag is-danger is-disabled is-pulled-left">
                       {{ mount.type }}
                     </a>
@@ -28,12 +28,12 @@
                       </a>
                     </tooltip>
                   </td>
-                  <td class="is-icon">
+                  <td width="68">
                     <a class="tag is-primary is-disabled is-pulled-left">
                       {{ mount.conf.default_lease_ttl === 0 ? 'Default' : mount.conf.default_lease_ttl }}
                     </a>
                   </td>
-                  <td class="is-icon">
+                  <td width="68">
                     <a class="tag is-primary is-disabled is-pulled-left">
                       {{ mount.conf.max_lease_ttl === 0 ? 'Default' : mount.conf.max_lease_ttl }}
                     </a>
@@ -112,91 +112,86 @@
     },
 
     mounted: function () {
-      this.$http.get('/api/mounts').then(function (response) {
-        this.mounts = []
-        this.csrf = response.headers.get('x-csrf-token')
-        var keys = Object.keys(response.data.result)
-        for (var i = 0; i < keys.length; i++) {
-          this.mounts.push({
-            path: keys[i],
-            type: response.data.result[keys[i]]['type'],
-            desc: response.data.result[keys[i]]['description'],
-            conf: response.data.result[keys[i]]['config']
-          })
-        }
-      }, function (err) {
-        openNotification({
-          title: 'Error',
-          message: err.body.error,
-          type: 'danger'
+      this.$http.get('/api/mounts')
+        .then((response) => {
+          this.mounts = []
+          this.csrf = response.headers['x-csrf-token']
+          let result = response.data.result
+          let keys = Object.keys(result)
+          for (var i = 0; i < keys.length; i++) {
+            this.mounts.push({
+              path: keys[i],
+              type: result[keys[i]]['type'],
+              desc: result[keys[i]]['description'],
+              conf: result[keys[i]]['config']
+            })
+          }
         })
-        console.log(err.body.error)
-      })
+
+        .catch((error) => {
+          openNotification({
+            title: 'Error',
+            message: error.body.error,
+            type: 'danger'
+          })
+          console.log(error.body.error)
+        })
     },
 
     methods: {
       getMountConfig: function (index) {
         this.selectedIndex = index
-        this.$http.get('/api/mounts/' + this.mounts[index].path.slice(0, -1)).then(function (response) {
-          this.mountConfig = response.data.result
-          this.mountConfigModified = this.mountConfig
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+        this.$http.get('/api/mounts/' + this.mounts[index].path.slice(0, -1))
+          .then((response) => {
+            this.mountConfig = response.data.result
+            this.mountConfigModified = response.data.result
           })
-          console.log(err.body.error)
-        })
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       },
 
       postMountConfig: function () {
-        // construct payload
-        var address = '/api/mounts/' + this.mounts[this.selectedIndex].path.slice(0, -1)
-        var parsed = JSON.parse(this.mountConfigModified)
-        var body = {
-          'default_lease_ttl': parsed.default_lease_ttl.toString(),
-          'max_lease_ttl': parsed.max_lease_ttl.toString()
-        }
-        var payload = {
-          headers: {
-            'X-CSRF-Token': this.csrf
-          }
-        }
+        let address = '/api/mounts/' + this.mounts[this.selectedIndex].path.slice(0, -1)
+        let parsed = JSON.parse(this.mountConfigModified)
 
-        // tune mount
-        this.$http.post(address, body, payload).then(function (response) {
-          // alert success
-          openNotification({
-            title: 'Success',
-            message: 'Mount tuned',
-            type: 'success'
+        this.$http
+          .post(address, {
+            default_lease_ttl: parsed.default_lease_ttl.toString(),
+            max_lease_ttl: parsed.max_lease_ttl.toString()
+          }, {
+            headers: {'X-CSRF-Token': this.csrf}
           })
 
-          // double check config from server
-          address = '/api/mounts/' + this.mounts[this.selectedIndex].path.slice(0, -1)
-          this.$http.get(address).then(function (response) {
+          .then((response) => {
+            openNotification({
+              title: 'Success',
+              message: 'Mount tuned',
+              type: 'success'
+            })
+
             // update page data accordingly
-            this.mountConfig = response.data.result
-            this.mountConfigModified = this.mountConfig
-            this.mounts[this.selectedIndex].conf.default_lease_ttl = this.mountConfig.default_lease_ttl
-            this.mounts[this.selectedIndex].conf.max_lease_ttl = this.mountConfig.max_lease_ttl
-          }, function (err) {
+            this.$http.get(address)
+              .then((response) => {
+                this.mountConfig = response.data.result
+                this.mountConfigModified = response.data.result
+                this.mounts[this.selectedIndex].conf = this.mountConfig
+              })
+          })
+
+          .catch((error) => {
             openNotification({
               title: 'Error',
-              message: err.body.error,
+              message: error.body.error,
               type: 'danger'
             })
-            console.log(err.body.error)
+            console.log(error.body.error)
           })
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
-          })
-          console.log(err.body.error)
-        })
       }
     }
   }
