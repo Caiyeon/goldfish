@@ -143,8 +143,8 @@
         this.selectedIndex = index
         this.$http.get('/api/mounts/' + this.mounts[index].path.slice(0, -1))
           .then((response) => {
-            this.mountConfig = response.data.result
-            this.mountConfigModified = response.data.result
+            this.mountConfig = JSON.stringify(response.data.result, null, 4)
+            this.mountConfigModified = this.mountConfig
           })
           .catch((error) => {
             openNotification({
@@ -174,13 +174,12 @@
               message: 'Mount tuned',
               type: 'success'
             })
-
             // update page data accordingly
             this.$http.get(address)
               .then((response) => {
-                this.mountConfig = response.data.result
-                this.mountConfigModified = response.data.result
-                this.mounts[this.selectedIndex].conf = this.mountConfig
+                this.mounts[this.selectedIndex].conf = response.data.result
+                this.mountConfig = JSON.stringify(response.data.result, null, 4)
+                this.mountConfigModified = this.mountConfig
               })
           })
 

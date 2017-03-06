@@ -14,10 +14,12 @@
               </thead>
               <tbody>
                 <tr v-for="(entry, index) in policies">
-                  <td class="is-icon">
+                  <td width="34">
+                    <span class="icon">
                     <a @click="getPolicyRules(index)">
                       <i class="fa fa-info"></i>
                     </a>
+                    </span>
                   </td>
                   <td>
                     {{ entry }}
@@ -82,31 +84,35 @@
     },
 
     mounted: function () {
-      this.$http.get('/api/policies').then(function (response) {
-        this.policies = response.data.result
-      }, function (err) {
-        openNotification({
-          title: 'Error',
-          message: err.body.error,
-          type: 'danger'
+      this.$http.get('/api/policies')
+        .then((response) => {
+          this.policies = response.data.result
         })
-        console.log(err.body.error)
-      })
+        .catch((error) => {
+          openNotification({
+            title: 'Error',
+            message: error.body.error,
+            type: 'danger'
+          })
+          console.log(error.body.error)
+        })
     },
 
     methods: {
       getPolicyRules: function (index) {
         this.policyRules = ''
-        this.$http.get('/api/policies/' + this.policies[index]).then(function (response) {
-          this.policyRules = response.data.result
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+        this.$http.get('/api/policies/' + this.policies[index])
+          .then((response) => {
+            this.policyRules = response.data.result
           })
-          console.log(err.body.error)
-        })
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       }
     }
   }

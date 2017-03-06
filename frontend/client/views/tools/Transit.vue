@@ -5,24 +5,27 @@
       <div class="tile is-parent">
         <div class="tile is-parent is-vertical is-6">
           <article class="tile is-child box">
+
             <h4 class="title is-4">Encrypt</h4>
             <p class="control">
               <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
             </p>
+
             <p class="control has-addons has-addons-right">
               <a @click="encryptText" class="button is-primary is-outlined">
-                Encrypt
-                <span class="icon is-small">
+                <span>Encrypt</span>
+                <span class="icon">
                   <i class="fa fa-check"></i>
                 </span>
               </a>
               <a @click="clearPlaintext" class="button is-danger is-outlined">
-                Clear
-                <span class="icon is-small">
+                <span>Clear</span>
+                <span class="icon">
                   <i class="fa fa-times"></i>
                 </span>
               </a>
             </p>
+
           </article>
         </div>
 
@@ -34,14 +37,14 @@
             </p>
             <p class="control has-addons has-addons-right">
               <a @click="decryptText" class="button is-primary is-outlined">
-                Decrypt
-                <span class="icon is-small">
+                <span>Decrypt</span>
+                <span class="icon">
                   <i class="fa fa-check"></i>
                 </span>
               </a>
               <a @click="clearCipher" class="button is-danger is-outlined">
-                Clear
-                <span class="icon is-small">
+                <span>Clear</span>
+                <span class="icon">
                   <i class="fa fa-times"></i>
                 </span>
               </a>
@@ -50,13 +53,13 @@
         </div>
       </div>
 
-    <div class="tile is-parent">
-      <div class="tile is-parent is-child">
-        <article class="tile is-child box">
-          <h4 class="title is-4">This tool uses the transit backend to encrypt and decrypt arbitrary strings</h4>
-        </article>
+      <div class="tile is-parent">
+        <div class="tile is-parent is-child">
+          <article class="tile is-child box">
+          <h4 class="title is-4">This page uses the transit backend to encrypt/decrypt arbitrary text</h4>
+          </article>
+        </div>
       </div>
-    </div>
 
     </div>
   </div>
@@ -103,71 +106,74 @@
     },
 
     mounted: function () {
-      this.$http.get('/api/transit').then(function (response) {
-        this.csrf = response.headers.get('x-csrf-token')
-      }, function (err) {
-        openNotification({
-          title: 'Error',
-          message: err.body.error,
-          type: 'danger'
+      this.$http.get('/api/transit')
+        .then((response) => {
+          this.csrf = response.headers['x-csrf-token']
         })
-        console.log(err.body.error)
-      })
+        .catch((error) => {
+          openNotification({
+            title: 'Error',
+            message: error.body.error,
+            type: 'danger'
+          })
+          console.log(error.body.error)
+        })
     },
 
     methods: {
       encryptText: function () {
-        var body = {
-          'Str': this.plaintext
-        }
-        var headers = {
-          headers: {
-            'X-CSRF-Token': this.csrf
-          }
-        }
-        this.$http.post('/api/transit/encrypt', body, headers).then(function (response) {
-          this.cipher = response.data.result
-          this.plaintext = ''
-          openNotification({
-            title: 'Success',
-            message: 'Encryption successful',
-            type: 'success'
+        this.$http
+          .post('/api/transit/encrypt', {
+            Str: this.plaintext
+          }, {
+            headers: {'X-CSRF-Token': this.csrf}
           })
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+
+          .then((response) => {
+            this.cipher = response.data.result
+            this.plaintext = ''
+            openNotification({
+              title: 'Success',
+              message: 'Encryption successful',
+              type: 'success'
+            })
           })
-          console.log(err.body.error)
-        })
+
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       },
 
       decryptText: function () {
-        var body = {
-          'Str': this.cipher
-        }
-        var headers = {
-          headers: {
-            'X-CSRF-Token': this.csrf
-          }
-        }
-        this.$http.post('/api/transit/decrypt', body, headers).then(function (response) {
-          this.plaintext = response.data.result
-          this.cipher = ''
-          openNotification({
-            title: 'Success',
-            message: 'Decryption successful',
-            type: 'success'
+        this.$http
+          .post('/api/transit/decrypt', {
+            Str: this.cipher
+          }, {
+            headers: {'X-CSRF-Token': this.csrf}
           })
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+
+          .then((response) => {
+            this.plaintext = response.data.result
+            this.cipher = ''
+            openNotification({
+              title: 'Success',
+              message: 'Decryption successful',
+              type: 'success'
+            })
           })
-          console.log(err.body.error)
-        })
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       },
 
       clearPlaintext: function () {

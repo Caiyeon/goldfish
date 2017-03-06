@@ -21,18 +21,22 @@
                   </thead>
                   <tbody>
                     <tr v-for="(entry, index) in tableData">
-                      <td class="is-icon">
+                      <td width="34">
+                      <span class="icon">
                         <a @click="openModalBasic(index)">
                           <i class="fa fa-info"></i>
                         </a>
+                      </span>
                       </td>
                       <td v-for="key in tableColumns">
                         {{ entry[key] }}
                       </td>
-                      <td class="is-icon">
+                      <td width="34">
+                      <span class="icon">
                         <a @click="openDeleteModal(index)">
                           <i class="fa fa-trash-o"></i>
                         </a>
+                      </span>
                       </td>
                     </tr>
                   </tbody>
@@ -54,18 +58,22 @@
                   </thead>
                   <tbody>
                     <tr v-for="(entry, index) in tableData">
-                      <td class="is-icon">
+                      <td width="34">
+                      <span class="icon">
                         <a @click="openModalBasic(index)">
                           <i class="fa fa-info"></i>
                         </a>
+                      </span>
                       </td>
                       <td v-for="key in tableColumns">
                         {{ entry[key] }}
                       </td>
-                      <td class="is-icon">
+                      <td width="34">
+                      <span class="icon">
                         <a @click="openDeleteModal(index)">
                           <i class="fa fa-trash-o"></i>
                         </a>
+                      </span>
                       </td>
                     </tr>
                   </tbody>
@@ -189,17 +197,19 @@
         this.tabName = TabNames[index]
         this.tableColumns = TabColumns[index]
         // populate new table data according to tab name
-        this.$http.get('/api/users?type=' + this.tabName).then(function (response) {
-          this.tableData = response.data.result
-          this.csrf = response.headers.get('x-csrf-token')
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+        this.$http.get('/api/users?type=' + this.tabName)
+          .then((response) => {
+            this.tableData = response.data.result
+            this.csrf = response.headers['x-csrf-token']
           })
-          console.log(err.body.error)
-        })
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       },
 
       openModalBasic (index) {
@@ -220,30 +230,32 @@
       },
 
       deleteItem (index) {
-        var payload = {
-          body: {
+        this.$http
+          .post('/api/users/revoke', {
             Type: this.tabName.toLowerCase(),
             ID: this.tableData[index][this.tableColumns[0]]
-          },
-          headers: {
-            'X-CSRF-Token': this.csrf
-          }
-        }
-        this.$http.delete('/api/users', payload).then(function (response) {
-          this.tableData.splice(index, 1)
-          openNotification({
-            title: 'Success',
-            message: 'Deletion successful',
-            type: 'success'
+          }, {
+            headers: {'X-CSRF-Token': this.csrf}
           })
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+
+          .then((response) => {
+            this.tableData.splice(index, 1)
+            openNotification({
+              title: 'Success',
+              message: 'Deletion successful',
+              type: 'success'
+            })
           })
-          console.log(err.body.error)
-        })
+
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
+
         this.showDeleteModal = false
       }
 

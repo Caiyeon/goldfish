@@ -30,7 +30,7 @@ func main() {
 	e.POST("/api/login", handlers.Login())
 
 	e.GET("/api/users", handlers.GetUsers())
-	e.DELETE("/api/users", handlers.DeleteUser())
+	e.POST("/api/users/revoke", handlers.DeleteUser())
 
 	e.GET("/api/policies", handlers.ListPolicies())
 	e.GET("/api/policies/:policyname", handlers.GetPolicy())
