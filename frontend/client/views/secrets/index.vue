@@ -58,7 +58,7 @@
               <!-- body -->
               <tbody>
                 <tr v-for="(entry, index) in tableData">
-                  <td class="is-icon">
+                  <td width="68">
                     <a class="tag is-disabled is-pulled-left" v-bind:class="type(index)">
                       {{ entry.type }}
                     </a>
@@ -83,7 +83,7 @@
                   v-show="currentPathType === 'Secret'"
                   @keyup.enter="addKeyValue()"
                 >
-                  <td class="is-icon">
+                  <td width="68">
                   </td>
                   <td>
                     <p class="control">
@@ -198,27 +198,31 @@
       },
 
       getMounts: function () {
-        this.$http.get('/api/mounts').then(function (response) {
-          this.tableData = []
-          this.csrf = response.headers.get('x-csrf-token')
-          var keys = Object.keys(response.data.result)
-          for (var i = 0; i < keys.length; i++) {
-            this.tableData.push({
-              path: keys[i],
-              type: response.data.result[keys[i]]['type'],
-              desc: response.data.result[keys[i]]['description'],
-              conf: response.data.result[keys[i]]['config']
-            })
-          }
-          this.tableHeaders = ['Mounts', 'Description', '']
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+        this.$http.get('/api/mounts')
+          .then((response) => {
+            this.tableData = []
+            this.tableHeaders = ['Mounts', 'Description', '']
+            this.csrf = response.headers['x-csrf-token']
+            let result = response.data.result
+
+            var keys = Object.keys(result)
+            for (var i = 0; i < keys.length; i++) {
+              this.tableData.push({
+                path: keys[i],
+                type: result[keys[i]]['type'],
+                desc: result[keys[i]]['description'],
+                conf: result[keys[i]]['config']
+              })
+            }
           })
-          console.log(err.body.error)
-        })
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       },
 
       changePath: function (path) {
@@ -231,38 +235,43 @@
           return
         }
 
-        this.$http.get('/api/secrets?path=' + path).then(function (response) {
-          this.tableData = []
-          if (path.slice(-1) === '/') {
-            // listing subdirectories
-            for (var i = 0; i < response.data.result.length; i++) {
-              this.tableData.push({
-                path: response.data.result[i],
-                type: response.data.result[i].slice(-1) === '/' ? 'Path' : 'Secret'
-              })
+        this.$http.get('/api/secrets?path=' + path)
+          .then((response) => {
+            this.tableData = []
+            this.currentPath = path
+            let result = response.data.result
+
+            if (path.slice(-1) === '/') {
+              // listing subdirectories
+              this.tableHeaders = ['Subpaths', 'Description', '']
+              for (var i = 0; i < result.length; i++) {
+                this.tableData.push({
+                  path: result[i],
+                  type: result[i].slice(-1) === '/' ? 'Path' : 'Secret'
+                })
+              }
+            } else {
+              // listing key value pairs
+              this.tableHeaders = ['Key', 'Value', '']
+              var keys = Object.keys(result)
+              for (var j = 0; j < keys.length; j++) {
+                this.tableData.push({
+                  path: keys[j],
+                  type: 'Key',
+                  desc: result[keys[j]]
+                })
+              }
             }
-            this.tableHeaders = ['Subpaths', 'Description', '']
-          } else {
-            // listing key value pairs
-            var keys = Object.keys(response.data.result)
-            for (var j = 0; j < keys.length; j++) {
-              this.tableData.push({
-                path: keys[j],
-                type: 'Key',
-                desc: response.data.result[keys[j]]
-              })
-            }
-            this.tableHeaders = ['Key', 'Value', '']
-          }
-          this.currentPath = path
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
           })
-          console.log(err.body.error)
-        })
+
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.body.error,
+              type: 'danger'
+            })
+            console.log(error.body.error)
+          })
       },
 
       changePathUp: function () {
