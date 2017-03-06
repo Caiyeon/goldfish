@@ -23,16 +23,37 @@ const state = {
       },
       component: lazyLoading('login', true)
     },
+    admin,
     {
       name: 'Secrets',
       path: '/secrets',
       meta: {
+<<<<<<< HEAD
+        icon: 'fa-tachometer',
+        link: 'dashboard/index.vue'
+=======
         icon: 'fa-list'
+>>>>>>> Goldfish specifics
       },
       component: lazyLoading('secrets', true)
     },
-    admin,
+<<<<<<< HEAD
+    {
+      name: 'Axios',
+      path: '/axiosDemo',
+      meta: {
+        icon: 'fa-rocket',
+        link: 'axios/index.vue'
+      },
+      component: lazyLoading('axios', true)
+    },
+    charts,
+    uifeatures,
+    components,
+    tables
+=======
     tools
+>>>>>>> Goldfish specifics
   ]
 }
 

@@ -19,7 +19,9 @@
 
               <p class="control has-icon">
                 <input class="input" type="password" placeholder="Vault Token" v-model="vaultToken">
-                <i class="fa fa-lock"></i>
+                <span class="icon is-small">
+                  <i class="fa fa-lock"></i>
+                </span>
               </p>
               <p class="control">
                 <button type="submit" value="Login" class="button is-success">
@@ -95,28 +97,32 @@
     },
     mounted: function () {
       // fetch csrf for login post request later
-      this.$http.get('/api/login/csrf').then(function (response) {
-        this.csrf = response.headers.get('x-csrf-token')
-      }, function (err) {
-        openNotification({
-          title: 'Error',
-          message: err.body.error,
-          type: 'danger'
+      this.$http.get('/api/login/csrf')
+        .then((response) => {
+          this.csrf = response.headers['x-csrf-token']
         })
-        console.log(err.body.error)
-      })
+        .catch((error) => {
+          openNotification({
+            title: 'Error',
+            message: error.response.data,
+            type: 'danger'
+          })
+          console.log(error.response.data)
+        })
 
       // fetch vault cluster details
-      this.$http.get('/api/health').then(function (response) {
-        this.healthData = JSON.parse(response.data.result)
-      }, function (err) {
-        openNotification({
-          title: 'Error',
-          message: err.body.error,
-          type: 'danger'
+      this.$http.get('/api/health')
+        .then((response) => {
+          this.healthData = JSON.parse(response.data.result)
         })
-        console.log(err.body.error)
-      })
+        .catch((error) => {
+          openNotification({
+            title: 'Error',
+            message: error.response.data,
+            type: 'danger'
+          })
+          console.log(error.response.data)
+        })
     },
 
     computed: {
@@ -127,31 +133,29 @@
 
     methods: {
       login: function () {
-        var payload = {
-          Type: this.type.toLowerCase(),
-          ID: this.vaultToken
-        }
-        var headers = {
-          headers: {
-            'X-CSRF-Token': this.csrf
-          }
-        }
-        this.$http.post('/api/login', payload, headers).then(function (response) {
-          console.log(response.data.status)
-          openNotification({
-            title: 'Login success!',
-            message: '',
-            type: 'success'
+        this.$http
+          .post('/api/login', {
+            Type: this.type.toLowerCase(),
+            ID: this.vaultToken
+          }, {
+            headers: {'X-CSRF-Token': this.csrf}
           })
-          this.vaultToken = ''
-        }, function (err) {
-          openNotification({
-            title: 'Error',
-            message: err.body.error,
-            type: 'danger'
+          .then((response) => {
+            openNotification({
+              title: 'Login success!',
+              message: '',
+              type: 'success'
+            })
+            this.vaultToken = ''
           })
-          console.log(err.body.error)
-        })
+          .catch((error) => {
+            openNotification({
+              title: 'Error',
+              message: error.response.data,
+              type: 'danger'
+            })
+            console.log(error.response.data)
+          })
       }
     }
 

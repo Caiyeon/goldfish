@@ -38,6 +38,7 @@
     "axios": "^0.15.3",
     "bulma": "^0.3.2",
     "font-awesome": "4.7.0",
+<<<<<<< HEAD
     "mdi": "^1.8.36",
     "plotly.js": "^1.24.0",
     "vue": "^2.2.1",
@@ -46,6 +47,16 @@
     "vue-bulma-card": "^1.0.2",
     "vue-bulma-chartist": "^1.1.0",
     "vue-bulma-chartjs": "^1.0.4",
+=======
+    "mdi": "1.7.22",
+    "plotly.js": "1.21.2",
+    "vue": "2.2.1",
+    "vue-bulma-brace": "0.0.1",
+    "vue-bulma-breadcrumb": "github:vue-bulma/breadcrumb",
+    "vue-bulma-card": "1.0.1",
+    "vue-bulma-chartist": "github:vue-bulma/chartist",
+    "vue-bulma-chartjs": "github:vue-bulma/chartjs",
+>>>>>>> Goldfish specifics
     "vue-bulma-collapse": "1.0.3",
     "vue-bulma-datepicker": "^1.2.9",
     "vue-bulma-emoji": "^0.0.2",
@@ -66,9 +77,16 @@
     "vue-lory": "0.0.4",
     "vue-nprogress": "0.1.5",
     "vue-peity": "0.5.0",
+<<<<<<< HEAD
     "vue-router": "^2.3.0",
     "vuex": "^2.2.1",
     "vuex-router-sync": "^4.1.2",
+=======
+    "vue-resource": "1.2.1",
+    "vue-router": "2.1.1",
+    "vuex": "2.1.1",
+    "vuex-router-sync": "4.0.2",
+>>>>>>> Goldfish specifics
     "wysiwyg.css": "0.0.2"
   },
   "devDependencies": {
@@ -108,10 +126,17 @@
     "stylus": "^0.54.5",
     "stylus-loader": "^2.4.0",
     "url-loader": "^0.5.7",
+<<<<<<< HEAD
     "vue-html-loader": "^1.2.3",
     "vue-loader": "^11.1.4",
     "vue-template-compiler": "^2.2.1",
     "webpack": "^2.2.1",
+=======
+    "vue-html-loader": "^1.2.4",
+    "vue-loader": "^11.0.0",
+    "vue-template-compiler": "2.2.1",
+    "webpack": "2.2.0",
+>>>>>>> Goldfish specifics
     "webpack-dev-middleware": "^1.9.0",
     "webpack-hot-middleware": "^2.14.0",
     "webpack-merge": "^3.0.0"

@@ -96,15 +96,17 @@
         </article>
     </div>
     <div class="tile is-parent">
-      <article class="tile is-child box">
-        <brace style="height: 100%" 
+      <article class="tile is-child box brace-container">
+        <brace
+          style="min-height: 100%; min-width: 100%" 
           :fontsize="this.selected.fontsize" 
           :theme="this.selected.theme" 
           :mode="this.selected.mode"
           :codefolding="this.selected.codefolding"
           :softwrap="this.selected.softwrap"
           :selectionstyle="this.selected.selectionstyle"
-          :highlightline="this.selected.highlightline === 'true'">
+          :highlightline="this.selected.highlightline === 'true'"
+          @code-change="oncodeChange">
         </brace>
       </article>
     </div>
@@ -127,6 +129,7 @@ export default {
 
   data () {
     return {
+      code: '',
       modes: modelist.modes,
       themes: themelist.themes,
       fontsize: ['12px', '13px', '14px', '16px', '18px', '20px', '22px', '24px'],
@@ -142,6 +145,12 @@ export default {
         highlightline: 'true'
       }
     }
+  },
+
+  methods: {
+    oncodeChange (code) {
+      this.code = code
+    }
   }
 }
 </script>
@@ -149,5 +158,8 @@ export default {
 <style lang="scss" scoped>
 .control-label {
   min-width: 100px;
+}
+.brace-container {
+  display: flex;
 }
 </style>

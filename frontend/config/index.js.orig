@@ -25,12 +25,18 @@ module.exports = {
     assetsSubDirectory: 'assets',
     assetsPublicPath: '/',
     proxyTable: {
+<<<<<<< HEAD
+        '/MODApis': {
+            target: 'http://dev.markitondemand.com',
+            changeOrigin: true
+=======
         '/api': {
             target: 'http://localhost:8000',
             changeOrigin: true,
             pathRewrite: {
                 '^/api': 'api'
             }
+>>>>>>> Goldfish specifics
         }
     },
     // CSS Sourcemaps off by default because relative paths are "buggy"
