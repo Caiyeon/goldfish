@@ -163,6 +163,11 @@ export default {
       right: 10px;
       transition: transform .377s ease;
     }
+    &:not(.is-angle) {
+      position: relative;
+      right: 3px;
+      top: 1px;
+    }
   }
 
   .menu-label {
