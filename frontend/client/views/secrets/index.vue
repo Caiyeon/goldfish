@@ -152,6 +152,24 @@
     })
   }
 
+  function handleError (error) {
+    if (error.response) {
+      openNotification({
+        title: 'Error: ' + error.response.status,
+        message: error.response.data.error,
+        type: 'danger'
+      })
+      console.log(error.response.data.error)
+    } else {
+      openNotification({
+        title: 'Error',
+        message: error.message,
+        type: 'danger'
+      })
+      console.log(error.message)
+    }
+  }
+
   export default {
     data () {
       return {
@@ -218,12 +236,7 @@
             }
           })
           .catch((error) => {
-            openNotification({
-              title: 'Error',
-              message: error.body.error,
-              type: 'danger'
-            })
-            console.log(error.body.error)
+            handleError(error)
           })
       },
 
@@ -267,12 +280,7 @@
           })
 
           .catch((error) => {
-            openNotification({
-              title: 'Error',
-              message: error.body.error,
-              type: 'danger'
-            })
-            console.log(error.body.error)
+            handleError(error)
           })
       },
 

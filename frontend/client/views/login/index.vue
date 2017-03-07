@@ -86,6 +86,24 @@
     })
   }
 
+  function handleError (error) {
+    if (error.response) {
+      openNotification({
+        title: 'Error: ' + error.response.status,
+        message: error.response.data.error,
+        type: 'danger'
+      })
+      console.log(error.response.data.error)
+    } else {
+      openNotification({
+        title: 'Error',
+        message: error.message,
+        type: 'danger'
+      })
+      console.log(error.message)
+    }
+  }
+
   export default {
     data () {
       return {
@@ -102,12 +120,7 @@
           this.csrf = response.headers['x-csrf-token']
         })
         .catch((error) => {
-          openNotification({
-            title: 'Error',
-            message: error.response.data,
-            type: 'danger'
-          })
-          console.log(error.response.data)
+          handleError(error)
         })
 
       // fetch vault cluster details
@@ -116,12 +129,7 @@
           this.healthData = JSON.parse(response.data.result)
         })
         .catch((error) => {
-          openNotification({
-            title: 'Error',
-            message: error.response.data,
-            type: 'danger'
-          })
-          console.log(error.response.data)
+          handleError(error)
         })
     },
 
@@ -149,12 +157,7 @@
             this.vaultToken = ''
           })
           .catch((error) => {
-            openNotification({
-              title: 'Error',
-              message: error.response.data,
-              type: 'danger'
-            })
-            console.log(error.response.data)
+            handleError(error)
           })
       }
     }
