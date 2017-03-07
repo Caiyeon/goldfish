@@ -6,7 +6,7 @@
         <div class="tile is-parent is-vertical is-6">
           <article class="tile is-child box">
 
-            <h4 class="title is-4">Encrypt</h4>
+            <h3 class="title is-3">Encrypt</h3>
             <p class="control">
               <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
             </p>
@@ -31,7 +31,7 @@
 
         <div class="tile is-parent is-vertical is-6">
           <article class="tile is-child box">
-            <h4 class="title is-4">Decrypt</h4>
+            <h3 class="title is-3">Decrypt</h3>
             <p class="control">
               <textarea v-model="cipher" class="textarea" placeholder="Paste something here"></textarea>
             </p>
