@@ -71,9 +71,47 @@ If Vault implements CORS, there is a possibility of goldfish becoming serverless
 -->
 ## Installation
 
-A full vagrant box simulation script will come soon(TM)
+#### Running locally
+You'll need go (v1.8), npm (>=3), and nodejs (>=5).
 
-For now, see `scripts` folder for a basic idea of how to setup goldfish
+```
+# you'll need a vault instance
+vault server -dev &
+
+# see vagrant/provision/vault.sh for setup data to populate vault with
+
+# build the backend server
+go get github.com/caiyeon/goldfish
+cd $GOPATH/src/github.com/caiyeon/goldfish
+go build server.go
+
+# run backend server with secret_id generated from approle
+server -token=$(vault write -f -wrap-ttl=20m -format=json \
+auth/approle/role/goldfish/secret-id | \
+jq -r .wrap_info.token)
+
+# run frontend in dev mode (with hot reload)
+cd frontend
+npm install
+npm run dev
+
+# a browser window/tab should open, pointing directly to goldfish
+```
 
 
+#### Using a VM
+While go and npm works decently on Windows, there is a one-line solution to spinning up a VM which will contain a dev vault instance and goldfish with hot-reload.
+
+You'll need [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/). On Windows,a restart after installation is needed.
+
+```
+# if you wish to launch goldfish in a VM:
+git clone https://github.com/Caiyeon/goldfish.git
+cd goldfish/vagrant
+
+# this will take awhile
+vagrant up --provision
+
+# open up localhost:8001 on your local machine. You can login with token 'goldfish'
+```
 

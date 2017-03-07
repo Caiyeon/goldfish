@@ -1,11 +1,55 @@
-# script to generate some test data for goldfish
+#!/bin/bash
+
+echo 'Setting vagrant user env vars...'
+cat /home/vagrant/.profile | grep 'VAULT_ADDR' || \
+echo 'export VAULT_ADDR=http://127.0.0.1:8200' >> /home/vagrant/.profile
+cat /home/vagrant/.profile | grep "VAULT_TOKEN" || \
+echo "export VAULT_TOKEN=$VAULT_ROOT_TOKEN" >> /home/vagrant/.profile
+
+echo 'Building vault...'
+export GOROOT=/usr/local/go
+export GOPATH=/home/vagrant/go
+export PATH=$PATH:$GOPATH/bin:$GOROOT/bin
+cd /home/vagrant/go/src/github.com/hashicorp/vault
+make bootstrap
+make dev
+cp bin/vault /usr/bin/
+
+echo 'Setting up vault dev server as system service...'
+echo "[Unit]
+Description=Vault Server
+
+[Service]
+Environment='GOMAXPROCS=`nproc`' 'GOROOT=/usr/local/go' 'GOPATH=/home/vagrant/go'
+WorkingDirectory=/home/vagrant/go/src/github.com/hashicorp/vault
+
+Restart=on-failure
+User=root
+Group=root
+
+ExecStart=/home/vagrant/go/src/github.com/hashicorp/vault/bin/vault server -dev -dev-root-token-id=$VAULT_ROOT_TOKEN
+ExecReload=/bin/kill -s=SIGHUP $MAINPID
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/vault.service
+
+echo 'Starting vault...'
+systemctl daemon-reload
+systemctl start vault
+sleep 10
+
+echo 'Populating vault with sample data for goldfish'
+export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_TOKEN=$VAULT_ROOT_TOKEN
+vault auth $VAULT_ROOT_TOKEN
 
 # write some sample policies
-vault policy-write admins policies/admins.hcl
-vault policy-write developers policies/developers.hcl
-vault policy-write operations policies/operations.hcl
-vault policy-write readonly policies/readonly.hcl
-vault policy-write goldfish policies/goldfish.hcl
+vault policy-write admins /vagrant/policies/admins.hcl
+vault policy-write developers /vagrant/policies/developers.hcl
+vault policy-write operations /vagrant/policies/operations.hcl
+vault policy-write readonly /vagrant/policies/readonly.hcl
+vault policy-write goldfish /vagrant/policies/goldfish.hcl
 
 # write some sample users
 vault token-create -policy="admins" -ttl=720h -renewable=true
@@ -39,9 +83,9 @@ vault token-create -policy="" -ttl=720h -renewable=true
 vault token-create -policy="" -ttl=720h -renewable=true
 vault token-create -policy="" -ttl=720h -renewable=true
 vault token-create -policy="" -ttl=720h -renewable=true
-vault token-create -policy="jenkins" -ttl=720h -renewable=true -orphan
-vault token-create -policy="travis" -ttl=720h -renewable=true -orphan
-vault token-create -policy="cron" -ttl=720h -renewable=true -orphan
+vault token-create -policy="jenkins" -no-default-policy=true -ttl=720h -renewable=true -orphan
+vault token-create -policy="travis" -no-default-policy=true -ttl=720h -renewable=true -orphan
+vault token-create -policy="cron" -no-default-policy=true -ttl=720h -renewable=true -orphan
 
 vault auth-enable userpass
 vault write auth/userpass/users/alice password=foo policies="admins" ttl=480h max_ttl=720h
@@ -106,11 +150,8 @@ vault write data/stardew_valley/animals/barn_animals/goat buy_price=4000 produce
 vault write data/stardew_valley/animals/barn_animals/sheep buy_price=8000 produces="wool" sell_price=4000
 vault write data/stardew_valley/animals/barn_animals/pig buy_price=16000 produces="truffle" sell_price=8000
 
-# configure role_id and policy required for goldfish server
+# configure approle for goldfish server
 vault auth-enable approle
 vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token_ttl=480h \
 token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
-
-# running goldfish server
 vault write auth/approle/role/goldfish/role-id role_id=goldfish
-

@@ -1,0 +1,46 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Specify a custom Vagrant box for the demo
+DEMO_BOX_NAME =  ENV['DEMO_BOX_NAME'] || "debian/jessie64"
+
+# Vagrantfile API/syntax version.
+# NB: Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.provider "virtualbox" do |v|
+    v.customize ["modifyvm", :id, "--cpuexecutioncap", "70"]
+    v.customize ["setextradata", :id, "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled", 1]
+    v.memory = 4096 # npm needs at least 2 GB memory to build. 4GB+ is recommended
+    v.cpus = 4
+  end
+
+  config.vm.box = DEMO_BOX_NAME
+  config.vm.provision "shell", inline: "\
+    echo 'Installing dependencies...'
+    sudo apt-get update
+    sudo apt-get install -y unzip curl git jq
+
+    echo 'Installing rsub & rmate for sublime remote access'
+    sudo wget https://raw.github.com/aurora/rmate/master/rmate -O /usr/local/bin/rsub
+    sudo chmod a+x /usr/local/bin/rsub"
+
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+
+  config.vm.define "n1" do |n1|
+    n1.vm.hostname = "goldfish"
+    n1.vm.network "private_network", ip: "172.20.20.11"
+    n1.vm.network "forwarded_port", guest: 8000, host:8000
+    n1.vm.network "forwarded_port", guest: 8080, host:8001
+
+    n1.vm.provision :shell, path: "provision/golang.sh"
+    n1.vm.provision :shell, path: "provision/vault.sh", env: {
+      "VAULT_ROOT_TOKEN" => "goldfish"
+    }
+    n1.vm.provision :shell, path: "provision/goldfish.sh", env: {
+      "VAULT_ROOT_TOKEN" => "goldfish"
+    }
+  end
+
+end
