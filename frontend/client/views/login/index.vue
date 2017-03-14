@@ -87,7 +87,7 @@
   }
 
   function handleError (error) {
-    if (error.response) {
+    if (error.response.data.error) {
       openNotification({
         title: 'Error: ' + error.response.status,
         message: error.response.data.error,
@@ -97,7 +97,7 @@
     } else {
       openNotification({
         title: 'Error',
-        message: error.message,
+        message: 'Please login first',
         type: 'danger'
       })
       console.log(error.message)
