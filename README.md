@@ -2,7 +2,7 @@
 
 <h3>Goldfish Vault UI - <a href="http://67.205.184.214:8000">Live Demo</a></h3>
 
-<p><img width="250" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
+<p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
 </div>
 
@@ -16,7 +16,7 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 -->
 ## Features
 
-* [x] Reading secrets
+* [x] Listing/reading secrets
 * [x] Listing users (tokens and userpass)
 * [x] Listing policies
 * [x] Listing and tuning mounts
@@ -102,7 +102,7 @@ npm run dev
 #### Using a VM
 While go and npm works decently on Windows, there is a one-line solution to spinning up a VM which will contain a dev vault instance and goldfish with hot-reload.
 
-You'll need [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/). On Windows,a restart after installation is needed.
+You'll need [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/). On Windows, a restart after installation is needed.
 
 ```
 # if you wish to launch goldfish in a VM:
@@ -112,6 +112,6 @@ cd goldfish/vagrant
 # this will take awhile
 vagrant up --provision
 
-# open up localhost:8001 on your local machine. You can login with token 'goldfish'
+# open up localhost:8001 in chrome on your local machine. You can login with token 'goldfish'
 ```
 
