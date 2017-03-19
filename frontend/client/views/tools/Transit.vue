@@ -86,6 +86,8 @@
     })
   }
 
+  const querystring = require('querystring')
+
   function handleError (error) {
     if (error.response.data.error) {
       openNotification({
@@ -136,9 +138,9 @@
     methods: {
       encryptText: function () {
         this.$http
-          .post('/api/transit/encrypt', {
-            Str: this.plaintext
-          }, {
+          .post('/api/transit/encrypt', querystring.stringify({
+            plaintext: this.plaintext
+          }), {
             headers: {'X-CSRF-Token': this.csrf}
           })
 
@@ -159,9 +161,9 @@
 
       decryptText: function () {
         this.$http
-          .post('/api/transit/decrypt', {
-            Str: this.cipher
-          }, {
+          .post('/api/transit/decrypt', querystring.stringify({
+            cipher: this.cipher
+          }), {
             headers: {'X-CSRF-Token': this.csrf}
           })
 

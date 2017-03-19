@@ -18,12 +18,14 @@ func main() {
 		csrf.Protect(
 			// Generate a new encryption key each launch
 			[]byte(securecookie.GenerateRandomKey(32)),
+			// MUST change to true in production to only allow https requests!
 			csrf.Secure(false),
 		)))
 
-	// routing
+	// file routing
 	e.Static("/", "public")
 
+	// API routing - wrapper around vault API
 	e.GET("/api/health", handlers.VaultHealth())
 
 	e.GET("/api/login/csrf", handlers.FetchCSRF())
@@ -46,6 +48,7 @@ func main() {
 
 	e.GET("/api/secrets", handlers.GetSecrets())
 
-	// start the server
+	// start the server in HTTP
+	// MUST change to HTTPS in production!
 	e.Logger.Fatal(e.Start(":8000"))
 }

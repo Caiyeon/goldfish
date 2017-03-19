@@ -15,13 +15,13 @@ func EncryptString() echo.HandlerFunc {
 		// fetch auth from cookie
 		getSession(c, auth)
 
-		var plaintext = &StringBind{}
-		if err := c.Bind(plaintext); err != nil {
-			return logError(c, err.Error(), "Invalid format")
+		plaintext := c.FormValue("plaintext")
+		if plaintext == "" {
+			return logError(c, "Empty plaintext provided", "Plaintext is empty")
 		}
 
 		// fetch results
-		cipher, err := auth.EncryptTransit(plaintext.Str)
+		cipher, err := auth.EncryptTransit(plaintext)
 		if err != nil {
 			return logError(c, err.Error(), "Internal error")
 		}
@@ -40,13 +40,13 @@ func DecryptString() echo.HandlerFunc {
 		// fetch auth from cookie
 		getSession(c, auth)
 
-		var cipher = &StringBind{}
-		if err := c.Bind(cipher); err != nil {
-			return logError(c, err.Error(), "Invalid format")
+		cipher := c.FormValue("cipher")
+		if cipher == "" {
+			return logError(c, "Empty cipher provided", "Cipher is empty")
 		}
 
 		// fetch results
-		plaintext, err := auth.DecryptTransit(cipher.Str)
+		plaintext, err := auth.DecryptTransit(cipher)
 		if err != nil {
 			return logError(c, err.Error(), "Internal error")
 		}

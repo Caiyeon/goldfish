@@ -63,12 +63,12 @@
                       {{ entry.type }}
                     </a>
                   </td>
-                  <td>
+                  <td contenteditable="true">
                     <a v-bind:class="entry.type === 'Key' ? 'is-disabled' : ''" @click="changePath(currentPath + entry.path)">
                       {{ entry.path }}
                     </a>
                   </td>
-                  <td>
+                  <td contenteditable="true">
                     {{ entry.desc }}
                   </td>
                   <td width="68">
@@ -174,7 +174,7 @@
     data () {
       return {
         csrf: '',
-        currentPath: 'data/',
+        currentPath: 'data/stardew_valley/animals/barn_animals/cow',
         tableHeaders: [],
         tableData: [],
         newKey: '',
@@ -333,6 +333,17 @@
           message: 'insertion not yet implemented',
           type: 'danger'
         })
+
+        console.log(this.prepareData())
+      },
+
+      // prepares tabledata in a format that vault will accept as a post request
+      prepareData: function () {
+        var data = {}
+        for (var i = 0; i < this.tableData.length; i++) {
+          data[this.tableData[i].path] = this.tableData[i].desc
+        }
+        return data
       }
 
     }
