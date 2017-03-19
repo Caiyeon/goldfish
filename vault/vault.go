@@ -5,9 +5,9 @@ import (
 	"encoding/gob"
 	"errors"
 	"flag"
-	"net/http"
 	"io/ioutil"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -65,7 +65,7 @@ func init() {
 	// fetch vault token with secret_id
 	resp, err = client.Logical().Write(path,
 		map[string]interface{}{
-			"role_id": roleID,
+			"role_id":   roleID,
 			"secret_id": secretID,
 		})
 
@@ -110,7 +110,7 @@ func (auth AuthInfo) Client() (*api.Client, error) {
 // encrypt auth details with transit backend
 func (auth *AuthInfo) EncryptAuth() error {
 	resp, err := vaultClient.Logical().Write(
-		"transit/encrypt/" + serverTransitKey,
+		"transit/encrypt/"+serverTransitKey,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(auth.ID)),
 		})
@@ -130,7 +130,7 @@ func (auth *AuthInfo) EncryptAuth() error {
 // decrypt auth details with transit backend
 func (auth *AuthInfo) DecryptAuth() error {
 	resp, err := vaultClient.Logical().Write(
-		"transit/decrypt/" + serverTransitKey,
+		"transit/decrypt/"+serverTransitKey,
 		map[string]interface{}{
 			"ciphertext": auth.ID,
 		})

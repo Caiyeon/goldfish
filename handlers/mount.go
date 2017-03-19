@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/labstack/echo"
 	"github.com/gorilla/csrf"
 	vaultapi "github.com/hashicorp/vault/api"
+	"github.com/labstack/echo"
 )
 
 func GetMounts() echo.HandlerFunc {

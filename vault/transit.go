@@ -13,7 +13,7 @@ func (auth AuthInfo) EncryptTransit(plaintext string) (string, error) {
 	}
 
 	resp, err := client.Logical().Write(
-		"transit/encrypt/" + userTransitKey,
+		"transit/encrypt/"+userTransitKey,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(plaintext)),
 		})
@@ -37,7 +37,7 @@ func (auth AuthInfo) DecryptTransit(cipher string) (string, error) {
 	}
 
 	resp, err := client.Logical().Write(
-		"transit/decrypt/" + userTransitKey,
+		"transit/decrypt/"+userTransitKey,
 		map[string]interface{}{
 			"ciphertext": cipher,
 		})

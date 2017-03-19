@@ -29,5 +29,5 @@ func (auth AuthInfo) TuneMount(path string, config api.MountConfigInput) error {
 		return err
 	}
 
-	return client.Sys().TuneMount(path + "/", config)
+	return client.Sys().TuneMount(path+"/", config)
 }

@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/labstack/echo"
 	"github.com/gorilla/csrf"
+	"github.com/labstack/echo"
 )
 
 func GetUsers() echo.HandlerFunc {
