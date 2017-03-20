@@ -47,6 +47,7 @@ func main() {
 	e.POST("/api/mounts/:mountname", handlers.ConfigMount())
 
 	e.GET("/api/secrets", handlers.GetSecrets())
+	e.POST("/api/secrets", handlers.PostSecrets())
 
 	// start the server in HTTP
 	// MUST change to HTTPS in production!

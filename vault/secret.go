@@ -2,6 +2,7 @@ package vault
 
 import (
 	"errors"
+	"encoding/json"
 )
 
 func (auth AuthInfo) ListSecret(path string) (interface{}, error) {
@@ -40,4 +41,19 @@ func (auth AuthInfo) ReadSecret(path string) (interface{}, error) {
 	} else {
 		return resp.Data, nil
 	}
+}
+
+func (auth AuthInfo) WriteSecret(path string, raw string) (interface{}, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+
+	var data map[string]interface{}
+	err = json.Unmarshal([]byte(raw), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Logical().Write(path, data)
 }

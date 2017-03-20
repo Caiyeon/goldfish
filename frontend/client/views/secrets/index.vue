@@ -35,6 +35,23 @@
               </span>
               <span>Insert Secret</span>
             </a> -->
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-primary is-small is-marginless"
+              v-on:click="startEdit">
+              Edit Secret
+            </a>
+
+            <a v-if="editMode === true && currentPathType === 'Secret'"
+              class="button is-success is-small is-marginless"
+              v-on:click="saveEdit">
+              Save Secret
+            </a>
+
+            <a v-if="editMode === true && currentPathType === 'Secret'"
+              class="button is-warning is-small is-marginless"
+              v-on:click="cancelEdit">
+              Cancel Edit
+            </a>
 
             <!-- legend -->
             <a class="tag is-danger is-unselectable is-disabled is-pulled-right">Mount</a>
@@ -63,18 +80,35 @@
                       {{ entry.type }}
                     </a>
                   </td>
-                  <td contenteditable="true">
+
+                  <!-- Editable key field -->
+                  <td v-if="editMode">
+                    <p class="control">
+                      <input class="input is-small" type="text" placeholder="" v-model="entry.path">
+                    </p>
+                  </td>
+                  <!-- View-only -->
+                  <td v-else>
                     <a v-bind:class="entry.type === 'Key' ? 'is-disabled' : ''" @click="changePath(currentPath + entry.path)">
                       {{ entry.path }}
                     </a>
                   </td>
-                  <td contenteditable="true">
+
+                  <!-- Editable value field -->
+                  <td v-if="editMode">
+                    <p class="control">
+                      <input class="input is-small" type="text" placeholder="" v-model="entry.desc">
+                    </p>
+                  </td>
+                  <!-- View-only -->
+                  <td v-else>
                     {{ entry.desc }}
                   </td>
+
                   <td width="68">
-                    <a @click="deleteItem">
+                    <a v-if="editMode" @click="deleteItem(index)">
                     <span class="icon">
-                      <i class="fa fa-trash-o"></i>
+                      <i class="fa fa-times-circle"></i>
                     </span>
                     </a>
                   </td>
@@ -82,7 +116,7 @@
 
                 <!-- new key value pair insertion row -->
                 <tr
-                  v-show="currentPathType === 'Secret'"
+                  v-show="editMode"
                   @keyup.enter="addKeyValue()"
                 >
                   <td width="68">
@@ -135,6 +169,7 @@
 <script>
   import Vue from 'vue'
   import Notification from 'vue-bulma-notification'
+  import VbSwitch from 'vue-bulma-switch'
 
   const NotificationComponent = Vue.extend(Notification)
 
@@ -151,6 +186,8 @@
       propsData
     })
   }
+
+  const querystring = require('querystring')
 
   function handleError (error) {
     if (error.response.data.error) {
@@ -171,14 +208,20 @@
   }
 
   export default {
+    components: {
+      VbSwitch
+    },
+
     data () {
       return {
         csrf: '',
-        currentPath: 'data/stardew_valley/animals/barn_animals/cow',
+        currentPath: 'data/',
         tableHeaders: [],
         tableData: [],
+        tableDataCopy: [],
         newKey: '',
-        newValue: ''
+        newValue: '',
+        editMode: false
       }
     },
 
@@ -198,6 +241,7 @@
         }
       },
 
+      // Returns true if the new key already exists in the current secret
       newKeyExists: function () {
         for (var i = 0; i < this.tableData.length; i++) {
           if (this.tableData[i].path === this.newKey) {
@@ -205,16 +249,25 @@
           }
         }
         return false
+      },
+
+      // Returns a constructed payload for writing secrets
+      constructedPayload: function () {
+        if (this.currentPathType === 'Secret') {
+          var data = {}
+          for (var i = 0; i < this.tableData.length; i++) {
+            data[this.tableData[i].path] = this.tableData[i].desc
+          }
+          return data
+        } else {
+          return {}
+        }
       }
     },
 
     methods: {
-      deleteItem: function () {
-        openNotification({
-          title: 'Under construction',
-          message: 'Deletion is not supported yet',
-          type: 'danger'
-        })
+      deleteItem: function (index) {
+        this.tableData.splice(index, 1)
       },
 
       getMounts: function () {
@@ -254,6 +307,9 @@
           .then((response) => {
             this.tableData = []
             this.currentPath = path
+            if (this.csrf === '') {
+              this.csrf = response.headers['x-csrf-token']
+            }
             let result = response.data.result
 
             if (path.slice(-1) === '/') {
@@ -310,6 +366,7 @@
       },
 
       addKeyValue: function () {
+        // only allow insertion if key and value are valid
         if (this.newKey === '' || this.newValue === '') {
           openNotification({
             title: 'Invalid',
@@ -318,7 +375,6 @@
           })
           return
         }
-
         if (this.newKeyExists) {
           openNotification({
             title: 'Invalid',
@@ -327,23 +383,47 @@
           })
           return
         }
-
-        openNotification({
-          title: 'SoonTM',
-          message: 'insertion not yet implemented',
-          type: 'danger'
+        // insert new key value pair to local table (don't write it to server yet)
+        this.tableData.push({
+          path: this.newKey,
+          type: 'Key',
+          desc: this.newValue
         })
-
-        console.log(this.prepareData())
+        // reset so that a new pair can be inserted
+        this.newKey = ''
+        this.newValue = ''
       },
 
-      // prepares tabledata in a format that vault will accept as a post request
-      prepareData: function () {
-        var data = {}
-        for (var i = 0; i < this.tableData.length; i++) {
-          data[this.tableData[i].path] = this.tableData[i].desc
-        }
-        return data
+      startEdit: function () {
+        // a deep copy is needed in case the edit is cancelled
+        this.tableDataCopy = JSON.parse(JSON.stringify(this.tableData))
+        this.editMode = true
+      },
+
+      saveEdit: function () {
+        var body = JSON.stringify(this.constructedPayload)
+        this.$http
+          .post('/api/secrets?path=' + this.currentPath, querystring.stringify({
+            body: body
+          }), {
+            headers: {'X-CSRF-Token': this.csrf}
+          })
+          .then((response) => {
+            openNotification({
+              title: 'Success!',
+              message: '',
+              type: 'success'
+            })
+            this.editMode = false
+          })
+          .catch((error) => {
+            handleError(error)
+          })
+      },
+
+      cancelEdit: function () {
+        this.editMode = false
+        this.tableData = this.tableDataCopy
       }
 
     }
@@ -359,7 +439,7 @@
     margin: inherit;
   }
 
-  .fa-trash-o {
+  .fa-times-circle {
     color: red;
   }
 </style>
