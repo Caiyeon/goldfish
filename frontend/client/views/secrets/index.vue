@@ -21,7 +21,7 @@
                   <!-- navigation input -->
                   <input class="input is-medium is-expanded" type="text"
                   placeholder="Enter the path of a secret or directory"
-                  v-model="currentPath"
+                  v-model.lazy="currentPath"
                   @keyup.enter="changePath(currentPath)">
 
                 </p>
@@ -35,8 +35,9 @@
               </span>
               <span>Insert Secret</span>
             </a> -->
+
             <a v-if="editMode === false && currentPathType === 'Secret'"
-              class="button is-primary is-small is-marginless"
+              class="button is-success is-small is-marginless"
               v-on:click="startEdit">
               Edit Secret
             </a>
@@ -45,6 +46,12 @@
               class="button is-success is-small is-marginless"
               v-on:click="saveEdit">
               Save Secret
+            </a>
+
+            <a v-if="editMode === false && currentPathType === 'Path'"
+              class="button is-info is-small is-marginless"
+              v-on:click="editMode = true">
+              Add Secret
             </a>
 
             <a v-if="editMode === true && currentPathType === 'Secret'"
@@ -82,7 +89,7 @@
                   </td>
 
                   <!-- Editable key field -->
-                  <td v-if="editMode">
+                  <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
                       <input class="input is-small" type="text" placeholder="" v-model="entry.path">
                     </p>
@@ -95,7 +102,7 @@
                   </td>
 
                   <!-- Editable value field -->
-                  <td v-if="editMode">
+                  <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
                       <input class="input is-small" type="text" placeholder="" v-model="entry.desc">
                     </p>
@@ -106,7 +113,7 @@
                   </td>
 
                   <td width="68">
-                    <a v-if="editMode" @click="deleteItem(index)">
+                    <a v-if="editMode && currentPathType === 'Secret'" @click="deleteItem(index)">
                     <span class="icon">
                       <i class="fa fa-times-circle"></i>
                     </span>
@@ -116,7 +123,7 @@
 
                 <!-- new key value pair insertion row -->
                 <tr
-                  v-show="editMode"
+                  v-show="editMode && currentPathType === 'Secret'"
                   @keyup.enter="addKeyValue()"
                 >
                   <td width="68">
@@ -142,6 +149,28 @@
                       placeholder="Add a value"
                       v-model="newValue"
                       v-bind:class="[newValue === '' ? '' : 'is-success']"
+                    >
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- new secret insertion -->
+                <tr
+                  v-show="editMode && currentPathType === 'Path'"
+                  @keyup.enter="addSecret()"
+                >
+                  <td width="68">
+                  </td>
+                  <td>
+                    <p class="control">
+                    <input
+                      class="input is-small"
+                      type="text"
+                      placeholder="Add a new secret"
+                      v-model="newKey"
+                      v-bind:class="[
+                        newKey === '' ? '' : 'is-success',
+                        newKeyExists ? 'is-danger' : '']"
                     >
                     </p>
                   </td>
@@ -216,6 +245,7 @@
       return {
         csrf: '',
         currentPath: 'data/',
+        currentPathCopy: '',
         tableHeaders: [],
         tableData: [],
         tableDataCopy: [],
@@ -309,7 +339,6 @@
             this.tableData = []
             this.currentPath = path
             this.csrf = response.headers['x-csrf-token']
-            console.log(this.csrf)
             let result = response.data.result
 
             if (path.slice(-1) === '/') {
@@ -395,9 +424,10 @@
       },
 
       startEdit: function () {
+        this.editMode = true
+        this.currentPathCopy = this.currentPath
         // a deep copy is needed in case the edit is cancelled
         this.tableDataCopy = JSON.parse(JSON.stringify(this.tableData))
-        this.editMode = true
       },
 
       saveEdit: function () {
@@ -424,6 +454,38 @@
       cancelEdit: function () {
         this.editMode = false
         this.tableData = this.tableDataCopy
+        this.currentPath = this.currentPathCopy
+      },
+
+      addSecret: function () {
+        // only allow insertion if key and value are valid
+        if (this.newKey === '') {
+          openNotification({
+            title: 'Invalid',
+            message: 'key and value must be non-empty',
+            type: 'warning'
+          })
+          return
+        }
+
+        // Backup in case edit is cancelled
+        this.currentPathCopy = this.currentPath
+
+        // Display the to-be path of the new secret
+        this.currentPath += this.newKey
+        this.newKey = ''
+
+        // Give the user a proper secret editing UI
+        this.startEdit()
+        this.tableData = []
+
+        // Warn the user that this secret is all a draft until saved
+        openNotification({
+          title: 'This is a draft!',
+          message: 'Click save secret to finalize',
+          type: 'warning',
+          duration: 10000
+        })
       }
 
     }
