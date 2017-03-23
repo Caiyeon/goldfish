@@ -29,7 +29,7 @@ func init() {
 		panic("Failed to generate random hashkey")
 	}
 	scookie = securecookie.New(hashKey, blockKey)
-	scookie = scookie.MaxAge(1800)
+	scookie = scookie.MaxAge(14400) // 8 hours
 	if scookie == nil {
 		panic("Failed to initialize gorilla/securecookie")
 	}
