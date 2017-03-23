@@ -296,6 +296,7 @@
       changePath: function (path) {
         this.newKey = ''
         this.newValue = ''
+        this.editMode = false
 
         if (path === '' || path === '/') {
           this.currentPath = ''
@@ -307,9 +308,8 @@
           .then((response) => {
             this.tableData = []
             this.currentPath = path
-            if (this.csrf === '') {
-              this.csrf = response.headers['x-csrf-token']
-            }
+            this.csrf = response.headers['x-csrf-token']
+            console.log(this.csrf)
             let result = response.data.result
 
             if (path.slice(-1) === '/') {
