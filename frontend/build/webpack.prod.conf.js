@@ -15,12 +15,15 @@ const isELECTRON = process.env.NODE_ELECTRON === 'true'
 
 const webpackConfig = merge(baseWebpackConfig, {
   module: {
-    loaders: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap })
+    loaders: utils.styleLoaders({
+      sourceMap: config.build.productionSourceMap,
+      extract: true
+    })
   },
   devtool: config.build.productionSourceMap ? '#source-map' : false,
   output: {
     path: config.build.assetsRoot,
-    publicPath: isELECTRON ? path.join(__dirname, '../dist/') : '',
+    publicPath: isELECTRON ? path.join(__dirname, '../dist/') : '/',
     filename: utils.assetsPath('js/[name].[chunkhash].js'),
     chunkFilename: utils.assetsPath('js/[id].[chunkhash].js')
   },
