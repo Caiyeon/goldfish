@@ -15,10 +15,6 @@ RUN npm install -g cross-env
 RUN npm install
 RUN npm run build
 
-WORKDIR $GOPATH/src/github.com/caiyeon/goldfish
-RUN mkdir public/assets/css/assets
-RUN mv public/assets/fonts public/assets/css/assets
-
 EXPOSE 8000
 
 ARG VAULT_ADDR
