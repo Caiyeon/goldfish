@@ -431,6 +431,10 @@
       },
 
       saveEdit: function () {
+        // if there is a current new key/value pair, add it in first
+        if (!(this.newKey === '' || this.newValue === '') && !this.newKeyExists) {
+          this.addKeyValue()
+        }
         var body = JSON.stringify(this.constructedPayload)
         this.$http
           .post('/api/secrets?path=' + this.currentPath, querystring.stringify({
