@@ -76,8 +76,9 @@ func Login() echo.HandlerFunc {
 			return logError(c, "Empty authentication", "Empty authentication")
 		}
 
-		// verify auth details
-		if _, err := auth.Client(); err != nil {
+		// verify auth details and create client access token
+		data, err := auth.Login()
+		if err != nil {
 			return logError(c, err.Error(), "Invalid authentication")
 		}
 
@@ -95,14 +96,20 @@ func Login() echo.HandlerFunc {
 			}
 			http.SetCookie(c.Response().Writer, cookie)
 		} else {
-			return logError(c, err.Error(),
-				"Please clear site-related cookie and storage",
-			)
+			return logError(c, err.Error(), "Please clear site-related cookie and storage")
 		}
 
-		// To do: return list of policies
+		// return useful information to user
 		return c.JSON(http.StatusOK, H{
 			"status": "Logged in",
+			"data": map[string]interface{}{
+				"display_name": data["display_name"],
+				"id": data["id"],
+				"meta": data["meta"],
+				"policies": data["policies"],
+				"renewable": data["renewable"],
+				"ttl": data["ttl"],
+			},
 		})
 	}
 }

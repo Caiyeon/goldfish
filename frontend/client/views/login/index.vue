@@ -1,84 +1,125 @@
 <template>
   <div>
-    <div class="tile is-ancestor">
-      <div class="tile is-parent box">
+    <div class="tile is-ancestor box is-vertical">
+      <div class="tile">
 
-        <!-- Login Tile -->
-        <article class="tile is-parent is-child is-5">
-          <h1 class="title">Vault Login</h1>
-          <div class="box is-parent is-6">
-            <form id="form" v-on:submit.prevent="login">
+        <!-- Left side -->
+        <article class="tile is-parent is-5 is-vertical">
 
-              <div class="control">
-                <label class="label">Authentication Type</label>
-                <div class="select is-fullwidth">
-                  <select v-model="type" @change="clearFormData">
-                    <option>Token</option>
-                    <option>Userpass</option>
-                  </select>
+          <!-- Login tile -->
+          <article class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Vault Login</h1>
+            <div class="box is-parent is-6">
+              <form id="form" v-on:submit.prevent="login">
+
+                <div class="control">
+                  <label class="label">Authentication Type</label>
+                  <div class="select is-fullwidth">
+                    <select v-model="type" @change="clearFormData">
+                      <option>Token</option>
+                      <option>Userpass</option>
+                    </select>
+                  </div>
                 </div>
+
+                <!-- Token login form -->
+                <p v-if="type === 'Token'" class="control has-icon">
+                  <input class="input" type="password" placeholder="Vault Token" v-model="ID">
+                  <span class="icon is-small">
+                    <i class="fa fa-lock"></i>
+                  </span>
+                </p>
+
+                <!-- Userpass login form -->
+                <p v-if="type === 'Userpass'" class="control has-icon">
+                  <input class="input" type="text" placeholder="Vault Username" v-model="ID">
+                  <span class="icon is-small">
+                    <i class="fa fa-user-circle-o"></i>
+                  </span>
+                </p>
+                <p v-if="type === 'Userpass'" class="control has-icon">
+                  <input class="input" type="password" placeholder="Vault Password" v-model="Password">
+                  <span class="icon is-small">
+                    <i class="fa fa-lock"></i>
+                  </span>
+                </p>
+
+                <p class="control">
+                  <button type="submit" value="Login" class="button is-success">
+                    Login
+                  </button>
+                </p>
+
+              </form>
+            </div>
+          </article>
+
+          <!-- Logged in data tile -->
+          <article class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Current Session</h1>
+            <div class="box is-parent is-6">
+              <div class="table-responsive">
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th>Key</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="key in sessionKeys">
+                      <td>
+                        {{ key }}
+                      </td>
+                      <td>
+                        {{ sessionData[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+            </div>
+          </article>
 
-              <!-- Token login form -->
-              <p v-if="type === 'Token'" class="control has-icon">
-                <input class="input" type="password" placeholder="Vault Token" v-model="ID">
-                <span class="icon is-small">
-                  <i class="fa fa-lock"></i>
-                </span>
-              </p>
-
-              <!-- Userpass login form -->
-              <p v-if="type === 'Userpass'" class="control has-icon">
-                <input class="input" type="text" placeholder="Vault Username" v-model="ID">
-                <span class="icon is-small">
-                  <i class="fa fa-user-circle-o"></i>
-                </span>
-              </p>
-              <p v-if="type === 'Userpass'" class="control has-icon">
-                <input class="input" type="password" placeholder="Vault Password" v-model="Password">
-                <span class="icon is-small">
-                  <i class="fa fa-lock"></i>
-                </span>
-              </p>
-
-              <p class="control">
-                <button type="submit" value="Login" class="button is-success">
-                  Login
-                </button>
-              </p>
-
-            </form>
-          </div>
+        <!-- Left side (end) -->
         </article>
 
-        <!-- Vault Health Tile -->
-        <article class="tile is-parent is-child is-7">
-          <h1 class="title">Vault Health</h1>
-          <div class="box">
-            <div class="table-responsive">
-              <table class="table is-striped is-narrow">
-                <thead>
-                  <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="key in healthKeys">
-                    <td>
-                      {{ key }}
-                    </td>
-                    <td>
-                      {{ healthData[key] }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+
+        <!-- Right side -->
+        <article class="tile is-parent is-7 is-vertical">
+
+          <!-- Vault Health Tile -->
+          <article class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Vault Health</h1>
+            <div class="box is-parent is-6">
+              <div class="table-responsive">
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th>Key</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="key in healthKeys">
+                      <td>
+                        {{ key }}
+                      </td>
+                      <td>
+                        {{ healthData[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </article>
+
+        <!-- Right side (end) -->
         </article>
 
       </div>
+
     </div>
   </div>
 </template>
@@ -128,7 +169,8 @@
         type: 'Token',
         ID: '',
         Password: '',
-        healthData: {}
+        healthData: {},
+        sessionData: {}
       }
     },
     mounted: function () {
@@ -155,6 +197,9 @@
     computed: {
       healthKeys: function () {
         return Object.keys(this.healthData)
+      },
+      sessionKeys: function () {
+        return Object.keys(this.sessionData)
       }
     },
 
@@ -175,6 +220,7 @@
               type: 'success'
             })
             this.clearFormData()
+            this.sessionData = response.data.data
           })
           .catch((error) => {
             handleError(error)

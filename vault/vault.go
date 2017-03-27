@@ -93,26 +93,39 @@ func (auth *AuthInfo) Clear() {
 	auth.Pass = ""
 }
 
-// returns a constructed client with the server's vaultaddress and provided ID
+// constructs a client with server's vault address and client access token
 func (auth AuthInfo) Client() (*api.Client, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	client.SetToken(auth.ID)
+	_, err = client.Auth().Token().LookupSelf()
+	return client, err
+}
+
+// verifies whether auth ID and password are valid
+// if valid, creates a client access token and returns the metadata
+func (auth *AuthInfo) Login() (map[string]interface{}, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+
 	switch auth.Type {
 	case "token":
-		client, err := api.NewClient(api.DefaultConfig())
+		client.SetToken(auth.ID)
+		resp, err := client.Auth().Token().LookupSelf()
 		if err != nil {
 			return nil, err
 		}
-		client.SetAddress(vaultAddress)
-		client.SetToken(auth.ID)
-		_, err = client.Auth().Token().LookupSelf()
-		return client, err
+		return resp.Data, nil
 
 	case "userpass":
-		client, err := api.NewClient(api.DefaultConfig())
-		if err != nil {
-			return nil, err
-		}
-		client.SetAddress(vaultAddress)
 		client.SetToken("")
+		// fetch client access token by performing a login
 		resp, err := client.Logical().Write("auth/userpass/login/" + auth.ID,
 			map[string]interface{}{
 				"password": auth.Pass,
@@ -120,16 +133,21 @@ func (auth AuthInfo) Client() (*api.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		if resp.Auth == nil {
+		if resp.Auth == nil || resp.Auth.ClientToken == "" {
 			return nil, errors.New("Unable to parse vault response")
 		}
-		token := resp.Auth.ClientToken
-		if token == "" {
-			return nil, errors.New("Unable to parse vault response")
+
+		client.SetToken(resp.Auth.ClientToken)
+		lookupResp, err := client.Auth().Token().LookupSelf()
+		if err != nil {
+			return nil, err
 		}
-		client.SetToken(auth.ID)
-		_, err = client.Auth().Token().LookupSelf()
-		return client, err
+
+		// if the login was valid, set auth to the access token
+		auth.Type = "token"
+		auth.ID = resp.Auth.ClientToken
+		auth.Pass = ""
+		return lookupResp.Data, nil
 
 	default:
 		return nil, errors.New("Unsupported authentication type")
