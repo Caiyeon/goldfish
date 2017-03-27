@@ -26,8 +26,9 @@ var serverTransitKey = "goldfish"
 var userTransitKey = "usertransit"
 
 type AuthInfo struct {
-	Type string `json:"Type" form:"Type" query:"Type"`
-	ID   string `json:"ID" form:"ID" query:"ID"`
+	Type     string `json:"Type" form:"Type" query:"Type"`
+	ID       string `json:"ID" form:"ID" query:"ID"`
+	Pass     string `json:"password" form:"Password" query:"Password"`
 }
 
 func init() {
@@ -68,6 +69,9 @@ func init() {
 			"role_id":   roleID,
 			"secret_id": secretID,
 		})
+	if err != nil {
+		panic(err)
+	}
 
 	// verify that the secret_id is valid
 	log.Println(resp.Auth.ClientToken)
@@ -86,6 +90,7 @@ func init() {
 func (auth *AuthInfo) Clear() {
 	auth.Type = ""
 	auth.ID = ""
+	auth.Pass = ""
 }
 
 // returns a constructed client with the server's vaultaddress and provided ID
@@ -101,7 +106,31 @@ func (auth AuthInfo) Client() (*api.Client, error) {
 		_, err = client.Auth().Token().LookupSelf()
 		return client, err
 
-	// only tokens are supported for now
+	case "userpass":
+		client, err := api.NewClient(api.DefaultConfig())
+		if err != nil {
+			return nil, err
+		}
+		client.SetAddress(vaultAddress)
+		client.SetToken("")
+		resp, err := client.Logical().Write("auth/userpass/login/" + auth.ID,
+			map[string]interface{}{
+				"password": auth.Pass,
+			})
+		if err != nil {
+			return nil, err
+		}
+		if resp.Auth == nil {
+			return nil, errors.New("Unable to parse vault response")
+		}
+		token := resp.Auth.ClientToken
+		if token == "" {
+			return nil, errors.New("Unable to parse vault response")
+		}
+		client.SetToken(auth.ID)
+		_, err = client.Auth().Token().LookupSelf()
+		return client, err
+
 	default:
 		return nil, errors.New("Unsupported authentication type")
 	}

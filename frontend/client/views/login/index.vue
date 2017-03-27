@@ -1,8 +1,9 @@
 <template>
   <div>
     <div class="tile is-ancestor">
-
       <div class="tile is-parent box">
+
+        <!-- Login Tile -->
         <article class="tile is-parent is-child is-5">
           <h1 class="title">Vault Login</h1>
           <div class="box is-parent is-6">
@@ -11,18 +12,35 @@
               <div class="control">
                 <label class="label">Authentication Type</label>
                 <div class="select is-fullwidth">
-                  <select v-model="type">
+                  <select v-model="type" @change="clearFormData">
                     <option>Token</option>
+                    <option>Userpass</option>
                   </select>
                 </div>
               </div>
 
-              <p class="control has-icon">
-                <input class="input" type="password" placeholder="Vault Token" v-model="vaultToken">
+              <!-- Token login form -->
+              <p v-if="type === 'Token'" class="control has-icon">
+                <input class="input" type="password" placeholder="Vault Token" v-model="ID">
                 <span class="icon is-small">
                   <i class="fa fa-lock"></i>
                 </span>
               </p>
+
+              <!-- Userpass login form -->
+              <p v-if="type === 'Userpass'" class="control has-icon">
+                <input class="input" type="text" placeholder="Vault Username" v-model="ID">
+                <span class="icon is-small">
+                  <i class="fa fa-user-circle-o"></i>
+                </span>
+              </p>
+              <p v-if="type === 'Userpass'" class="control has-icon">
+                <input class="input" type="password" placeholder="Vault Password" v-model="Password">
+                <span class="icon is-small">
+                  <i class="fa fa-lock"></i>
+                </span>
+              </p>
+
               <p class="control">
                 <button type="submit" value="Login" class="button is-success">
                   Login
@@ -33,6 +51,7 @@
           </div>
         </article>
 
+        <!-- Vault Health Tile -->
         <article class="tile is-parent is-child is-7">
           <h1 class="title">Vault Health</h1>
           <div class="box">
@@ -58,10 +77,8 @@
             </div>
           </div>
         </article>
+
       </div>
-
-
-
     </div>
   </div>
 </template>
@@ -109,7 +126,8 @@
       return {
         csrf: '',
         type: 'Token',
-        vaultToken: '',
+        ID: '',
+        Password: '',
         healthData: {}
       }
     },
@@ -144,7 +162,8 @@
         this.$http
           .post('/api/login', {
             Type: this.type.toLowerCase(),
-            ID: this.vaultToken
+            ID: this.ID,
+            Password: this.Password
           }, {
             headers: {'X-CSRF-Token': this.csrf}
           })
@@ -154,11 +173,16 @@
               message: '',
               type: 'success'
             })
-            this.vaultToken = ''
+            this.clearFormData()
           })
           .catch((error) => {
             handleError(error)
           })
+      },
+
+      clearFormData: function () {
+        this.ID = ''
+        this.Password = ''
       }
     }
 
