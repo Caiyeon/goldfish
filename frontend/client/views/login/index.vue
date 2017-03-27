@@ -145,6 +145,7 @@
       this.$http.get('/api/health')
         .then((response) => {
           this.healthData = JSON.parse(response.data.result)
+          this.healthData['server_time_utc'] = new Date(this.healthData['server_time_utc'] * 1000).toUTCString()
         })
         .catch((error) => {
           handleError(error)
