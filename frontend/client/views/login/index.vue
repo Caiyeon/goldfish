@@ -54,7 +54,7 @@
             </div>
           </article>
 
-          <!-- Logged in data tile -->
+          <!-- Current session tile -->
           <article class="tile is-child is-marginless is-paddingless">
             <h1 class="title">Current Session</h1>
             <div class="box is-parent is-6">
@@ -77,6 +77,11 @@
                     </tr>
                   </tbody>
                 </table>
+                <p class="control">
+                  <button class="button is-warning" @click="logout()">
+                    Logout
+                  </button>
+                </p>
               </div>
             </div>
           </article>
@@ -111,13 +116,17 @@
                     </tr>
                   </tbody>
                 </table>
+                <p class="control">
+                  <button class="button is-primary"
+                    v-bind:class="{
+                      'is-loading': healthLoading,
+                      'is-disabled': healthLoading
+                    }"
+                    @click="getHealth()">
+                  Refresh
+                </button>
+              </p>
               </div>
-              <a class="button is-primary"
-                v-bind:class="{
-                  'is-loading': healthLoading,
-                  'is-disabled': healthLoading
-                }"
-                @click="getHealth()">Refresh</a>
             </div>
           </article>
 
@@ -270,6 +279,12 @@
           .catch((error) => {
             handleError(error)
           })
+      },
+
+      logout: function () {
+        document.cookie = 'auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+        this.sessionData = {}
+        window.localStorage.removeItem('session')
       },
 
       clearFormData: function () {
