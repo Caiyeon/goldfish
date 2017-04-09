@@ -45,7 +45,7 @@
                 </p>
 
                 <p class="control">
-                  <button type="submit" value="Login" class="button is-success">
+                  <button type="submit" value="Login" class="button is-primary">
                     Login
                   </button>
                 </p>
@@ -112,6 +112,12 @@
                   </tbody>
                 </table>
               </div>
+              <a class="button is-primary"
+                v-bind:class="{
+                  'is-loading': healthLoading,
+                  'is-disabled': healthLoading
+                }"
+                @click="getHealth()">Refresh</a>
             </div>
           </article>
 
@@ -170,28 +176,29 @@
         ID: '',
         Password: '',
         healthData: {},
+        healthLoading: false,
         sessionData: {}
       }
     },
+
     mounted: function () {
       // fetch csrf for login post request later
-      this.$http.get('/api/login/csrf')
-        .then((response) => {
-          this.csrf = response.headers['x-csrf-token']
-        })
-        .catch((error) => {
-          handleError(error)
-        })
-
+      this.fetchCSRF()
       // fetch vault cluster details
-      this.$http.get('/api/health')
-        .then((response) => {
-          this.healthData = JSON.parse(response.data.result)
-          this.healthData['server_time_utc'] = new Date(this.healthData['server_time_utc'] * 1000).toUTCString()
-        })
-        .catch((error) => {
-          handleError(error)
-        })
+      this.getHealth()
+      var currentSession = window.localStorage.getItem('session')
+      if (currentSession) {
+        if (currentSession['cookie_expires_at'] > Date.now()) {
+          window.localStorage.removeItem('session')
+          openNotification({
+            title: 'Session expired',
+            message: 'Please login again',
+            type: 'warning'
+          })
+        } else {
+          this.sessionData = JSON.parse(currentSession)
+        }
+      }
     },
 
     computed: {
@@ -204,6 +211,30 @@
     },
 
     methods: {
+      fetchCSRF: function () {
+        this.$http.get('/api/login/csrf')
+          .then((response) => {
+            this.csrf = response.headers['x-csrf-token']
+          })
+          .catch((error) => {
+            handleError(error)
+          })
+      },
+
+      getHealth: function () {
+        this.healthLoading = true
+        this.$http.get('/api/health')
+          .then((response) => {
+            this.healthData = JSON.parse(response.data.result)
+            this.healthData['server_time_utc'] = new Date(this.healthData['server_time_utc'] * 1000).toUTCString()
+            this.healthLoading = false
+          })
+          .catch((error) => {
+            handleError(error)
+            this.healthLoading = false
+          })
+      },
+
       login: function () {
         this.$http
           .post('/api/login', {
@@ -213,15 +244,29 @@
           }, {
             headers: {'X-CSRF-Token': this.csrf}
           })
+
           .then((response) => {
+            // notify user, and clear inputs
             openNotification({
               title: 'Login success!',
               message: '',
               type: 'success'
             })
             this.clearFormData()
-            this.sessionData = response.data.data
+
+            // set user's session reactively, and store it browser's localStorage
+            this.sessionData = {
+              'type': this.type,
+              'display_name': response.data.data['display_name'],
+              'meta': response.data.data['meta'],
+              'policies': response.data.data['policies'],
+              'renewable': response.data.data['renewable'],
+              'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toLocaleString(),
+              'cookie_expiry': new Date(Date.now() + 28800000).toLocaleString() // 8 hours from now
+            }
+            window.localStorage.setItem('session', JSON.stringify(this.sessionData))
           })
+
           .catch((error) => {
             handleError(error)
           })
