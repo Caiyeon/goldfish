@@ -58,6 +58,7 @@ const openNotification = (propsData = {
 Vue.prototype.$notify = openNotification
 
 function handleError (error) {
+  // if the server gave a response message, print that
   if (error.response.data.error) {
     openNotification({
       title: 'Error: ' + error.response.status,
@@ -66,11 +67,21 @@ function handleError (error) {
     })
     console.log(error.response.data.error)
   } else {
-    openNotification({
-      title: 'Error',
-      message: 'Please login first',
-      type: 'danger'
-    })
+    // 403s happen mostly because of invalid CSRF tokens
+    if (error.response.status === 403) {
+      openNotification({
+        title: 'Error: 403',
+        message: 'Invalid CSRF. Try refreshing the page',
+        type: 'danger'
+      })
+    } else {
+    // otherwise, it's likely the user isn't logged in
+      openNotification({
+        title: 'Error: ' + error.response.status.toString(),
+        message: 'Please login first',
+        type: 'danger'
+      })
+    }
     console.log(error.message)
   }
 }
