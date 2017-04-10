@@ -8,6 +8,7 @@ import store from './store'
 import * as filters from './filters'
 import { TOGGLE_SIDEBAR } from 'vuex-store/mutation-types'
 import Notification from 'vue-bulma-notification'
+import Message from 'vue-bulma-message'
 
 Vue.prototype.$http = axios
 Vue.axios = axios
@@ -41,7 +42,6 @@ const app = new Vue({
 })
 
 const NotificationComponent = Vue.extend(Notification)
-
 const openNotification = (propsData = {
   title: '',
   message: '',
@@ -55,7 +55,6 @@ const openNotification = (propsData = {
     propsData
   })
 }
-
 Vue.prototype.$notify = openNotification
 
 function handleError (error) {
@@ -75,7 +74,22 @@ function handleError (error) {
     console.log(error.message)
   }
 }
-
 Vue.prototype.$onError = handleError
+
+const MessageComponent = Vue.extend(Message)
+const openMessage = (propsData = {
+  title: '',
+  message: '',
+  type: '',
+  direction: '',
+  duration: 1500,
+  container: '.messages'
+}) => {
+  return new MessageComponent({
+    el: document.createElement('div'),
+    propsData
+  })
+}
+Vue.prototype.$message = openMessage
 
 export { app, router, store }
