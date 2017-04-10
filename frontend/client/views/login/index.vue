@@ -77,9 +77,13 @@
                     </tr>
                   </tbody>
                 </table>
-                <p class="control">
+                <p v-if="sessionData !== null" class="control">
                   <button class="button is-warning" @click="logout()">
                     Logout
+                  </button>
+                  <button v-if="renewable" class="button is-primary"
+                  @click="renewLogin()">
+                    Renew
                   </button>
                 </p>
               </div>
@@ -149,7 +153,7 @@ export default {
       Password: '',
       healthData: {},
       healthLoading: false,
-      sessionData: {}
+      sessionData: null
     }
   },
 
@@ -158,9 +162,11 @@ export default {
     this.fetchCSRF()
     // fetch vault cluster details
     this.getHealth()
+    // check if user is logged on
     var currentSession = window.localStorage.getItem('session')
     if (currentSession) {
       if (currentSession['cookie_expires_at'] > Date.now()) {
+        // login expired
         window.localStorage.removeItem('session')
         this.$notify({
           title: 'Session expired',
@@ -168,6 +174,7 @@ export default {
           type: 'warning'
         })
       } else {
+        // login still valid
         this.sessionData = JSON.parse(currentSession)
       }
     }
@@ -178,7 +185,10 @@ export default {
       return Object.keys(this.healthData)
     },
     sessionKeys: function () {
-      return Object.keys(this.sessionData)
+      return (this.sessionData === null) || Object.keys(this.sessionData)
+    },
+    renewable: function () {
+      return (this.sessionData && this.sessionData['renewable'])
     }
   },
 
@@ -256,13 +266,21 @@ export default {
 
     logout: function () {
       document.cookie = 'auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-      this.sessionData = {}
+      this.sessionData = null
       window.localStorage.removeItem('session')
     },
 
     clearFormData: function () {
       this.ID = ''
       this.Password = ''
+    },
+
+    renewLogin: function () {
+      this.$notify({
+        title: 'SoonTM',
+        message: 'Feature not implemented yet',
+        type: 'warning'
+      })
     }
   }
 }
