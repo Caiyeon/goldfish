@@ -46,84 +46,36 @@
 </template>
 
 <script>
-  import Vue from 'vue'
-  import Notification from 'vue-bulma-notification'
+export default {
+  data () {
+    return {
+      policies: [],
+      policyRules: '',
+      selectedIndex: -1
+    }
+  },
 
-  const NotificationComponent = Vue.extend(Notification)
-
-  const openNotification = (propsData = {
-    title: '',
-    message: '',
-    type: '',
-    direction: '',
-    duration: 4500,
-    container: '.notifications'
-  }) => {
-    return new NotificationComponent({
-      el: document.createElement('div'),
-      propsData
+  mounted: function () {
+    this.$http.get('/api/policies').then((response) => {
+      this.policies = response.data.result
     })
-  }
+    .catch((error) => {
+      this.$onError(error)
+    })
+  },
 
-  function handleError (error) {
-    if (error.response.data.error) {
-      openNotification({
-        title: 'Error: ' + error.response.status,
-        message: error.response.data.error,
-        type: 'danger'
+  methods: {
+    getPolicyRules: function (index) {
+      this.policyRules = ''
+      this.$http.get('/api/policies/' + this.policies[index]).then((response) => {
+        this.policyRules = response.data.result
       })
-      console.log(error.response.data.error)
-    } else {
-      openNotification({
-        title: 'Error',
-        message: 'Please login first',
-        type: 'danger'
+      .catch((error) => {
+        this.$onError(error)
       })
-      console.log(error.message)
     }
   }
-
-  export default {
-    components: {
-    },
-
-    data () {
-      return {
-        policies: [],
-        policyRules: '',
-        selectedIndex: -1
-      }
-    },
-
-    computed: {
-    },
-
-    filters: {
-    },
-
-    mounted: function () {
-      this.$http.get('/api/policies')
-        .then((response) => {
-          this.policies = response.data.result
-        })
-        .catch((error) => {
-          handleError(error)
-        })
-    },
-
-    methods: {
-      getPolicyRules: function (index) {
-        this.policyRules = ''
-        this.$http.get('/api/policies/' + this.policies[index])
-          .then((response) => {
-            this.policyRules = response.data.result
-          })
-          .catch((error) => {
-            handleError(error)
-          })
-      }
-    }
-  }
+}
 </script>
 
 <style scoped>

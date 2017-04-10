@@ -66,130 +66,84 @@
 </template>
 
 <script>
-  import Tooltip from 'vue-bulma-tooltip'
-  import Vue from 'vue'
-  import Notification from 'vue-bulma-notification'
+import Tooltip from 'vue-bulma-tooltip'
+const querystring = require('querystring')
 
-  const NotificationComponent = Vue.extend(Notification)
+export default {
+  components: {
+    Tooltip
+  },
 
-  const openNotification = (propsData = {
-    title: '',
-    message: '',
-    type: '',
-    direction: '',
-    duration: 4500,
-    container: '.notifications'
-  }) => {
-    return new NotificationComponent({
-      el: document.createElement('div'),
-      propsData
+  data () {
+    return {
+      csrf: '',
+      plaintext: '',
+      cipher: ''
+    }
+  },
+
+  mounted: function () {
+    this.$http.get('/api/transit').then((response) => {
+      this.csrf = response.headers['x-csrf-token']
     })
-  }
+    .catch((error) => {
+      this.$onError(error)
+    })
+  },
 
-  const querystring = require('querystring')
-
-  function handleError (error) {
-    if (error.response.data.error) {
-      openNotification({
-        title: 'Error: ' + error.response.status,
-        message: error.response.data.error,
-        type: 'danger'
+  methods: {
+    encryptText: function () {
+      this.$http.post('/api/transit/encrypt', querystring.stringify({
+        plaintext: this.plaintext
+      }), {
+        headers: {'X-CSRF-Token': this.csrf}
       })
-      console.log(error.response.data.error)
-    } else {
-      openNotification({
-        title: 'Error',
-        message: 'Please login first',
-        type: 'danger'
-      })
-      console.log(error.message)
-    }
-  }
 
-  export default {
-    components: {
-      Tooltip
-    },
-
-    data () {
-      return {
-        csrf: '',
-        plaintext: '',
-        cipher: ''
-      }
-    },
-
-    computed: {
-    },
-
-    filters: {
-    },
-
-    mounted: function () {
-      this.$http.get('/api/transit')
-        .then((response) => {
-          this.csrf = response.headers['x-csrf-token']
-        })
-        .catch((error) => {
-          handleError(error)
-        })
-    },
-
-    methods: {
-      encryptText: function () {
-        this.$http
-          .post('/api/transit/encrypt', querystring.stringify({
-            plaintext: this.plaintext
-          }), {
-            headers: {'X-CSRF-Token': this.csrf}
-          })
-
-          .then((response) => {
-            this.cipher = response.data.result
-            this.plaintext = ''
-            openNotification({
-              title: 'Success',
-              message: 'Encryption successful',
-              type: 'success'
-            })
-          })
-
-          .catch((error) => {
-            handleError(error)
-          })
-      },
-
-      decryptText: function () {
-        this.$http
-          .post('/api/transit/decrypt', querystring.stringify({
-            cipher: this.cipher
-          }), {
-            headers: {'X-CSRF-Token': this.csrf}
-          })
-
-          .then((response) => {
-            this.plaintext = response.data.result
-            this.cipher = ''
-            openNotification({
-              title: 'Success',
-              message: 'Decryption successful',
-              type: 'success'
-            })
-          })
-
-          .catch((error) => {
-            handleError(error)
-          })
-      },
-
-      clearPlaintext: function () {
+      .then((response) => {
+        this.cipher = response.data.result
         this.plaintext = ''
-      },
-      clearCipher: function () {
+        this.$notify({
+          title: 'Success',
+          message: 'Encryption successful',
+          type: 'success'
+        })
+      })
+
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    decryptText: function () {
+      this.$http.post('/api/transit/decrypt', querystring.stringify({
+        cipher: this.cipher
+      }), {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+
+      .then((response) => {
+        this.plaintext = response.data.result
         this.cipher = ''
-      }
+        this.$notify({
+          title: 'Success',
+          message: 'Decryption successful',
+          type: 'success'
+        })
+      })
+
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    clearPlaintext: function () {
+      this.plaintext = ''
+    },
+    clearCipher: function () {
+      this.cipher = ''
     }
   }
+}
 </script>
 
 <style scoped>

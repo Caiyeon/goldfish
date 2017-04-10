@@ -196,304 +196,263 @@
 </template>
 
 <script>
-  import Vue from 'vue'
-  import Notification from 'vue-bulma-notification'
-  import VbSwitch from 'vue-bulma-switch'
+import VbSwitch from 'vue-bulma-switch'
+const querystring = require('querystring')
 
-  const NotificationComponent = Vue.extend(Notification)
+export default {
+  components: {
+    VbSwitch
+  },
 
-  const openNotification = (propsData = {
-    title: '',
-    message: '',
-    type: '',
-    direction: '',
-    duration: 4500,
-    container: '.notifications'
-  }) => {
-    return new NotificationComponent({
-      el: document.createElement('div'),
-      propsData
-    })
-  }
-
-  const querystring = require('querystring')
-
-  function handleError (error) {
-    if (error.response.data.error) {
-      openNotification({
-        title: 'Error: ' + error.response.status,
-        message: error.response.data.error,
-        type: 'danger'
-      })
-      console.log(error.response.data.error)
-    } else {
-      openNotification({
-        title: 'Error',
-        message: 'Please login first',
-        type: 'danger'
-      })
-      console.log(error.message)
+  data () {
+    return {
+      csrf: '',
+      currentPath: 'data/',
+      currentPathCopy: '',
+      tableHeaders: [],
+      tableData: [],
+      tableDataCopy: [],
+      newKey: '',
+      newValue: '',
+      editMode: false
     }
-  }
+  },
 
-  export default {
-    components: {
-      VbSwitch
-    },
+  mounted: function () {
+    this.changePath(this.currentPath)
+  },
 
-    data () {
-      return {
-        csrf: '',
-        currentPath: 'data/',
-        currentPathCopy: '',
-        tableHeaders: [],
-        tableData: [],
-        tableDataCopy: [],
-        newKey: '',
-        newValue: '',
-        editMode: false
+  computed: {
+    currentPathType: function () {
+      if (this.currentPath === '' || this.currentPath === '/') {
+        return 'Mount'
+      }
+      if (this.currentPath.slice(-1) === '/') {
+        return 'Path'
+      } else {
+        return 'Secret'
       }
     },
 
-    mounted: function () {
+    // Returns true if the new key already exists in the current secret
+    newKeyExists: function () {
+      for (var i = 0; i < this.tableData.length; i++) {
+        if (this.tableData[i].path === this.newKey) {
+          return true
+        }
+      }
+      return false
+    },
+
+    // Returns a constructed payload for writing secrets
+    constructedPayload: function () {
+      if (this.currentPathType === 'Secret') {
+        var data = {}
+        for (var i = 0; i < this.tableData.length; i++) {
+          data[this.tableData[i].path] = this.tableData[i].desc
+        }
+        return data
+      } else {
+        return {}
+      }
+    }
+  },
+
+  methods: {
+    deleteItem: function (index) {
+      this.tableData.splice(index, 1)
+    },
+
+    getMounts: function () {
+      this.$http.get('/api/mounts').then((response) => {
+        this.tableData = []
+        this.tableHeaders = ['Mounts', 'Description', '']
+        this.csrf = response.headers['x-csrf-token']
+        let result = response.data.result
+
+        var keys = Object.keys(result)
+        for (var i = 0; i < keys.length; i++) {
+          this.tableData.push({
+            path: keys[i],
+            type: result[keys[i]]['type'],
+            desc: result[keys[i]]['description'],
+            conf: result[keys[i]]['config']
+          })
+        }
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    changePath: function (path) {
+      this.newKey = ''
+      this.newValue = ''
+      this.editMode = false
+
+      if (path === '' || path === '/') {
+        this.currentPath = ''
+        this.getMounts()
+        return
+      }
+
+      this.$http.get('/api/secrets?path=' + path).then((response) => {
+        this.tableData = []
+        this.currentPath = path
+        this.csrf = response.headers['x-csrf-token']
+        let result = response.data.result
+
+        if (path.slice(-1) === '/') {
+          // listing subdirectories
+          this.tableHeaders = ['Subpaths', 'Description', '']
+          for (var i = 0; i < result.length; i++) {
+            this.tableData.push({
+              path: result[i],
+              type: result[i].slice(-1) === '/' ? 'Path' : 'Secret'
+            })
+          }
+        } else {
+          // listing key value pairs
+          this.tableHeaders = ['Key', 'Value', '']
+          var keys = Object.keys(result)
+          for (var j = 0; j < keys.length; j++) {
+            this.tableData.push({
+              path: keys[j],
+              type: 'Key',
+              desc: result[keys[j]]
+            })
+          }
+        }
+      })
+
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    changePathUp: function () {
+      // cut the trailing slash off if it exists
+      var noTrailingSlash = this.currentPath
+      if (this.currentPath.slice(-1) === '/') {
+        noTrailingSlash = this.currentPath.substring(0, this.currentPath.length - 1)
+      }
+      // remove up to the last slash if it exists
+      this.currentPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+      // fetch data again
       this.changePath(this.currentPath)
     },
 
-    computed: {
-      currentPathType: function () {
-        if (this.currentPath === '' || this.currentPath === '/') {
-          return 'Mount'
-        }
-        if (this.currentPath.slice(-1) === '/') {
-          return 'Path'
-        } else {
-          return 'Secret'
-        }
-      },
-
-      // Returns true if the new key already exists in the current secret
-      newKeyExists: function () {
-        for (var i = 0; i < this.tableData.length; i++) {
-          if (this.tableData[i].path === this.newKey) {
-            return true
-          }
-        }
-        return false
-      },
-
-      // Returns a constructed payload for writing secrets
-      constructedPayload: function () {
-        if (this.currentPathType === 'Secret') {
-          var data = {}
-          for (var i = 0; i < this.tableData.length; i++) {
-            data[this.tableData[i].path] = this.tableData[i].desc
-          }
-          return data
-        } else {
-          return {}
-        }
+    type: function (index) {
+      switch (this.tableData[index].type) {
+        case 'Secret':
+          return { 'tag': true, 'is-info': true }
+        case 'Path':
+          return { 'tag': true, 'is-primary': true }
+        case 'Key':
+          return { 'tag': true, 'is-success': true }
+        default:
+          return { 'tag': true, 'is-danger': true }
       }
     },
 
-    methods: {
-      deleteItem: function (index) {
-        this.tableData.splice(index, 1)
-      },
-
-      getMounts: function () {
-        this.$http.get('/api/mounts')
-          .then((response) => {
-            this.tableData = []
-            this.tableHeaders = ['Mounts', 'Description', '']
-            this.csrf = response.headers['x-csrf-token']
-            let result = response.data.result
-
-            var keys = Object.keys(result)
-            for (var i = 0; i < keys.length; i++) {
-              this.tableData.push({
-                path: keys[i],
-                type: result[keys[i]]['type'],
-                desc: result[keys[i]]['description'],
-                conf: result[keys[i]]['config']
-              })
-            }
-          })
-          .catch((error) => {
-            handleError(error)
-          })
-      },
-
-      changePath: function (path) {
-        this.newKey = ''
-        this.newValue = ''
-        this.editMode = false
-
-        if (path === '' || path === '/') {
-          this.currentPath = ''
-          this.getMounts()
-          return
-        }
-
-        this.$http.get('/api/secrets?path=' + path)
-          .then((response) => {
-            this.tableData = []
-            this.currentPath = path
-            this.csrf = response.headers['x-csrf-token']
-            let result = response.data.result
-
-            if (path.slice(-1) === '/') {
-              // listing subdirectories
-              this.tableHeaders = ['Subpaths', 'Description', '']
-              for (var i = 0; i < result.length; i++) {
-                this.tableData.push({
-                  path: result[i],
-                  type: result[i].slice(-1) === '/' ? 'Path' : 'Secret'
-                })
-              }
-            } else {
-              // listing key value pairs
-              this.tableHeaders = ['Key', 'Value', '']
-              var keys = Object.keys(result)
-              for (var j = 0; j < keys.length; j++) {
-                this.tableData.push({
-                  path: keys[j],
-                  type: 'Key',
-                  desc: result[keys[j]]
-                })
-              }
-            }
-          })
-
-          .catch((error) => {
-            handleError(error)
-          })
-      },
-
-      changePathUp: function () {
-        // cut the trailing slash off if it exists
-        var noTrailingSlash = this.currentPath
-        if (this.currentPath.slice(-1) === '/') {
-          noTrailingSlash = this.currentPath.substring(0, this.currentPath.length - 1)
-        }
-        // remove up to the last slash if it exists
-        this.currentPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
-        // fetch data again
-        this.changePath(this.currentPath)
-      },
-
-      type: function (index) {
-        switch (this.tableData[index].type) {
-          case 'Secret':
-            return { 'tag': true, 'is-info': true }
-          case 'Path':
-            return { 'tag': true, 'is-primary': true }
-          case 'Key':
-            return { 'tag': true, 'is-success': true }
-          default:
-            return { 'tag': true, 'is-danger': true }
-        }
-      },
-
-      addKeyValue: function () {
-        // only allow insertion if key and value are valid
-        if (this.newKey === '' || this.newValue === '') {
-          openNotification({
-            title: 'Invalid',
-            message: 'key and value must be non-empty',
-            type: 'warning'
-          })
-          return
-        }
-        if (this.newKeyExists) {
-          openNotification({
-            title: 'Invalid',
-            message: 'key already exists',
-            type: 'warning'
-          })
-          return
-        }
-        // insert new key value pair to local table (don't write it to server yet)
-        this.tableData.push({
-          path: this.newKey,
-          type: 'Key',
-          desc: this.newValue
+    addKeyValue: function () {
+      // only allow insertion if key and value are valid
+      if (this.newKey === '' || this.newValue === '') {
+        this.$notify({
+          title: 'Invalid',
+          message: 'key and value must be non-empty',
+          type: 'warning'
         })
-        // reset so that a new pair can be inserted
-        this.newKey = ''
-        this.newValue = ''
-      },
-
-      startEdit: function () {
-        this.editMode = true
-        this.currentPathCopy = this.currentPath
-        // a deep copy is needed in case the edit is cancelled
-        this.tableDataCopy = JSON.parse(JSON.stringify(this.tableData))
-      },
-
-      saveEdit: function () {
-        // if there is a current new key/value pair, add it in first
-        if (!(this.newKey === '' || this.newValue === '') && !this.newKeyExists) {
-          this.addKeyValue()
-        }
-        var body = JSON.stringify(this.constructedPayload)
-        this.$http
-          .post('/api/secrets?path=' + this.currentPath, querystring.stringify({
-            body: body
-          }), {
-            headers: {'X-CSRF-Token': this.csrf}
-          })
-          .then((response) => {
-            openNotification({
-              title: 'Success!',
-              message: '',
-              type: 'success'
-            })
-            this.editMode = false
-          })
-          .catch((error) => {
-            handleError(error)
-          })
-      },
-
-      cancelEdit: function () {
-        this.editMode = false
-        this.tableData = this.tableDataCopy
-        this.currentPath = this.currentPathCopy
-      },
-
-      addSecret: function () {
-        // only allow insertion if key and value are valid
-        if (this.newKey === '') {
-          openNotification({
-            title: 'Invalid',
-            message: 'key and value must be non-empty',
-            type: 'warning'
-          })
-          return
-        }
-
-        // Backup in case edit is cancelled
-        this.currentPathCopy = this.currentPath
-
-        // Display the to-be path of the new secret
-        this.currentPath += this.newKey
-        this.newKey = ''
-
-        // Give the user a proper secret editing UI
-        this.startEdit()
-        this.tableData = []
-
-        // Warn the user that this secret is all a draft until saved
-        openNotification({
-          title: 'This is a draft!',
-          message: 'Click save secret to finalize',
-          type: 'warning',
-          duration: 10000
+        return
+      }
+      if (this.newKeyExists) {
+        this.$notify({
+          title: 'Invalid',
+          message: 'key already exists',
+          type: 'warning'
         })
+        return
+      }
+      // insert new key value pair to local table (don't write it to server yet)
+      this.tableData.push({
+        path: this.newKey,
+        type: 'Key',
+        desc: this.newValue
+      })
+      // reset so that a new pair can be inserted
+      this.newKey = ''
+      this.newValue = ''
+    },
+
+    startEdit: function () {
+      this.editMode = true
+      this.currentPathCopy = this.currentPath
+      // a deep copy is needed in case the edit is cancelled
+      this.tableDataCopy = JSON.parse(JSON.stringify(this.tableData))
+    },
+
+    saveEdit: function () {
+      // if there is a current new key/value pair, add it in first
+      if (!(this.newKey === '' || this.newValue === '') && !this.newKeyExists) {
+        this.addKeyValue()
+      }
+      var body = JSON.stringify(this.constructedPayload)
+      this.$http.post('/api/secrets?path=' + this.currentPath, querystring.stringify({
+        body: body
+      }), {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        this.$notify({
+          title: 'Success!',
+          message: '',
+          type: 'success'
+        })
+        this.editMode = false
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    cancelEdit: function () {
+      this.editMode = false
+      this.tableData = this.tableDataCopy
+      this.currentPath = this.currentPathCopy
+    },
+
+    addSecret: function () {
+      // only allow insertion if key and value are valid
+      if (this.newKey === '') {
+        this.$notify({
+          title: 'Invalid',
+          message: 'key and value must be non-empty',
+          type: 'warning'
+        })
+        return
       }
 
+      // Backup in case edit is cancelled
+      this.currentPathCopy = this.currentPath
+
+      // Display the to-be path of the new secret
+      this.currentPath += this.newKey
+      this.newKey = ''
+
+      // Give the user a proper secret editing UI
+      this.startEdit()
+      this.tableData = []
+
+      // Warn the user that this secret is all a draft until saved
+      this.$notify({
+        title: 'This is a draft!',
+        message: 'Click save secret to finalize',
+        type: 'warning',
+        duration: 10000
+      })
     }
   }
+}
 </script>
 
 <style scoped>
