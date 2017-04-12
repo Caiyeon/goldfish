@@ -163,10 +163,10 @@ export default {
     // fetch vault cluster details
     this.getHealth()
     // check if user is logged on
-    var currentSession = window.localStorage.getItem('session')
-    if (currentSession) {
-      if (currentSession['cookie_expires_at'] > Date.now()) {
-        // login expired
+    var raw = window.localStorage.getItem('session')
+    if (raw) {
+      var session = JSON.parse(raw)
+      if (Date.now() > Date.parse(session['cookie_expiry'])) {
         window.localStorage.removeItem('session')
         this.$notify({
           title: 'Session expired',
@@ -174,8 +174,7 @@ export default {
           type: 'warning'
         })
       } else {
-        // login still valid
-        this.sessionData = JSON.parse(currentSession)
+        this.sessionData = session
       }
     }
   },
@@ -242,8 +241,8 @@ export default {
           'meta': response.data.data['meta'],
           'policies': response.data.data['policies'],
           'renewable': response.data.data['renewable'],
-          'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toLocaleString(),
-          'cookie_expiry': new Date(Date.now() + 28800000).toLocaleString() // 8 hours from now
+          'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString(),
+          'cookie_expiry': new Date(Date.now() + 28800000).toString() // 8 hours from now
         }
         window.localStorage.setItem('session', JSON.stringify(this.sessionData))
 
