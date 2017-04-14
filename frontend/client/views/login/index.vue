@@ -248,7 +248,6 @@ export default {
 
         // notify user of generated client-token
         if (this.type === 'Userpass') {
-          console.log(response.data.data['id'])
           this.$message({
             message: 'Your access token is: ' + response.data.data['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',
