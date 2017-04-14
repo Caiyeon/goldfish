@@ -274,10 +274,22 @@ export default {
     },
 
     renewLogin: function () {
-      this.$notify({
-        title: 'SoonTM',
-        message: 'Feature not implemented yet',
-        type: 'warning'
+      this.$http.post('/api/login/renew-self', {}, {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        this.$notify({
+          title: 'Renew success!',
+          message: '',
+          type: 'success'
+        })
+        this.sessionData['meta'] = response.data.data['meta']
+        this.sessionData['policies'] = response.data.data['policies']
+        this.sessionData['token_expiry'] = response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString()
+        window.localStorage.setItem('session', JSON.stringify(this.sessionData))
+      })
+      .catch((error) => {
+        this.$onError(error)
       })
     }
   }

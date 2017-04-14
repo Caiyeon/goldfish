@@ -114,6 +114,30 @@ func Login() echo.HandlerFunc {
 	}
 }
 
+func RenewSelf() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &vault.AuthInfo{}
+		defer auth.Clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		// verify auth details and create client access token
+		resp, err := auth.RenewSelf()
+		if err != nil {
+			return logError(c, err.Error(), "Could not renew token")
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"data": map[string]interface{}{
+				"meta": resp.Auth.Metadata,
+				"policies": resp.Auth.Policies,
+				"ttl": resp.Auth.LeaseDuration,
+			},
+		})
+	}
+}
+
 func getSession(c echo.Context, auth *vault.AuthInfo) error {
 	// fetch auth from cookie
 	if cookie, err := c.Request().Cookie("auth"); err == nil {
