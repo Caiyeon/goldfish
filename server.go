@@ -30,6 +30,7 @@ func main() {
 
 	e.GET("/api/login/csrf", handlers.FetchCSRF())
 	e.POST("/api/login", handlers.Login())
+	e.POST("/api/login/renew-self", handlers.RenewSelf())
 
 	e.GET("/api/users", handlers.GetUsers())
 	e.POST("/api/users/revoke", handlers.DeleteUser())

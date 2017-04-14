@@ -69,6 +69,42 @@ func (auth AuthInfo) ListUsers(backend string) (interface{}, error) {
 		}
 		return users, nil
 
+	case "approle":
+		type Role struct {
+			Roleid             string
+			Token_TTL          int
+			Token_max_TTL      int
+			Secret_id_TTL      int
+			Secret_id_num_uses int
+			Policies           []string
+			Period             int
+			Bind_secret_id     bool
+			Bound_cidr_list    string
+		}
+
+		// get a list of roles
+		resp, err := logical.List("auth/approle/role")
+		if err != nil {
+			return nil, err
+		}
+		rolenames, ok := resp.Data["keys"].([]interface{})
+		if !ok {
+			return nil, errors.New("Failed to convert response")
+		}
+
+		// fetch each role's details
+		roles := make([]Role, len(rolenames))
+		for i, role := range rolenames {
+			roles[i].Roleid = role.(string)
+			resp, err := logical.Read("auth/approle/role/" + roles[i].Roleid)
+			if err == nil {
+				if b, err := json.Marshal(resp.Data); err == nil {
+					json.Unmarshal(b, &roles[i])
+				}
+			}
+		}
+		return roles, nil
+
 	default:
 		return nil, errors.New("Unsupported user listing type")
 	}

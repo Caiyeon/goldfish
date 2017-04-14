@@ -8,7 +8,7 @@
 
 ## What is this?
 
-Goldfish is a UI for [HashiCorp Vault](https://www.vaultproject.io)
+[Goldfish](http://67.205.184.214:8000) is a UI for [HashiCorp Vault](https://www.vaultproject.io)
 
 Although Vault's REST API is powerful, certain operations would benefit from a visual representation.
 
@@ -16,15 +16,15 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 -->
 ## Features
 
-* [x] Listing/reading secrets
-* [x] Listing users (tokens and userpass)
+* [x] Logging in with token or userpass
+* [x] Reading/editing/creating/listing secrets
+* [x] Listing/deleting users (tokens and userpass)
 * [x] Listing policies
 * [x] Listing and tuning mounts
-* [x] Encrypting and decrypting arbitrary strings (via transit backend)
-* [ ] Writing secrets
+* [x] Encrypting and decrypting arbitrary strings using transit backend
+* [ ] Logging in with GitHub & more
 * [ ] Listing approle role-id and secret-id
-* [ ] Login with userpass & more
-* [ ] Local settings mapping policy names to labels (for easier user listing visualization)
+* [ ] Reading and hotloading server settings from a provided vault endpoint
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 <!--
@@ -40,7 +40,7 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 ![](screenshots/Secrets.png)
 
 
-![](screenshots/Mounts.png)
+![](screenshots/Transit.png)
 
 
 <!--
@@ -59,7 +59,7 @@ Backend:
 -->
 ## Design
 
-User credentials, upon logging in, are encrypted using the [transit backend](https://www.vaultproject.io/docs/secrets/transit/) and the cipher is sent back as a [secure cookie](http://www.gorillatoolkit.org/pkg/securecookie)
+User credentials are always encrypted using [transit backend](https://www.vaultproject.io/docs/secrets/transit/), and will never remain unencrypted at rest (both server and client-side). Cipher is then sent as an unforgeable [secure cookie](http://www.gorillatoolkit.org/pkg/securecookie)
 
 Any future actions from the user will be verified by decrypting the user's cookie with the [transit backend](https://www.vaultproject.io/docs/secrets/transit/) before being validated and used for the action.
 
@@ -114,4 +114,15 @@ vagrant up --provision
 
 # open up localhost:8001 in chrome on your local machine. You can login with token 'goldfish'
 ```
+
+
+
+<!--
+-->
+## Development
+Goldfish is being actively maintained (with new features every 1-2 weeks).
+
+Contributions are welcomed. Feel free to pick up an issue and make a pull request, or open a new issue for a feature enhancement.
+
+The Vagrant setup should provide a consistent dev environment.
 

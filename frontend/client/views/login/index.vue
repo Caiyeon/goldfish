@@ -179,10 +179,10 @@ export default {
     // fetch vault cluster details
     this.getHealth()
     // check if user is logged on
-    var currentSession = window.localStorage.getItem('session')
-    if (currentSession) {
-      if (currentSession['cookie_expires_at'] > Date.now()) {
-        // login expired
+    var raw = window.localStorage.getItem('session')
+    if (raw) {
+      var session = JSON.parse(raw)
+      if (Date.now() > Date.parse(session['cookie_expiry'])) {
         window.localStorage.removeItem('session')
         this.$notify({
           title: 'Session expired',
@@ -190,8 +190,7 @@ export default {
           type: 'warning'
         })
       } else {
-        // login still valid
-        this.sessionData = JSON.parse(currentSession)
+        this.sessionData = session
       }
     }
   },
@@ -258,14 +257,13 @@ export default {
           'meta': response.data.data['meta'],
           'policies': response.data.data['policies'],
           'renewable': response.data.data['renewable'],
-          'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toLocaleString(),
-          'cookie_expiry': new Date(Date.now() + 28800000).toLocaleString() // 8 hours from now
+          'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString(),
+          'cookie_expiry': new Date(Date.now() + 28800000).toString() // 8 hours from now
         }
         window.localStorage.setItem('session', JSON.stringify(this.sessionData))
 
         // notify user of generated client-token
         if (this.type === 'Userpass') {
-          console.log(response.data.data['id'])
           this.$message({
             message: 'Your access token is: ' + response.data.data['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',
@@ -292,10 +290,22 @@ export default {
     },
 
     renewLogin: function () {
-      this.$notify({
-        title: 'SoonTM',
-        message: 'Feature not implemented yet',
-        type: 'warning'
+      this.$http.post('/api/login/renew-self', {}, {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        this.$notify({
+          title: 'Renew success!',
+          message: '',
+          type: 'success'
+        })
+        this.sessionData['meta'] = response.data.data['meta']
+        this.sessionData['policies'] = response.data.data['policies']
+        this.sessionData['token_expiry'] = response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString()
+        window.localStorage.setItem('session', JSON.stringify(this.sessionData))
+      })
+      .catch((error) => {
+        this.$onError(error)
       })
     }
   }

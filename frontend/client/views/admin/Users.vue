@@ -81,7 +81,35 @@
               </div>
             </tab-pane>
 
-            <tab-pane label="AppRole" disabled>Disabled</tab-pane>
+            <tab-pane label="AppRole">
+              <div class="table-responsive">
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th v-for="key in tableColumns">
+                        {{ key }}
+                      </th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(entry, index) in tableData">
+                      <td width="34">
+                      <span class="icon">
+                        <a @click="openModalBasic(index)">
+                          <i class="fa fa-info"></i>
+                        </a>
+                      </span>
+                      </td>
+                      <td v-for="key in tableColumns">
+                        {{ entry[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </tab-pane>
             <tab-pane label="Certificates" disabled>Disabled</tab-pane>
 
           </tabs>
@@ -102,7 +130,7 @@ import { Tabs, TabPane } from './vue-bulma-tabs'
 import Modal from './modals/InfoModal'
 import ConfirmModal from './modals/ConfirmModal'
 
-var TabNames = ['token', 'userpass']
+var TabNames = ['token', 'userpass', 'approle']
 var TabColumns = [
   [
     'accessor',
@@ -117,6 +145,14 @@ var TabColumns = [
     'TTL',
     'Max_TTL',
     'Policies'
+  ],
+  [
+    'Roleid',
+    'Policies',
+    'Token_TTL',
+    'Token_max_TTL',
+    'Secret_id_TTL',
+    'Secret_id_num_uses'
   ]
 ]
 
@@ -151,13 +187,13 @@ export default {
   computed: {
     selectedItemTitle: function () {
       if (this.selectedIndex !== -1) {
-        return String(this.tableData[this.selectedIndex][this.tableColumns[1]])
+        return String(this.tableData[this.selectedIndex][this.tableColumns[0]])
       }
       return ''
     },
     selectedItemInfo: function () {
       if (this.selectedIndex !== -1) {
-        return this.tableData[this.selectedIndex][this.tableColumns[0]]
+        return 'This modal panel is under construction'
       }
       return ''
     },

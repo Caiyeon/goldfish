@@ -199,6 +199,14 @@ func (auth *AuthInfo) DecryptAuth() error {
 	return nil
 }
 
+func (auth AuthInfo) RenewSelf() (*api.Secret, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	return client.Auth().Token().RenewSelf(0)
+}
+
 func VaultHealth() (string, error) {
 	resp, err := http.Get(vaultAddress + "/v1/sys/health")
 	if err != nil {
