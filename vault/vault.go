@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -16,14 +17,6 @@ import (
 var vaultAddress = ""
 var vaultToken = ""
 var vaultClient *api.Client
-
-// transit key for server use only
-// encrypts and decrypts user's authentication info in cookie
-var serverTransitKey = "goldfish"
-
-// transit key for user usage
-// used for encrypting and decrypting strings in tools/transit
-var userTransitKey = "usertransit"
 
 type AuthInfo struct {
 	Type     string `json:"Type" form:"Type" query:"Type"`
@@ -36,11 +29,12 @@ func init() {
 	gob.Register(&AuthInfo{})
 
 	// read address and wrapping token inputs
-	var wrappingToken, roleID, path string
+	var wrappingToken, roleID, rolePath, configPath string
 	flag.StringVar(&vaultAddress, "addr", "http://127.0.0.1:8200", "Vault address")
 	flag.StringVar(&wrappingToken, "token", "", "Wrapping token that should contain a secret_id")
 	flag.StringVar(&roleID, "role_id", "goldfish", "The role_id the secret_id was generated from")
-	flag.StringVar(&path, "approle_path", "auth/approle/login", "The login path of the mount e.g. 'auth/approle/login'")
+	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The login path of the mount e.g. 'auth/approle/login'")
+	flag.StringVar(&configPath, "config_path", "data/goldfish", "The vault path containing goldfish config data e.g. 'secret/goldfish'")
 	flag.Parse()
 	if vaultAddress == "" || wrappingToken == "" {
 		panic("Provide credentials via -addr and -token (wrapping token only)")
@@ -81,6 +75,19 @@ func init() {
 		panic(err)
 	}
 	vaultClient = client
+
+	// load config once to ensure validity
+	if err := loadConfigFromVault(configPath); err != nil {
+		panic(err)
+	}
+
+	// continuously load config in go routine
+	go func() {
+		time.Sleep(5 * time.Second)
+		if err := loadConfigFromVault(configPath); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	// report back the accessor so it may be safekept
 	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
@@ -156,8 +163,10 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 
 // encrypt auth details with transit backend
 func (auth *AuthInfo) EncryptAuth() error {
+	c := GetConfig()
+
 	resp, err := vaultClient.Logical().Write(
-		"transit/encrypt/"+serverTransitKey,
+		"transit/encrypt/" + c.ServerTransitKey,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(auth.ID)),
 		})
@@ -176,8 +185,10 @@ func (auth *AuthInfo) EncryptAuth() error {
 
 // decrypt auth details with transit backend
 func (auth *AuthInfo) DecryptAuth() error {
+	c := GetConfig()
+
 	resp, err := vaultClient.Logical().Write(
-		"transit/decrypt/"+serverTransitKey,
+		"transit/decrypt/" + c.ServerTransitKey,
 		map[string]interface{}{
 			"ciphertext": auth.ID,
 		})

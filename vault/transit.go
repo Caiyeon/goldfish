@@ -7,13 +7,15 @@ import (
 
 // encrypt given string with userTransitKey
 func (auth AuthInfo) EncryptTransit(plaintext string) (string, error) {
+	c := GetConfig()
+
 	client, err := auth.Client()
 	if err != nil {
 		return "", err
 	}
 
 	resp, err := client.Logical().Write(
-		"transit/encrypt/"+userTransitKey,
+		"transit/encrypt/" + c.UserTransitKey,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(plaintext)),
 		})
@@ -31,13 +33,15 @@ func (auth AuthInfo) EncryptTransit(plaintext string) (string, error) {
 
 // decrypt given cipher with userTransitKey
 func (auth AuthInfo) DecryptTransit(cipher string) (string, error) {
+	c := GetConfig()
+
 	client, err := auth.Client()
 	if err != nil {
 		return "", err
 	}
 
 	resp, err := client.Logical().Write(
-		"transit/decrypt/"+userTransitKey,
+		"transit/decrypt/" + c.UserTransitKey,
 		map[string]interface{}{
 			"ciphertext": cipher,
 		})
