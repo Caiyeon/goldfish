@@ -16,15 +16,20 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 -->
 ## Features
 
+* [x] Hot-loadable server settings from a provided vault endpoint
 * [x] Logging in with token or userpass
 * [x] Reading/editing/creating/listing secrets
-* [x] Listing/deleting users (tokens and userpass)
+* [x] Listing/deleting users (tokens, userpass, and approle)
 * [x] Listing policies
 * [x] Listing and tuning mounts
 * [x] Encrypting and decrypting arbitrary strings using transit backend
-* [ ] Logging in with GitHub & more
-* [ ] Listing approle role-id and secret-id
-* [ ] Reading and hotloading server settings from a provided vault endpoint
+
+#### Planned features: Soon<sup>TM</sup>
+
+* [ ] Displaying a vault endpoint as a 'bulletin board' in homepage
+* [ ] Logging in with GitHub
+* [ ] User creation
+* [ ] Displaying a masked server audit log in real-time
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 <!--
@@ -74,7 +79,7 @@ If Vault implements CORS, there is a possibility of goldfish becoming serverless
 #### Running locally
 You'll need go (v1.8), npm (>=3), and nodejs (>=5).
 
-```
+```bash
 # you'll need a vault instance
 vault server -dev &
 
@@ -104,7 +109,7 @@ While go and npm works decently on Windows, there is a one-line solution to spin
 
 You'll need [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/). On Windows, a restart after installation is needed.
 
-```
+```bash
 # if you wish to launch goldfish in a VM:
 git clone https://github.com/Caiyeon/goldfish.git
 cd goldfish/vagrant
