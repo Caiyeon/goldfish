@@ -18,18 +18,20 @@ func GetSecrets() echo.HandlerFunc {
 
 		path := c.QueryParam("path")
 		if path == "" {
-			return logError(c, "Empty path parameter in getting secrets", "Invalid parameter")
+			c := vault.GetConfig()
+			path = c.DefaultSecretPath
 		}
 
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 
-		if path[len(path)-1:] == "/" {
+		if path == "" || path[len(path)-1:] == "/" {
 			// listing a directory
 			if result, err := auth.ListSecret(path); err != nil {
 				return logError(c, err.Error(), "Internal error")
 			} else {
 				return c.JSON(http.StatusOK, H{
 					"result": result,
+					"path": path,
 				})
 			}
 		} else {
@@ -39,6 +41,7 @@ func GetSecrets() echo.HandlerFunc {
 			} else {
 				return c.JSON(http.StatusOK, H{
 					"result": result,
+					"path": path,
 				})
 			}
 		}

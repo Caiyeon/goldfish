@@ -57,9 +57,11 @@ func init() {
 	} else {
 		// continuously load config in go routine
 		go func() {
-			time.Sleep(5 * time.Second)
-			if err := loadConfigFromVault(configPath); err != nil {
-				log.Println(err)
+			for {
+				time.Sleep(5 * time.Second)
+				if err := loadConfigFromVault(configPath); err != nil {
+					log.Println(err)
+				}
 			}
 		}()
 	}

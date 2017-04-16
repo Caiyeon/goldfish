@@ -4,18 +4,21 @@ import (
 	"encoding/json"
 	"sync"
 	"time"
+	"log"
+	"reflect"
 )
 
 type Config struct {
-	ServerTransitKey string
-	UserTransitKey   string
-	LastUpdated      time.Time
+	ServerTransitKey  string
+	UserTransitKey    string
+	DefaultSecretPath string
 }
 
-var config *Config
+var config Config
 var configLock = new(sync.RWMutex)
+var LastUpdated time.Time
 
-func GetConfig() *Config {
+func GetConfig() Config {
 	configLock.RLock()
 	defer configLock.RUnlock()
 	return config
@@ -28,7 +31,7 @@ func loadConfigFromVault(path string) error {
 	}
 
 	// marshall into temp config to ensure it is valid
-	temp := new(Config)
+	temp := Config{}
 	if b, err := json.Marshal(resp.Data); err == nil {
 		if err := json.Unmarshal(b, &temp); err != nil {
 			return err
@@ -37,12 +40,18 @@ func loadConfigFromVault(path string) error {
 		return err
 	}
 
+	// don't waste a lock if nothing has changed
+	if reflect.DeepEqual(temp, config) {
+		return nil
+	}
+
 	// RWLock.Lock() will block read lock requests until it is done
 	configLock.Lock()
 	defer configLock.Unlock()
 
 	config = temp
-	config.LastUpdated = time.Now()
+	LastUpdated = time.Now()
+	log.Println("Goldfish config reloaded")
 
 	return nil
 }

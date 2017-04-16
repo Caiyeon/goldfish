@@ -207,7 +207,7 @@ export default {
   data () {
     return {
       csrf: '',
-      currentPath: 'data/',
+      currentPath: '',
       currentPathCopy: '',
       tableHeaders: [],
       tableData: [],
@@ -263,6 +263,7 @@ export default {
       this.tableData.splice(index, 1)
     },
 
+    // currently deprecated
     getMounts: function () {
       this.$http.get('/api/mounts').then((response) => {
         this.tableData = []
@@ -290,19 +291,13 @@ export default {
       this.newValue = ''
       this.editMode = false
 
-      if (path === '' || path === '/') {
-        this.currentPath = ''
-        this.getMounts()
-        return
-      }
-
       this.$http.get('/api/secrets?path=' + path).then((response) => {
         this.tableData = []
-        this.currentPath = path
+        this.currentPath = response.data.path
         this.csrf = response.headers['x-csrf-token']
         let result = response.data.result
 
-        if (path.slice(-1) === '/') {
+        if (this.currentPath.slice(-1) === '/') {
           // listing subdirectories
           this.tableHeaders = ['Subpaths', 'Description', '']
           for (var i = 0; i < result.length; i++) {
