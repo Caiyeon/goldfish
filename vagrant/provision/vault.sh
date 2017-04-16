@@ -114,6 +114,10 @@ vault mount -path=mssql -description="Secret backend for MS SQL dynamic user cre
 vault mount -path=mysql -description="Secret backend for MySQL dynamic user credentials generation" mysql
 vault remount secret/ data/
 
+# write initial goldfish config into vault
+vault write data/goldfish DefaultSecretPath="data/" TransitBackend="transit" UserTransitKey="usertransit" \
+ServerTransitKey="goldfish" BulletinPath="data/bulletins"
+
 # populate /data/ generic backend with some sample data
 vault write data/stardew_valley/crops/spring/blue_jazz buy_price=30 days_to_grow=7 sell_price=50
 vault write data/stardew_valley/crops/spring/cauliflower buy_price=80 days_to_grow=12 sell_price=175

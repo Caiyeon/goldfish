@@ -429,13 +429,14 @@ export default {
 
       // Backup in case edit is cancelled
       this.currentPathCopy = this.currentPath
+      this.tableDataCopy = JSON.parse(JSON.stringify(this.tableData))
 
       // Display the to-be path of the new secret
       this.currentPath += this.newKey
       this.newKey = ''
 
       // Give the user a proper secret editing UI
-      this.startEdit()
+      this.editMode = true
       this.tableData = []
 
       // Warn the user that this secret is all a draft until saved
