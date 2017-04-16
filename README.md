@@ -16,15 +16,20 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 -->
 ## Features
 
+* [x] Hot-loadable server settings from a provided vault endpoint
 * [x] Logging in with token or userpass
 * [x] Reading/editing/creating/listing secrets
-* [x] Listing/deleting users (tokens and userpass)
+* [x] Listing/deleting users (tokens, userpass, and approle)
 * [x] Listing policies
 * [x] Listing and tuning mounts
 * [x] Encrypting and decrypting arbitrary strings using transit backend
-* [ ] Logging in with GitHub & more
-* [ ] Listing approle role-id and secret-id
-* [ ] Reading and hotloading server settings from a provided vault endpoint
+
+#### Planned features: Soon<sup>TM</sup>
+
+* [ ] Displaying a vault endpoint as a 'bulletin board' in homepage
+* [ ] Logging in with GitHub
+* [ ] User creation
+* [ ] Displaying a masked server audit log in real-time
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 <!--
@@ -67,6 +72,7 @@ Any actions performed (except user credential encryption/decryption via transit)
 
 If Vault implements CORS, there is a possibility of goldfish becoming serverless, and being shipped as a desktop application using electron.
 
+
 <!--
 -->
 ## Installation
@@ -74,7 +80,7 @@ If Vault implements CORS, there is a possibility of goldfish becoming serverless
 #### Running locally
 You'll need go (v1.8), npm (>=3), and nodejs (>=5).
 
-```
+```bash
 # you'll need a vault instance
 vault server -dev &
 
@@ -86,9 +92,13 @@ cd $GOPATH/src/github.com/caiyeon/goldfish
 go build server.go
 
 # run backend server with secret_id generated from approle
-server -token=$(vault write -f -wrap-ttl=20m -format=json \
+server -addr=http://127.0.0.1:8200 -token=$(vault write -f -wrap-ttl=20m -format=json \
 auth/approle/role/goldfish/secret-id | \
-jq -r .wrap_info.token)
+jq -r .wrap_info.token) \
+-role_id=goldfish \
+-approle_path=auth/approle/login
+-config_path=data/goldfish
+
 
 # run frontend in dev mode (with hot reload)
 cd frontend
@@ -104,7 +114,7 @@ While go and npm works decently on Windows, there is a one-line solution to spin
 
 You'll need [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/). On Windows, a restart after installation is needed.
 
-```
+```bash
 # if you wish to launch goldfish in a VM:
 git clone https://github.com/Caiyeon/goldfish.git
 cd goldfish/vagrant
@@ -114,6 +124,20 @@ vagrant up --provision
 
 # open up localhost:8001 in chrome on your local machine. You can login with token 'goldfish'
 ```
+
+
+#### Configuration
+Goldfish reads most of its configuration details from a provided vault endpoint (set by a cmd line arg `config_path` when launching the server)
+
+There are several keys that are used:
+
+`DefaultSecretPath`: the path that is loaded by default on Secrets page
+
+`TransitBackend`: the transit backend that goldfish will use for encryption/decryption
+
+`ServerTransitKey`: the key in `TransitBackend` used to encrypt/decrypt user credentials. Control this tightly (preferably, only allow goldfish to access this)
+
+`UserTransitKey`: the key in `TransitBackend` used by Transit page. Individual users must be granted access to this in order to use the tool.
 
 
 

@@ -39,7 +39,7 @@ func main() {
 	e.GET("/api/policies/:policyname", handlers.GetPolicy())
 	e.DELETE("/api/policies/:policyname", handlers.DeletePolicy())
 
-	e.GET("/api/transit", handlers.FetchCSRF())
+	e.GET("/api/transit", handlers.TransitInfo())
 	e.POST("/api/transit/encrypt", handlers.EncryptString())
 	e.POST("/api/transit/decrypt", handlers.DecryptString())
 

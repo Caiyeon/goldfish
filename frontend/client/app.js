@@ -67,11 +67,18 @@ function handleError (error) {
     })
     console.log(error.response.data.error)
   } else {
-    // 403s happen mostly because of invalid CSRF tokens
     if (error.response.status === 403) {
+    // 403s happen mostly because of invalid CSRF tokens
       openNotification({
         title: 'Error: 403',
         message: 'Invalid CSRF. Try refreshing the page',
+        type: 'danger'
+      })
+    } else if (error.response.status === 504) {
+    // Gateway timeout means vault is down/unreachable
+      openNotification({
+        title: 'Error: 504',
+        message: 'Goldfish or vault is unreachable',
         type: 'danger'
       })
     } else {

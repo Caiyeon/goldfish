@@ -1,66 +1,67 @@
 <template>
   <div>
-    <div class="tile is-ancestor is-vertical">
-
+    <div class="tile is-ancestor">
       <div class="tile is-parent">
-        <div class="tile is-parent is-vertical is-6">
-          <article class="tile is-child box">
+        <article class="tile is-child box">
 
-            <h3 class="title is-3">Encrypt</h3>
-            <p class="control">
-              <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
-            </p>
-
-            <p class="control has-addons has-addons-right">
-              <a @click="encryptText" class="button is-primary is-outlined">
-                <span>Encrypt</span>
-                <span class="icon">
-                  <i class="fa fa-check"></i>
-                </span>
-              </a>
-              <a @click="clearPlaintext" class="button is-danger is-outlined">
-                <span>Clear</span>
-                <span class="icon">
-                  <i class="fa fa-times"></i>
-                </span>
-              </a>
-            </p>
-
-          </article>
+        <div class="box">
+          <p class="title is-3 is-spaced">Encryption as a service</p>
+          <p class="subtitle is-5">Logged in user must have write access to transit key: '/{{ userTransitKey }}' </p>
         </div>
 
-        <div class="tile is-parent is-vertical is-6">
-          <article class="tile is-child box">
-            <h3 class="title is-3">Decrypt</h3>
-            <p class="control">
-              <textarea v-model="cipher" class="textarea" placeholder="Paste something here"></textarea>
-            </p>
-            <p class="control has-addons has-addons-right">
-              <a @click="decryptText" class="button is-primary is-outlined">
-                <span>Decrypt</span>
-                <span class="icon">
-                  <i class="fa fa-check"></i>
-                </span>
-              </a>
-              <a @click="clearCipher" class="button is-danger is-outlined">
-                <span>Clear</span>
-                <span class="icon">
-                  <i class="fa fa-times"></i>
-                </span>
-              </a>
-            </p>
-          </article>
+        <div class="tile is-parent is-marginless is-paddingless">
+          <div class="tile is-parent is-vertical is-6">
+            <article class="tile is-child box">
+
+              <h3 class="title is-3">Encrypt</h3>
+              <p class="control">
+                <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
+              </p>
+
+              <p class="control has-addons has-addons-right">
+                <a @click="encryptText" class="button is-primary is-outlined">
+                  <span>Encrypt</span>
+                  <span class="icon">
+                    <i class="fa fa-check"></i>
+                  </span>
+                </a>
+                <a @click="clearPlaintext" class="button is-danger is-outlined">
+                  <span>Clear</span>
+                  <span class="icon">
+                    <i class="fa fa-times"></i>
+                  </span>
+                </a>
+              </p>
+
+            </article>
+          </div>
+
+          <div class="tile is-parent is-vertical is-6">
+            <article class="tile is-child box">
+              <h3 class="title is-3">Decrypt</h3>
+              <p class="control">
+                <textarea v-model="cipher" class="textarea" placeholder="Paste something here"></textarea>
+              </p>
+              <p class="control has-addons has-addons-right">
+                <a @click="decryptText" class="button is-primary is-outlined">
+                  <span>Decrypt</span>
+                  <span class="icon">
+                    <i class="fa fa-check"></i>
+                  </span>
+                </a>
+                <a @click="clearCipher" class="button is-danger is-outlined">
+                  <span>Clear</span>
+                  <span class="icon">
+                    <i class="fa fa-times"></i>
+                  </span>
+                </a>
+              </p>
+            </article>
+          </div>
         </div>
+
+        </article>
       </div>
-
-      <div class="tile is-parent">
-        <div class="tile is-parent is-child">
-          <article class="tile is-child box">
-          <h4 class="title is-4">This page uses the transit backend to encrypt/decrypt arbitrary text</h4>
-          </article>
-        </div>
-      </div>
-
     </div>
   </div>
 </template>
@@ -78,13 +79,15 @@ export default {
     return {
       csrf: '',
       plaintext: '',
-      cipher: ''
+      cipher: '',
+      userTransitKey: ''
     }
   },
 
   mounted: function () {
     this.$http.get('/api/transit').then((response) => {
       this.csrf = response.headers['x-csrf-token']
+      this.userTransitKey = response.headers['usertransitkey']
     })
     .catch((error) => {
       this.$onError(error)

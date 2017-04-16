@@ -123,11 +123,15 @@ func (auth AuthInfo) DeleteUser(backend string, deleteID string) error {
 
 	switch backend {
 	case "token":
-		_, err := logical.Write("/auth/token/revoke-accessor/"+deleteID, nil)
+		_, err := logical.Write("/auth/token/revoke-accessor/" + deleteID, nil)
 		return err
 
 	case "userpass":
 		_, err := logical.Delete("/auth/userpass/users/" + deleteID)
+		return err
+
+	case "approle":
+		_, err := logical.Delete("/auth/approle/role/" + deleteID)
 		return err
 
 	default:

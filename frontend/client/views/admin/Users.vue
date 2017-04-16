@@ -105,6 +105,13 @@
                       <td v-for="key in tableColumns">
                         {{ entry[key] }}
                       </td>
+                      <td width="34">
+                      <span class="icon">
+                        <a @click="openDeleteModal(index)">
+                          <i class="fa fa-trash-o"></i>
+                        </a>
+                      </span>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -248,23 +255,22 @@ export default {
       }, {
         headers: {'X-CSRF-Token': this.csrf}
       })
-
       .then((response) => {
+        this.closeDeleteModal()
         this.tableData.splice(index, 1)
         this.$notify({
           title: 'Success',
           message: 'Deletion successful',
           type: 'success'
         })
-        this.showDeleteModal = false
       })
-
       .catch((error) => {
+        this.closeDeleteModal()
         this.$onError(error)
-        this.showDeleteModal = false
       })
     }
   }
+
 }
 </script>
 
