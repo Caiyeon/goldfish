@@ -5,7 +5,19 @@ import (
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/labstack/echo"
+	"github.com/gorilla/csrf"
 )
+
+func TransitInfo() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+		conf := vault.GetConfig()
+		c.Response().Writer.Header().Set("UserTransitKey", conf.UserTransitKey)
+		return c.JSON(http.StatusOK, H{
+			"status": "fetched",
+		})
+	}
+}
 
 func EncryptString() echo.HandlerFunc {
 	return func(c echo.Context) error {

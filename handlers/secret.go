@@ -18,8 +18,8 @@ func GetSecrets() echo.HandlerFunc {
 
 		path := c.QueryParam("path")
 		if path == "" {
-			c := vault.GetConfig()
-			path = c.DefaultSecretPath
+			conf := vault.GetConfig()
+			path = conf.DefaultSecretPath
 		}
 
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))

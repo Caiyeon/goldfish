@@ -11,6 +11,7 @@ import (
 type Config struct {
 	ServerTransitKey  string
 	UserTransitKey    string
+	TransitBackend    string
 	DefaultSecretPath string
 }
 
