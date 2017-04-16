@@ -39,7 +39,7 @@ func init() {
 	}
 
 	// setup server's vault client, used for login transit encryption/decryption
-	resp, err := fetchAppRole(vaultAddress, wrappingToken, roleID, rolePath)
+	resp, err := loginWithSecretID(vaultAddress, wrappingToken, roleID, rolePath)
 	if err != nil {
 		panic(err)
 	}

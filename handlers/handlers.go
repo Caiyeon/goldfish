@@ -16,11 +16,6 @@ type H map[string]interface{}
 // for storing ciphers of user credentials
 var scookie = &securecookie.SecureCookie{}
 
-// constraint by vue-resource. Will not need if/when switched to axios
-type StringBind struct {
-	Str string `json:"Str" form:"Str" query:"Str"`
-}
-
 func init() {
 	// setup cookie encryption keys
 	hashKey := securecookie.GenerateRandomKey(64)

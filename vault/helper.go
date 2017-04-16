@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
-func fetchAppRole(address, token, roleID, rolePath string) (*api.Secret, error) {
+func loginWithSecretID(address, token, roleID, rolePath string) (*api.Secret, error) {
 	// set up vault client
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
