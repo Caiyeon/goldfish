@@ -17,6 +17,7 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 ## Features
 
 * [x] Hot-loadable server settings from a provided vault endpoint
+* [x] Displaying a vault endpoint as a 'bulletin board' in homepage
 * [x] Logging in with token or userpass
 * [x] Reading/editing/creating/listing secrets
 * [x] Listing/deleting users (tokens, userpass, and approle)
@@ -26,7 +27,6 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 
 #### Planned features: Soon<sup>TM</sup>
 
-* [ ] Displaying a vault endpoint as a 'bulletin board' in homepage
 * [ ] Logging in with GitHub
 * [ ] User creation
 * [ ] Displaying a masked server audit log in real-time
@@ -40,6 +40,9 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 
 
 ![](screenshots/Login.png)
+
+
+![](screenshots/BulletinBoard.png)
 
 
 ![](screenshots/Secrets.png)
