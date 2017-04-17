@@ -50,6 +50,8 @@ func main() {
 	e.GET("/api/secrets", handlers.GetSecrets())
 	e.POST("/api/secrets", handlers.PostSecrets())
 
+	e.GET("/api/bulletins", handlers.GetBulletins())
+
 	// start the server in HTTP
 	// MUST change to HTTPS in production!
 	e.Logger.Fatal(e.Start(":8000"))

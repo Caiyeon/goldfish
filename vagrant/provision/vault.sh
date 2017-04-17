@@ -114,10 +114,6 @@ vault mount -path=mssql -description="Secret backend for MS SQL dynamic user cre
 vault mount -path=mysql -description="Secret backend for MySQL dynamic user credentials generation" mysql
 vault remount secret/ data/
 
-# write initial goldfish config into vault
-vault write data/goldfish DefaultSecretPath="data/" TransitBackend="transit" UserTransitKey="usertransit" \
-ServerTransitKey="goldfish" BulletinPath="data/bulletins"
-
 # populate /data/ generic backend with some sample data
 vault write data/stardew_valley/crops/spring/blue_jazz buy_price=30 days_to_grow=7 sell_price=50
 vault write data/stardew_valley/crops/spring/cauliflower buy_price=80 days_to_grow=12 sell_price=175
@@ -159,3 +155,28 @@ vault auth-enable approle
 vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token_ttl=480h \
 token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
 vault write auth/approle/role/goldfish/role-id role_id=goldfish
+
+# write initial goldfish config into vault
+vault write data/goldfish DefaultSecretPath="data/" TransitBackend="transit" UserTransitKey="usertransit" \
+ServerTransitKey="goldfish" BulletinPath="data/bulletins"
+
+# Write some sample bulletins
+vault write data/bulletins/alphabetically_first title="Bulletin Board Page" \
+message="This page is populated from a specific endpoint in vault (configurable), \
+and is read with the end-user's token to ensure traceability."
+
+vault write data/bulletins/alphabetically_second title="Usefulness" \
+message="This page is useful for displaying site-wide info that may concern vault users. \
+E.g. upcoming down-time, policy changes, new mounts , etc." type="is-success"
+
+vault write data/bulletins/bee title="Color-codeable" \
+message="Messages here can be color-coded, based on a key pair value. See Secrets page '/data/bulletins'. \
+The 'Type' key of each bulletin will cause it to show with a color" type="is-info"
+
+vault write data/bulletins/cee title="Requirements" \
+message="The logged in user must have read access to the configured bulletin path. \
+Goldfish's configurations can be changed in 'data/goldfish'. This, of course, can also be configured!" type="is-warning"
+
+vault write data/bulletins/alphabetically_first title="Vault Maintenance" \
+message="This is a mock message describing a non-existent upcoming vault maintenance, \
+ensuring that logged in users can see this clearly." type="is-danger"
