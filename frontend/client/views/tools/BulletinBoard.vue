@@ -7,23 +7,23 @@
       <div v-for="(pair, index) in bulletinPairs" class="tile is-parent is-marginless is-paddingless">
 
         <div class="tile is-parent is-vertical is-6">
-          <article class="message" v-bind:class="pair[0].Type || 'is-primary'">
+          <article class="message" v-bind:class="pair[0].type || 'is-primary'">
             <div class="message-header">
-              <p>{{ pair[0].Title }}</p>
+              <p>{{ pair[0].title }}</p>
             </div>
             <div class="message-body">
-              {{ pair[0].Message }}
+              {{ pair[0].message }}
             </div>
           </article>
         </div>
 
         <div v-if="pair[1]" class="tile is-parent is-vertical is-6">
-          <article class="message" v-bind:class="pair[1].Type || 'is-primary'">
+          <article class="message" v-bind:class="pair[1].type || 'is-primary'">
             <div class="message-header">
-              <p>{{ pair[1].Title }}</p>
+              <p>{{ pair[1].title }}</p>
             </div>
             <div class="message-body">
-              {{ pair[1].Message }}
+              {{ pair[1].message }}
             </div>
           </article>
         </div>
