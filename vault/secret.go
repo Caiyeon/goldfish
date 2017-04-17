@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-func (auth AuthInfo) ListSecret(path string) (interface{}, error) {
+func (auth AuthInfo) ListSecret(path string) ([]interface{}, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func (auth AuthInfo) ListSecret(path string) (interface{}, error) {
 		// invalid handler (i.e. invalid request)
 		return nil, errors.New("Invalid path")
 	} else {
-		return resp.Data["keys"], nil
+		return resp.Data["keys"].([]interface{}), nil
 	}
 }
 
