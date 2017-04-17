@@ -13,6 +13,7 @@ type Config struct {
 	UserTransitKey    string
 	TransitBackend    string
 	DefaultSecretPath string
+	BulletinPath      string
 }
 
 var config Config
