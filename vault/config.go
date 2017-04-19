@@ -2,11 +2,11 @@ package vault
 
 import (
 	"encoding/json"
-	"sync"
-	"time"
 	"error"
 	"log"
 	"reflect"
+	"sync"
+	"time"
 )
 
 type Config struct {

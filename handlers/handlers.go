@@ -99,11 +99,11 @@ func Login() echo.HandlerFunc {
 			"status": "Logged in",
 			"data": map[string]interface{}{
 				"display_name": data["display_name"],
-				"id": data["id"],
-				"meta": data["meta"],
-				"policies": data["policies"],
-				"renewable": data["renewable"],
-				"ttl": data["ttl"],
+				"id":           data["id"],
+				"meta":         data["meta"],
+				"policies":     data["policies"],
+				"renewable":    data["renewable"],
+				"ttl":          data["ttl"],
 			},
 		})
 	}
@@ -125,9 +125,9 @@ func RenewSelf() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, H{
 			"data": map[string]interface{}{
-				"meta": resp.Auth.Metadata,
+				"meta":     resp.Auth.Metadata,
 				"policies": resp.Auth.Policies,
-				"ttl": resp.Auth.LeaseDuration,
+				"ttl":      resp.Auth.LeaseDuration,
 			},
 		})
 	}

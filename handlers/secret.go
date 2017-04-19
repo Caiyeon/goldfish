@@ -31,7 +31,7 @@ func GetSecrets() echo.HandlerFunc {
 			} else {
 				return c.JSON(http.StatusOK, H{
 					"result": result,
-					"path": path,
+					"path":   path,
 				})
 			}
 		} else {
@@ -41,7 +41,7 @@ func GetSecrets() echo.HandlerFunc {
 			} else {
 				return c.JSON(http.StatusOK, H{
 					"result": result,
-					"path": path,
+					"path":   path,
 				})
 			}
 		}

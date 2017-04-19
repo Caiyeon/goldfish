@@ -39,7 +39,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 	case "userpass":
 		client.SetToken("")
 		// fetch client access token by performing a login
-		resp, err := client.Logical().Write("auth/userpass/login/" + auth.ID,
+		resp, err := client.Logical().Write("auth/userpass/login/"+auth.ID,
 			map[string]interface{}{
 				"password": auth.Pass,
 			})
@@ -66,7 +66,6 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 		return nil, errors.New("Unsupported authentication type")
 	}
 }
-
 
 func (auth AuthInfo) RenewSelf() (*api.Secret, error) {
 	client, err := auth.Client()
