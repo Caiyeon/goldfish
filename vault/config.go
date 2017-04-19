@@ -2,7 +2,7 @@ package vault
 
 import (
 	"encoding/json"
-	"error"
+	"errors"
 	"log"
 	"reflect"
 	"sync"
