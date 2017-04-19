@@ -24,12 +24,16 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [x] Listing policies
 * [x] Listing and tuning mounts
 * [x] Encrypting and decrypting arbitrary strings using transit backend
-
-#### Planned features: Soon<sup>TM</sup>
-
 * [ ] Logging in with GitHub
-* [ ] User creation
-* [ ] Displaying a masked server audit log in real-time
+* [ ] Authentication credential creation
+
+#### Planned major features: Soon<sup>TM</sup>
+* [ ] Displaying a server audit log in real-time
+	- Authorization would be mapped to a (configurable) policy name
+* [ ] Request & approval based policy/mount changes
+	- An edit will cause goldfish to keep track of the request body to vault
+	- Admins must then provide unseal tokens for that specific edit
+	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 <!--
