@@ -24,6 +24,14 @@ const state = {
       component: lazyLoading('login', true)
     },
     {
+      name: 'Bulletin Board',
+      path: '/bulletinboard',
+      meta: {
+        icon: 'fa-thumb-tack'
+      },
+      component: lazyLoading('bulletinboard', true)
+    },
+    {
       name: 'Secrets',
       path: '/secrets',
       meta: {

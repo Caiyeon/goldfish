@@ -26,8 +26,11 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 * [ ] Logging in with GitHub
 * [ ] Authentication credential creation
+* [ ] Limit user listing to pages to avoid stress on server
 
 #### Planned major features: Soon<sup>TM</sup>
+* [ ] Searching policy by path
+	- E.g. Display all policies that can access 'secret/data*'
 * [ ] Displaying a server audit log in real-time
 	- Authorization would be mapped to a (configurable) policy name
 * [ ] Request & approval based policy/mount changes
