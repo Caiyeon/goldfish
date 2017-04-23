@@ -2,7 +2,7 @@ package vault
 
 import (
 	"errors"
-
+	"log"
 	"github.com/hashicorp/vault/api"
 )
 
@@ -60,6 +60,34 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 		auth.Type = "token"
 		auth.ID = resp.Auth.ClientToken
 		auth.Pass = ""
+		return lookupResp.Data, nil
+
+	case "github":
+		client.SetToken("")
+
+		log.Println("token provided: " + auth.ID)
+		// fetch client access token by performing a login
+		resp, err := client.Logical().Write("auth/github/login",
+			map[string]interface{}{
+				"token": auth.ID,
+			})
+		if err != nil {
+			return nil, err
+		}
+		if resp.Auth == nil || resp.Auth.ClientToken == "" {
+			return nil, errors.New("Unable to parse vault response")
+		}
+
+		log.Println("token received: " + resp.Auth.ClientToken)
+
+		client.SetToken(resp.Auth.ClientToken)
+		lookupResp, err := client.Auth().Token().LookupSelf()
+		if err != nil {
+			return nil, err
+		}
+
+		auth.Type = "token"
+		auth.ID = resp.Auth.ClientToken
 		return lookupResp.Data, nil
 
 	default:

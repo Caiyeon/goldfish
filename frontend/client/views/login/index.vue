@@ -18,6 +18,7 @@
                     <select v-model="type" @change="clearFormData">
                       <option>Token</option>
                       <option>Userpass</option>
+                      <option>Github</option>
                     </select>
                   </div>
                 </div>
@@ -39,6 +40,14 @@
                 </p>
                 <p v-if="type === 'Userpass'" class="control has-icon">
                   <input class="input" type="password" placeholder="Vault Password" v-model="Password">
+                  <span class="icon is-small">
+                    <i class="fa fa-lock"></i>
+                  </span>
+                </p>
+
+                <!-- Github login form -->
+                <p v-if="type === 'Github'" class="control has-icon">
+                  <input class="input" type="password" placeholder="Github Access Token" v-model="ID">
                   <span class="icon is-small">
                     <i class="fa fa-lock"></i>
                   </span>
