@@ -46,7 +46,7 @@
                   >{{ page }}</a>
                 </li>
 
-                <li v-if="lastPage - currentPage > 2 && lastPage > 5">
+                <li v-if="lastPage - currentPage > 2 && lastPage > 5 && lastPage !== 1">
                   <span class="pagination-ellipsis">&hellip;</span>
                 </li>
                 <li>
@@ -233,7 +233,7 @@ export default {
       showDeleteModal: false,
       selectedIndex: -1,
       currentPage: 1,
-      lastPage: 6,
+      lastPage: 1,
       loading: false
     }
   },
