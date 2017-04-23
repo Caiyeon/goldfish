@@ -2,7 +2,6 @@ package vault
 
 import (
 	"errors"
-	"log"
 	"github.com/hashicorp/vault/api"
 )
 
