@@ -17,19 +17,26 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 ## Features
 
 * [x] Hot-loadable server settings from a provided vault endpoint
+* [x] Displaying a vault endpoint as a 'bulletin board' in homepage
 * [x] Logging in with token or userpass
 * [x] Reading/editing/creating/listing secrets
 * [x] Listing/deleting users (tokens, userpass, and approle)
 * [x] Listing policies
 * [x] Listing and tuning mounts
 * [x] Encrypting and decrypting arbitrary strings using transit backend
-
-#### Planned features: Soon<sup>TM</sup>
-
-* [ ] Displaying a vault endpoint as a 'bulletin board' in homepage
 * [ ] Logging in with GitHub
-* [ ] User creation
-* [ ] Displaying a masked server audit log in real-time
+* [ ] Authentication credential creation
+* [ ] Limit user listing to pages to avoid stress on server
+
+#### Planned major features: Soon<sup>TM</sup>
+* [ ] Searching policy by path
+	- E.g. Display all policies that can access 'secret/data*'
+* [ ] Displaying a server audit log in real-time
+	- Authorization would be mapped to a (configurable) policy name
+* [ ] Request & approval based policy/mount changes
+	- An edit will cause goldfish to keep track of the request body to vault
+	- Admins must then provide unseal tokens for that specific edit
+	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 <!--
@@ -40,6 +47,9 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 
 
 ![](screenshots/Login.png)
+
+
+![](screenshots/BulletinBoard.png)
 
 
 ![](screenshots/Secrets.png)
