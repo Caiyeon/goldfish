@@ -62,28 +62,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 		return lookupResp.Data, nil
 
 	case "github":
-		client.SetToken("")
-		// fetch client access token by performing a login
-		resp, err := client.Logical().Write("auth/github/login",
-			map[string]interface{}{
-				"token": auth.ID,
-			})
-		if err != nil {
-			return nil, err
-		}
-		if resp.Auth == nil || resp.Auth.ClientToken == "" {
-			return nil, errors.New("Unable to parse vault response")
-		}
-
-		client.SetToken(resp.Auth.ClientToken)
-		lookupResp, err := client.Auth().Token().LookupSelf()
-		if err != nil {
-			return nil, err
-		}
-
-		auth.Type = "token"
-		auth.ID = resp.Auth.ClientToken
-		return lookupResp.Data, nil
+		return nil, errors.New("Github login not supported on demo")
 
 	default:
 		return nil, errors.New("Unsupported authentication type")
