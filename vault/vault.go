@@ -10,16 +10,16 @@ import (
 )
 
 type AuthInfo struct {
-	Type     string `json:"Type" form:"Type" query:"Type"`
-	ID       string `json:"ID" form:"ID" query:"ID"`
-	Pass     string `json:"password" form:"Password" query:"Password"`
+	Type string `json:"Type" form:"Type" query:"Type"`
+	ID   string `json:"ID" form:"ID" query:"ID"`
+	Pass string `json:"password" form:"Password" query:"Password"`
 }
 
 // for authenticating this web server with vault
 var (
 	vaultAddress = ""
-	vaultToken = ""
-	vaultClient *api.Client
+	vaultToken   = ""
+	vaultClient  *api.Client
 )
 
 func init() {

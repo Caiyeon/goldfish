@@ -17,7 +17,7 @@ func (auth *AuthInfo) EncryptAuth() error {
 	c := GetConfig()
 
 	resp, err := vaultClient.Logical().Write(
-		c.TransitBackend + "/encrypt/" + c.ServerTransitKey,
+		c.TransitBackend+"/encrypt/"+c.ServerTransitKey,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(auth.ID)),
 		})
@@ -39,7 +39,7 @@ func (auth *AuthInfo) DecryptAuth() error {
 	c := GetConfig()
 
 	resp, err := vaultClient.Logical().Write(
-		c.TransitBackend + "/decrypt/" + c.ServerTransitKey,
+		c.TransitBackend+"/decrypt/"+c.ServerTransitKey,
 		map[string]interface{}{
 			"ciphertext": auth.ID,
 		})

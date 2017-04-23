@@ -1,7 +1,6 @@
 package vault
 
-import (
-)
+import ()
 
 func (auth AuthInfo) GetBulletins() ([]interface{}, error) {
 	c := GetConfig()
@@ -13,7 +12,8 @@ func (auth AuthInfo) GetBulletins() ([]interface{}, error) {
 
 	results := make([]interface{}, len(bulletins))
 	for i, bulletin := range bulletins {
-		b, ok := bulletin.(string); if ok {
+		b, ok := bulletin.(string)
+		if ok {
 			data, err := auth.ReadSecret(c.BulletinPath + b)
 			if err != nil {
 				return nil, err
