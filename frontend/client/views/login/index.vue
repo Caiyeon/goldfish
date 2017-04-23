@@ -18,7 +18,6 @@
                     <select v-model="type" @change="clearFormData">
                       <option>Token</option>
                       <option>Userpass</option>
-                      <option>Github</option>
                     </select>
                   </div>
                 </div>
@@ -45,36 +44,20 @@
                   </span>
                 </p>
 
-                <!-- Github login form -->
-                <p v-if="type === 'Github'" class="control has-icon">
-                  <input class="input" type="password" placeholder="Github Access Token" v-model="ID">
-                  <span class="icon is-small">
-                    <i class="fa fa-lock"></i>
-                  </span>
+                <p v-if="type === 'Token'" class="control">
+                <tooltip label="Use 'goldfish' as vault token to login" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
+                  <button type="submit" value="Login" class="button is-primary">
+                    Login
+                  </button>
+                </tooltip>
                 </p>
 
-                <p class="control">
-                  <p v-if="type === 'Token'" class="control">
-                  <tooltip label="Use 'goldfish' as vault token to login" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
-                    <button type="submit" value="Login" class="button is-primary">
-                      Login
-                    </button>
-                  </tooltip>
-                  </p>
-
-                  <p v-if="type === 'Userpass'" class="control">
-                  <tooltip label="Use username:'goldfish', password:'goldfish'" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
-                    <button type="submit" value="Login" class="button is-primary">
-                      Login
-                    </button>
-                  </tooltip>
-                  
-                  <p v-if="type === 'Github'" class="control">
-                  <tooltip label="Github login is disabled on demo mode" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
-                    <button type="submit" value="Login" class="button is-primary" disabled>
-                      Login
-                    </button>
-                  </tooltip>
+                <p v-if="type === 'Userpass'" class="control">
+                <tooltip label="Use username:'goldfish', password:'goldfish'" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
+                  <button type="submit" value="Login" class="button is-primary">
+                    Login
+                  </button>
+                </tooltip>
                 </p>
 
               </form>
