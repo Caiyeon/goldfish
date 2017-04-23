@@ -25,8 +25,8 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [x] Listing and tuning mounts
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 * [x] Logging in with
+* [x] Limit user listing to pages to avoid stress on server
 * [ ] Authentication credential creation
-* [ ] Limit user listing to pages to avoid stress on server
 
 #### Planned major features: Soon<sup>TM</sup>
 * [ ] Searching policy by path

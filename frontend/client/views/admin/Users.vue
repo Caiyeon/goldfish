@@ -180,7 +180,6 @@
 </template>
 
 <script>
-import { Tabs, TabPane } from './vue-bulma-tabs'
 import Modal from './modals/InfoModal'
 import ConfirmModal from './modals/ConfirmModal'
 
@@ -212,8 +211,6 @@ var TabColumns = [
 
 export default {
   components: {
-    Tabs,
-    TabPane,
     Modal,
     ConfirmModal
   },
