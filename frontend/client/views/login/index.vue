@@ -68,10 +68,10 @@
                       Login
                     </button>
                   </tooltip>
-                  
+
                   <p v-if="type === 'Github'" class="control">
                   <tooltip label="Github login is disabled on demo mode" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
-                    <button type="submit" value="Login" class="button is-primary" disabled>
+                    <button type="submit" value="Login" class="button is-primary is-disabled">
                       Login
                     </button>
                   </tooltip>
