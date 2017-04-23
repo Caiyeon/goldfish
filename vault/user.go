@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-func (auth AuthInfo) ListUsers(backend string) (interface{}, error) {
+func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -24,14 +24,22 @@ func (auth AuthInfo) ListUsers(backend string) (interface{}, error) {
 			return nil, errors.New("Failed to convert response")
 		}
 
-		// fetch each token's details
-		tokens := make([]interface{}, len(accessors))
-		for i, accessor := range accessors {
+		// calculate how many accessors to read, to avoid too much stress on vault server
+		limit := 300
+		if offset > len(accessors) {
+			return nil, errors.New("Offset out of bound")
+		} else if offset + limit > len(accessors) {
+			limit = len(accessors) - offset
+		}
+
+		// fetch details for each accessor
+		tokens := make([]interface{}, limit)
+		for i := 0; i < limit; i++ {
 			resp, err := logical.Write("auth/token/lookup-accessor",
 				map[string]interface{}{
-					"accessor": accessor,
+					"accessor": accessors[i + offset],
 				})
-			// error may occur if accessor expired. Simply ignore it.
+			// error may occur if accessor expired, simply ignore it
 			if err == nil {
 				tokens[i] = resp.Data
 			}
@@ -137,4 +145,24 @@ func (auth AuthInfo) DeleteUser(backend string, deleteID string) error {
 	default:
 		return errors.New("Unsupported user deletion type")
 	}
+}
+
+func (auth AuthInfo) GetTokenCount() (int, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return -1, err
+	}
+	logical := client.Logical()
+
+	resp, err := logical.List("auth/token/accessors")
+	if err != nil {
+		return -1, err
+	}
+
+	accessors, ok := resp.Data["keys"].([]interface{})
+	if !ok {
+		return -1, errors.New("Failed to convert response")
+	}
+
+	return len(accessors), nil
 }
