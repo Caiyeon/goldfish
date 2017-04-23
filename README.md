@@ -18,13 +18,13 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 
 * [x] Hot-loadable server settings from a provided vault endpoint
 * [x] Displaying a vault endpoint as a 'bulletin board' in homepage
-* [x] Logging in with token or userpass
+* [x] Logging in with token, userpass, or github
 * [x] Reading/editing/creating/listing secrets
 * [x] Listing/deleting users (tokens, userpass, and approle)
 * [x] Listing policies
 * [x] Listing and tuning mounts
 * [x] Encrypting and decrypting arbitrary strings using transit backend
-* [ ] Logging in with GitHub
+* [x] Logging in with
 * [ ] Authentication credential creation
 * [ ] Limit user listing to pages to avoid stress on server
 
@@ -37,6 +37,7 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 	- An edit will cause goldfish to keep track of the request body to vault
 	- Admins must then provide unseal tokens for that specific edit
 	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
+* [ ] SAML to LDAP integration
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 <!--
