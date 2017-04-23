@@ -2,8 +2,8 @@ package vault
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/http"
+	"io/ioutil"
 
 	"github.com/hashicorp/vault/api"
 )

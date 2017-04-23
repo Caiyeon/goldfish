@@ -11,6 +11,11 @@ export default {
       name: 'Transit',
       path: '/transit',
       component: lazyLoading('tools/Transit')
+    },
+    {
+      name: 'Bulletin Board',
+      path: '/bulletin',
+      component: lazyLoading('tools/BulletinBoard')
     }
   ]
 }

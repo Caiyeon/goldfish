@@ -2,11 +2,10 @@ package vault
 
 import (
 	"encoding/json"
-	"errors"
-	"log"
-	"reflect"
 	"sync"
 	"time"
+	"log"
+	"reflect"
 )
 
 type Config struct {
@@ -31,8 +30,6 @@ func loadConfigFromVault(path string) error {
 	resp, err := vaultClient.Logical().Read(path)
 	if err != nil {
 		return err
-	} else if resp == nil {
-		return errors.New("Failed to read config secret from vault")
 	}
 
 	// marshall into temp config to ensure it is valid

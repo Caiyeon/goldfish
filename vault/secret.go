@@ -1,8 +1,8 @@
 package vault
 
 import (
-	"encoding/json"
 	"errors"
+	"encoding/json"
 )
 
 func (auth AuthInfo) ListSecret(path string) ([]interface{}, error) {
