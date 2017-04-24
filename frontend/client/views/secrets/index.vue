@@ -9,22 +9,23 @@
 
             <div class="columns">
               <div class="column is-fullwidth">
-                <p class="control has-addons">
-
+                <div class="field has-addons">
                   <!-- up button -->
+                  <p class="control">
                   <a class="button is-medium is-primary is-paddingless is-marginless" @click="changePathUp()">
                     <span class="icon is-paddingless is-marginless">
                       <i class="fa fa-angle-up is-paddingless is-marginless"></i>
                     </span>
                   </a>
-
+                  </p>
+                  <p class="control is-expanded">
                   <!-- navigation input -->
                   <input class="input is-medium is-expanded" type="text"
                   placeholder="Enter the path of a secret or directory"
                   v-model.lazy="currentPath"
                   @keyup.enter="changePath(currentPath)">
-
-                </p>
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -50,21 +51,21 @@
 
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
-              v-on:click="editMode = true">
+              v-on:click="startEdit">
               Add Secret
             </a>
 
-            <a v-if="editMode === true && currentPathType === 'Secret'"
+            <a v-if="editMode === true"
               class="button is-warning is-small is-marginless"
               v-on:click="cancelEdit">
               Cancel Edit
             </a>
 
             <!-- legend -->
-            <a class="tag is-danger is-unselectable is-disabled is-pulled-right">Mount</a>
-            <a class="tag is-primary is-unselectable is-disabled is-pulled-right">Path</a>
-            <a class="tag is-info is-unselectable is-disabled is-pulled-right">Secret</a>
-            <a class="tag is-success is-unselectable is-disabled is-pulled-right">Key</a>
+            <span class="tag is-danger is-unselectable is-pulled-right">Mount</span>
+            <span class="tag is-primary is-unselectable is-pulled-right">Path</span>
+            <span class="tag is-info is-unselectable is-pulled-right">Secret</span>
+            <span class="tag is-success is-unselectable is-pulled-right">Key</span>
           </div>
 
           <!-- data table -->
@@ -83,9 +84,9 @@
               <tbody>
                 <tr v-for="(entry, index) in tableData">
                   <td width="68">
-                    <a class="tag is-disabled is-pulled-left" v-bind:class="type(index)">
+                    <span class="tag is-pulled-left" v-bind:class="type(index)">
                       {{ entry.type }}
-                    </a>
+                    </span>
                   </td>
 
                   <!-- Editable key field -->
@@ -96,7 +97,7 @@
                   </td>
                   <!-- View-only -->
                   <td v-else>
-                    <a v-bind:class="entry.type === 'Key' ? 'is-disabled' : ''" @click="changePath(currentPath + entry.path)">
+                    <a @click="changePath(currentPath, entry)">
                       {{ entry.path }}
                     </a>
                   </td>
@@ -286,7 +287,15 @@ export default {
       })
     },
 
-    changePath: function (path) {
+    changePath: function (path, entry) {
+      if (entry) {
+        if (entry.type === 'Key') {
+          return
+        } else {
+          path += entry.path
+        }
+      }
+
       this.newKey = ''
       this.newValue = ''
       this.editMode = false

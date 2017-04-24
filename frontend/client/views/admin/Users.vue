@@ -11,7 +11,7 @@
               <li v-bind:class="tabName === 'token' ? 'is-active' : ''" v-on:click="switchTab(0)"><a>Tokens</a></li>
               <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''" v-on:click="switchTab(1)"><a>Userpass</a></li>
               <li v-bind:class="tabName === 'approle' ? 'is-active' : ''" v-on:click="switchTab(2)"><a>Approle</a></li>
-              <li class="is-disabled"><a>Certificates</a></li>
+              <li disabled><a>Certificates</a></li>
             </ul>
           </div>
 
@@ -21,11 +21,11 @@
             <nav class="pagination is-right">
               <a class="pagination-previous"
                 v-on:click="loadPage(currentPage - 1)"
-                v-bind:class="currentPage < 2 || loading ? 'is-disabled' : ''"
+                :disabled="loading || currentPage < 2"
               >Previous</a>
               <a class="pagination-next"
                 v-on:click="loadPage(currentPage + 1)"
-                v-bind:class="currentPage > lastPage - 1 || loading ? 'is-disabled' : ''"
+                :disabled="loading || currentPage > lastPage - 1"
               >Next page</a>
 
               <ul class="pagination-list">
@@ -344,6 +344,9 @@ export default {
     },
 
     loadPage: function (pageNumber) {
+      if (pageNumber < 1 || pageNumber > this.lastPage) {
+        return
+      }
       this.currentPage = pageNumber
       this.loading = true
       this.$http.get('/api/users?type=token&offset=' + ((this.currentPage - 1) * 300).toString()).then((response) => {

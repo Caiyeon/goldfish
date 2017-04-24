@@ -9,9 +9,9 @@
           <!-- Login tile -->
           <article class="tile is-child is-marginless is-paddingless">
             <h1 class="title">Vault Login</h1>
-            <div class="box is-parent is-6">
-              <form id="form" v-on:submit.prevent="login">
+            <div class="box is-parent is-6" @keyup.enter="login">
 
+              <div class="field">
                 <div class="control">
                   <label class="label">Authentication Type</label>
                   <div class="select is-fullwidth">
@@ -22,44 +22,56 @@
                     </select>
                   </div>
                 </div>
+              </div>
 
-                <!-- Token login form -->
-                <p v-if="type === 'Token'" class="control has-icon">
+              <!-- Token login form -->
+              <div v-if="type === 'Token'" class="field">
+                <p class="control has-icons-left">
                   <input class="input" type="password" placeholder="Vault Token" v-model="ID">
                   <span class="icon is-small">
                     <i class="fa fa-lock"></i>
                   </span>
                 </p>
+              </div>
 
-                <!-- Userpass login form -->
-                <p v-if="type === 'Userpass'" class="control has-icon">
-                  <input class="input" type="text" placeholder="Vault Username" v-model="ID">
-                  <span class="icon is-small">
-                    <i class="fa fa-user-circle-o"></i>
-                  </span>
-                </p>
-                <p v-if="type === 'Userpass'" class="control has-icon">
-                  <input class="input" type="password" placeholder="Vault Password" v-model="Password">
-                  <span class="icon is-small">
-                    <i class="fa fa-lock"></i>
-                  </span>
-                </p>
+              <!-- Userpass login form -->
+              <div v-if="type === 'Userpass'" class="field">
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="text" placeholder="Vault Username" v-model="ID">
+                    <span class="icon is-small">
+                      <i class="fa fa-user-circle-o"></i>
+                    </span>
+                  </p>
+                </div>
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="password" placeholder="Vault Password" v-model="Password">
+                    <span class="icon is-small">
+                      <i class="fa fa-lock"></i>
+                    </span>
+                  </p>
+                </div>
+              </div>
 
-                <!-- Github login form -->
-                <p v-if="type === 'Github'" class="control has-icon">
+              <!-- Github login form -->
+              <div v-if="type === 'Github'" class="field">
+                <p class="control has-icons-left">
                   <input class="input" type="password" placeholder="Github Access Token" v-model="ID">
                   <span class="icon is-small">
                     <i class="fa fa-lock"></i>
                   </span>
                 </p>
+              </div>
 
+              <div class="field">
                 <p class="control">
-                  <button type="submit" value="Login" class="button is-primary">
+                  <button @click="login" type="submit" value="Login" class="button is-primary">
                     Login
                   </button>
                 </p>
+              </div>
 
-              </form>
             </div>
           </article>
 

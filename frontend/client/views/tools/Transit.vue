@@ -14,48 +14,60 @@
             <article class="tile is-child box">
 
               <h3 class="title is-3">Encrypt</h3>
-              <p class="control">
-                <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
-              </p>
 
-              <p class="control has-addons has-addons-right">
-                <a @click="encryptText" class="button is-primary is-outlined">
-                  <span>Encrypt</span>
-                  <span class="icon">
-                    <i class="fa fa-check"></i>
-                  </span>
-                </a>
-                <a @click="clearPlaintext" class="button is-danger is-outlined">
-                  <span>Clear</span>
-                  <span class="icon">
-                    <i class="fa fa-times"></i>
-                  </span>
-                </a>
-              </p>
+              <div class="field">
+                <p class="control">
+                  <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
+                </p>
+              </div>
+
+              <div class="field is-pulled-right">
+                <p class="control">
+                  <a @click="encryptText" class="button is-primary is-outlined">
+                    <span>Encrypt</span>
+                    <span class="icon">
+                      <i class="fa fa-check"></i>
+                    </span>
+                  </a>
+                  <a @click="clearPlaintext" class="button is-danger is-outlined">
+                    <span>Clear</span>
+                    <span class="icon">
+                      <i class="fa fa-times"></i>
+                    </span>
+                  </a>
+                </p>
+              </div>
 
             </article>
           </div>
 
           <div class="tile is-parent is-vertical is-6">
             <article class="tile is-child box">
+
               <h3 class="title is-3">Decrypt</h3>
-              <p class="control">
-                <textarea v-model="cipher" class="textarea" placeholder="Paste something here"></textarea>
-              </p>
-              <p class="control has-addons has-addons-right">
-                <a @click="decryptText" class="button is-primary is-outlined">
-                  <span>Decrypt</span>
-                  <span class="icon">
-                    <i class="fa fa-check"></i>
-                  </span>
-                </a>
-                <a @click="clearCipher" class="button is-danger is-outlined">
-                  <span>Clear</span>
-                  <span class="icon">
-                    <i class="fa fa-times"></i>
-                  </span>
-                </a>
-              </p>
+
+              <div class="field">
+                <p class="control">
+                  <textarea v-model="cipher" class="textarea" placeholder="Paste something here"></textarea>
+                </p>
+              </div>
+
+              <div class="field is-pulled-right">
+                <p class="control">
+                  <a @click="decryptText" class="button is-primary is-outlined">
+                    <span>Decrypt</span>
+                    <span class="icon">
+                      <i class="fa fa-check"></i>
+                    </span>
+                  </a>
+                  <a @click="clearCipher" class="button is-danger is-outlined">
+                    <span>Clear</span>
+                    <span class="icon">
+                      <i class="fa fa-times"></i>
+                    </span>
+                  </a>
+                </p>
+              </div>
             </article>
           </div>
         </div>
