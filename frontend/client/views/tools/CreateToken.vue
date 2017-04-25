@@ -1,0 +1,370 @@
+<template>
+  <div>
+    <div class="tile is-ancestor">
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+
+          <!-- ID -->
+          <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">ID</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <input class="input is-info" type="text" placeholder="Default will be a UUID" v-model="ID">
+                </div>
+                <p class="help is-info">
+                  Root privilege
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Display name -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Display Name</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <input class="input" type="text" placeholder="Default will be 'token'" v-model="displayName">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TTL -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">TTL</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <input class="input" type="text"
+                    placeholder="e.g. '2d 12h' or '10h 30m 20s'"
+                    v-model="ttl"
+                    :class="stringToSeconds(this.ttl) < 0 ? 'is-danger' : ''">
+                </div>
+                <p v-if="stringToSeconds(this.ttl) < 0" class="help is-danger">
+                  TTL cannot be negative
+                </p>
+                <p v-if="stringToSeconds(this.ttl) > 0" class="help is-info">
+                  {{ stringToSeconds(this.ttl) }} seconds
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Max_TTL -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Explicit Max TTL</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <input class="input" type="text"
+                    placeholder="e.g. '2d 12h' or '10h 30m 20s'"
+                    v-model="max_ttl"
+                    :class="stringToSeconds(this.max_ttl) < 0 ? 'is-danger' : ''">
+                </div>
+                <p v-if="stringToSeconds(this.max_ttl) < 0" class="help is-danger">
+                  TTL cannot be negative
+                </p>
+                <p v-if="stringToSeconds(this.max_ttl) > 0" class="help is-info">
+                  {{ stringToSeconds(this.max_ttl) }} seconds
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Renewable -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Renewable?</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <vb-switch type="info" :checked="bRenewable" v-model="bRenewable"></vb-switch>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No-parent -->
+          <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">No parent?</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <vb-switch type="info" :checked="bNoParent" v-model="bNoParent"></vb-switch>
+                </div>
+                <p class="help is-info">
+                  Root privilege
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Period -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Periodic?</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <vb-switch type="info" :checked="bPeriodic" v-model="bPeriodic"></vb-switch>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Metadata</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <p>Feature is coming soon<sup>TM</sup></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Policies -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Policies</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <nav class="panel">
+                    <p class="panel-heading">Available Policies</p>
+                    <div class="panel-block">
+                      <p class="control has-icons-left">
+                        <input class="input is-small" type="text" placeholder="Search" v-model="policyFilter">
+                        <span class="icon is-small is-left">
+                          <i class="fa fa-search"></i>
+                        </span>
+                      </p>
+                    </div>
+                    <label
+                      class="panel-block"
+                      v-for="policy in filteredPolicies">
+                      <input
+                        type="checkbox"
+                        :checked="selectedPolicies.indexOf(policy) > -1"
+                        @click="toggle(policy)"
+                        > {{ policy }} </label>
+                    </label>
+                    <div class="panel-block">
+                      <button class="button is-primary is-outlined is-fullwidth" @click="selectedPolicies = []">
+                        Reset all filters
+                      </button>
+                    </div>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirm button -->
+          <div class="field is-horizontal">
+            <div class="field-label">
+              <!-- Left empty for spacing -->
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="log()">
+                    Create Root Token
+                  </button>
+                  <button v-else class="button is-primary" @click="log()">
+                    Create Token
+                  </button>
+                  <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
+                  <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </article>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import VbSwitch from 'vue-bulma-switch'
+
+export default {
+  components: {
+    VbSwitch
+  },
+
+  data () {
+    return {
+      csrf: '',
+      bRenewable: true,
+      bNoParent: false,
+      bPeriodic: false,
+      ID: '',
+      displayName: '',
+      ttl: '',
+      max_ttl: '',
+      metadata: '',
+      availablePolicies: ['default'],
+      selectedPolicies: ['default'],
+      policyFilter: ''
+    }
+  },
+
+  computed: {
+    // returns all policies in availablePolicies that contain the policyFilter substring
+    filteredPolicies: function () {
+      var filter = this.policyFilter
+      return this.availablePolicies.filter(
+        function (policy) {
+          return policy.includes(filter)
+        }
+      )
+    },
+
+    // constructs the JSON payload that needs to be sent to the server
+    payloadJSON: function () {
+      var payload = {
+        'id': this.ID,
+        'display_name': this.displayName,
+        'ttl': this.stringToSeconds(this.ttl).toString() + 's',
+        'explicit_max_ttl': this.stringToSeconds(this.max_ttl).toString() + 's',
+        'renewable': !!this.bRenewable,
+        'no_parent': !!this.bNoParent,
+        'period': !!this.bPeriodic,
+        'no_default_policy': this.availablePolicies.indexOf('default') === -1,
+        'policies': this.selectedPolicies
+      }
+      return payload
+    }
+  },
+
+  mounted: function () {
+    // fetch available policies
+    try {
+      var session = JSON.parse(window.localStorage.getItem('session'))
+      if (Date.now() > Date.parse(session['cookie_expiry'])) {
+        throw session
+      } else {
+        this.availablePolicies = session.policies
+      }
+    } catch (e) {
+      this.$notify({
+        title: 'Session not found',
+        message: 'Please login',
+        type: 'danger'
+      })
+    }
+
+    // if root policy, fetch all available policies from server
+    if (this.availablePolicies.indexOf('root') > -1) {
+      this.$http.get('/api/policies').then((response) => {
+        this.availablePolicies = response.data.result
+        // default policy is always an option, and the first item in list
+        var i = this.availablePolicies.indexOf('default')
+        if (i < 0) {
+          this.availablePolicies.splice(0, 0, 'default')
+        } else if (i > 0) {
+          var temp = this.availablePolicies[i]
+          this.availablePolicies[i] = this.availablePolicies[0]
+          this.availablePolicies[0] = temp
+        }
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    }
+  },
+
+  methods: {
+    oncodeChange (code) {
+      this.metadata = code
+    },
+
+    stringToSeconds: function (str) {
+      if (str.includes('-')) {
+        return -1
+      }
+      var totalSeconds = 0
+      var days = str.match(/(\d+)\s*d/)
+      var hours = str.match(/(\d+)\s*h/)
+      var minutes = str.match(/(\d+)\s*m/)
+      var seconds = str.match(/(\d+)$/) || str.match(/(\d+)\s*s/)
+      if (days) { totalSeconds += parseInt(days[1]) * 86400 }
+      if (hours) { totalSeconds += parseInt(hours[1]) * 3600 }
+      if (minutes) { totalSeconds += parseInt(minutes[1]) * 60 }
+      if (seconds) { totalSeconds += parseInt(seconds[1]) }
+      return totalSeconds
+    },
+
+    isValidJSON: function (str) {
+      try {
+        JSON.parse(str)
+      } catch (e) {
+        console.log(false)
+        return false
+      }
+      console.log(true)
+      return true
+    },
+
+    toggle: function (policy) {
+      // if already selected, unselect the policy
+      if (this.selectedPolicies.indexOf(policy) > -1) {
+        this.selectedPolicies.splice(this.selectedPolicies.indexOf(policy), 1)
+      } else {
+        this.selectedPolicies.push(policy)
+      }
+    },
+
+    log: function () {
+      console.log(this.payloadJSON)
+      this.$notify({
+        title: 'SoonTM',
+        message: 'Feature not yet implemented in backend',
+        type: 'danger'
+      })
+    }
+
+  }
+}
+</script>
+
+<style scoped>
+  .button {
+    margin: 5px 0 0;
+  }
+
+  .control .button {
+    margin: inherit;
+  }
+
+  .fa-trash-o {
+    color: red;
+  }
+
+  .fa-info {
+    color: lightskyblue;
+  }
+
+  .switch {
+    top: 7px;
+  }
+</style>
