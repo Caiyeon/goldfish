@@ -27,7 +27,7 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 
 #### Planned major features: Soon<sup>TM</sup>
-* [ ] Searching users by policy
+* [x] Searching users by policy
 	- E.g. Display all users that have the policy 'admins'
 * [ ] Searching policy by path
 	- E.g. Display all policies that can access 'secret/data*'
