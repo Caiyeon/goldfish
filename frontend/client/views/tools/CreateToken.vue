@@ -12,7 +12,7 @@
             <div class="field-body">
               <div class="field">
                 <div class="control">
-                  <input class="input is-info" type="text" placeholder="Default will be a UUID" v-model="ID">
+                  <input class="input" type="text" placeholder="Default will be a UUID" v-model="ID">
                 </div>
                 <p class="help is-info">
                   Root privilege
@@ -31,6 +31,9 @@
                 <div class="control">
                   <input class="input" type="text" placeholder="Default will be 'token'" v-model="displayName">
                 </div>
+                <p v-if="displayName !== ''" class="help is-info">
+                  Display name will be 'token-{{ displayName }}'
+                </p>
               </div>
             </div>
           </div>
@@ -103,7 +106,7 @@
             <div class="field-body">
               <div class="field">
                 <div class="control">
-                  <vb-switch type="info" :checked="bNoParent" v-model="bNoParent"></vb-switch>
+                  <vb-switch type="danger" :checked="bNoParent" v-model="bNoParent"></vb-switch>
                 </div>
                 <p class="help is-info">
                   Root privilege
@@ -113,21 +116,45 @@
           </div>
 
           <!-- Period -->
-          <div class="field is-horizontal">
+          <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
               <label class="label">Periodic?</label>
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control">
-                  <vb-switch type="info" :checked="bPeriodic" v-model="bPeriodic"></vb-switch>
+                  <vb-switch type="danger" :checked="bPeriodic" v-model="bPeriodic"></vb-switch>
                 </div>
+                <p class="help is-info">
+                  Root privilege
+                </p>
+              </div>
+            </div>
+          </div>
+          <div v-if="availablePolicies.indexOf('root') > -1 && this.bPeriodic" class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Period TTL</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <input class="input" type="text"
+                    placeholder="e.g. '2d 12h' or '10h 30m 20s'"
+                    v-model="period_ttl"
+                    :class="stringToSeconds(this.period_ttl) < 0 ? 'is-danger' : ''">
+                </div>
+                <p v-if="stringToSeconds(this.period_ttl) < 0" class="help is-danger">
+                  TTL cannot be negative
+                </p>
+                <p v-if="stringToSeconds(this.period_ttl) > 0" class="help is-info">
+                  {{ stringToSeconds(this.period_ttl) }} seconds
+                </p>
               </div>
             </div>
           </div>
 
           <!-- Metadata -->
-          <div class="field is-horizontal">
+          <!-- <div class="field is-horizontal">
             <div class="field-label is-normal">
               <label class="label">Metadata</label>
             </div>
@@ -136,7 +163,7 @@
                 <p>Feature is coming soon<sup>TM</sup></p>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Policies -->
           <div class="field is-horizontal">
@@ -224,7 +251,9 @@ export default {
       metadata: '',
       availablePolicies: ['default'],
       selectedPolicies: ['default'],
-      policyFilter: ''
+      policyFilter: '',
+      num_uses: 0,
+      period_ttl: ''
     }
   },
 
@@ -248,8 +277,8 @@ export default {
         'explicit_max_ttl': this.stringToSeconds(this.max_ttl).toString() + 's',
         'renewable': !!this.bRenewable,
         'no_parent': !!this.bNoParent,
-        'period': !!this.bPeriodic,
-        'no_default_policy': this.availablePolicies.indexOf('default') === -1,
+        'period': this.bPeriodic ? this.period_ttl : '',
+        'no_default_policy': this.selectedPolicies.indexOf('default') === -1,
         'policies': this.selectedPolicies
       }
       return payload
@@ -257,6 +286,14 @@ export default {
   },
 
   mounted: function () {
+    this.$http.get('/api/users/csrf')
+    .then((response) => {
+      this.csrf = response.headers['x-csrf-token']
+    })
+    .catch((error) => {
+      this.$onError(error)
+    })
+
     // fetch available policies
     try {
       var session = JSON.parse(window.localStorage.getItem('session'))
@@ -336,10 +373,19 @@ export default {
 
     log: function () {
       console.log(this.payloadJSON)
-      this.$notify({
-        title: 'SoonTM',
-        message: 'Feature not yet implemented in backend',
-        type: 'danger'
+      this.$http.post('/api/users/create?type=token', this.payloadJSON, {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        this.$notify({
+          title: 'Token created!',
+          message: '',
+          type: 'success'
+        })
+        console.log(response.data)
+      })
+      .catch((error) => {
+        this.$onError(error)
       })
     }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
+	"github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
 )
 
@@ -88,6 +89,41 @@ func DeleteUser() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, H{
 			"result": "User deleted successfully",
+		})
+	}
+}
+
+func CreateUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &vault.AuthInfo{}
+		defer auth.Clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		var resp *api.Secret
+		switch c.QueryParam("type") {
+		case "":
+			return logError(c, "Received empty user creation type", "Creation type cannot be empty")
+
+		case "token":
+			var request = &api.TokenCreateRequest{}
+			err := c.Bind(request)
+			if err != nil {
+				return logError(c, err.Error(), "Invalid format")
+			}
+
+			resp, err = auth.CreateToken(request)
+			if err != nil {
+				return logError(c, err.Error(), "Could not create token")
+			}
+
+		default:
+			return logError(c, "Received unknown creation type", "Unsupported creation type")
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": resp,
 		})
 	}
 }

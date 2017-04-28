@@ -33,8 +33,10 @@ func main() {
 	e.POST("/api/login/renew-self", handlers.RenewSelf())
 
 	e.GET("/api/users", handlers.GetUsers())
+	e.GET("/api/users/csrf", handlers.FetchCSRF())
 	e.GET("/api/tokencount", handlers.GetTokenCount())
 	e.POST("/api/users/revoke", handlers.DeleteUser())
+	e.POST("/api/users/create", handlers.CreateUser())
 
 	e.GET("/api/policies", handlers.ListPolicies())
 	e.GET("/api/policies/:policyname", handlers.GetPolicy())
