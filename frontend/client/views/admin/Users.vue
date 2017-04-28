@@ -78,8 +78,11 @@
                     </a>
                   </span>
                   </td>
-                  <td v-for="key in tableColumns">
+                  <td v-if="entry" v-for="key in tableColumns">
                     {{ entry[key] }}
+                  </td>
+                  <td v-else>
+                    ERROR: An invalid token-accessor has been found
                   </td>
                   <td width="34">
                   <span class="icon">
@@ -221,13 +224,12 @@ export default {
       tabName: 'token',
       tableData: [],
       tableColumns: [
-        'Token_Accessor',
-        'Display_Name',
-        'Num_Uses',
-        'Orphan',
-        'Path',
-        'Policies',
-        'TTL'
+        'accessor',
+        'display_name',
+        'num_uses',
+        'orphan',
+        'policies',
+        'ttl'
       ],
       showModal: false,
       showDeleteModal: false,
@@ -240,9 +242,14 @@ export default {
 
   mounted: function () {
     this.switchTab(0)
+    this.$http.get('/api/users/csrf').then((response) => {
+      this.csrf = response.headers['x-csrf-token']
+    })
+    .catch((error) => {
+      this.$onError(error)
+    })
     this.$http.get('/api/tokencount').then((response) => {
       this.lastPage = Math.ceil(response.data.result / 300)
-      this.csrf = response.headers['x-csrf-token']
     })
     .catch((error) => {
       this.$onError(error)
