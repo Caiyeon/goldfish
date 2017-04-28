@@ -20,15 +20,15 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [x] Displaying a vault endpoint as a 'bulletin board' in homepage
 * [x] Logging in with token, userpass, or github
 * [x] Reading/editing/creating/listing secrets
-* [x] Listing/deleting users (tokens, userpass, and approle)
-* [x] Listing policies
-* [x] Listing and tuning mounts
-* [x] Encrypting and decrypting arbitrary strings using transit backend
-* [x] Logging in with
+* [x] Listing users, policies, mounts
 * [x] Limit user listing to pages to avoid stress on server
-* [ ] Authentication credential creation
+* [x] Creating tokens
+* [x] Deleting tokens and users
+* [x] Encrypting and decrypting arbitrary strings using transit backend
 
 #### Planned major features: Soon<sup>TM</sup>
+* [ ] Searching users by policy
+	- E.g. Display all users that have the policy 'admins'
 * [ ] Searching policy by path
 	- E.g. Display all policies that can access 'secret/data*'
 * [ ] Displaying a server audit log in real-time
@@ -44,19 +44,19 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 -->
 ## Screenshots
 
-![](screenshots/Home.png)
-
-
 ![](screenshots/Login.png)
 
 
 ![](screenshots/BulletinBoard.png)
 
 
+![](screenshots/TokenCreator.png)
+
+
 ![](screenshots/Secrets.png)
 
 
-![](screenshots/Transit.png)
+![](screenshots/Users.png)
 
 
 <!--
