@@ -67,63 +67,13 @@ func GetTokenCount() echo.HandlerFunc {
 
 func DeleteUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
-		defer auth.Clear()
-
-		// verify form data
-		var deleteTarget = &vault.AuthInfo{}
-		if err := c.Bind(deleteTarget); err != nil {
-			return logError(c, err.Error(), "Invalid format")
-		}
-		if deleteTarget.Type == "" || deleteTarget.ID == "" {
-			return logError(c, "Received empty delete request", "Invalid format")
-		}
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		// delete user
-		if err := auth.DeleteUser(deleteTarget.Type, deleteTarget.ID); err != nil {
-			return logError(c, err.Error(), "Deletion error")
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": "User deleted successfully",
-		})
+		return logError(c, "Deletion attempted", "Deletion not supported in demo mode")
 	}
 }
 
 func CreateUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
-		defer auth.Clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		var resp *api.Secret
-		switch c.QueryParam("type") {
-		case "":
-			return logError(c, "Received empty user creation type", "Creation type cannot be empty")
-
-		case "token":
-			var request = &api.TokenCreateRequest{}
-			err := c.Bind(request)
-			if err != nil {
-				return logError(c, err.Error(), "Invalid format")
-			}
-
-			resp, err = auth.CreateToken(request)
-			if err != nil {
-				return logError(c, err.Error(), "Could not create token")
-			}
-
-		default:
-			return logError(c, "Received unknown creation type", "Unsupported creation type")
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": resp,
-		})
+    return logError(c, "Creation attempted", "Creation not supported in demo mode")
 	}
 }
+

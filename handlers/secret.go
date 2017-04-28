@@ -50,30 +50,6 @@ func GetSecrets() echo.HandlerFunc {
 
 func PostSecrets() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
-		defer auth.Clear()
-
-		// fetch auth from cookie
-		getSession(c, auth)
-
-		path := c.QueryParam("path")
-		body := c.FormValue("body")
-
-		if path == "" || body == "" {
-			return logError(c, "Empty path or body", "Path and body cannot be empty")
-		}
-
-		if path[len(path)-1:] == "/" {
-			return logError(c, "Invalid path", "Path must not end in '/'")
-		}
-
-		resp, err := auth.WriteSecret(path, body)
-		if err != nil {
-			return logError(c, err.Error(), "Internal error")
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": resp,
-		})
+		return logError(c, "Editing secret attempted", "Editing not allowed in demo mode")
 	}
 }

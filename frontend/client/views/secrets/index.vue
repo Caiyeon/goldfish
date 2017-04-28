@@ -198,7 +198,6 @@
 
 <script>
 import VbSwitch from 'vue-bulma-switch'
-const querystring = require('querystring')
 
 export default {
   components: {
@@ -400,23 +399,12 @@ export default {
       if (!(this.newKey === '' || this.newValue === '') && !this.newKeyExists) {
         this.addKeyValue()
       }
-      var body = JSON.stringify(this.constructedPayload)
-      this.$http.post('/api/secrets?path=' + this.currentPath, querystring.stringify({
-        body: body
-      }), {
-        headers: {'X-CSRF-Token': this.csrf}
+      this.$notify({
+        title: 'Demo Mode',
+        message: 'Results are not saved to vault',
+        type: 'warning'
       })
-      .then((response) => {
-        this.$notify({
-          title: 'Success!',
-          message: '',
-          type: 'success'
-        })
-        this.editMode = false
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
+      this.editMode = false
     },
 
     cancelEdit: function () {

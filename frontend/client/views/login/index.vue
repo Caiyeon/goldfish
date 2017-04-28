@@ -66,9 +66,27 @@
 
               <div class="field">
                 <p class="control">
-                  <button @click="login" type="submit" value="Login" class="button is-primary">
-                    Login
-                  </button>
+                  <p v-if="type === 'Token'" class="control">
+                  <tooltip label="Use 'goldfish' as vault token to login" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
+                    <button type="submit" value="Login" class="button is-primary">
+                      Login
+                    </button>
+                  </tooltip>
+                  </p>
+
+                  <p v-if="type === 'Userpass'" class="control">
+                  <tooltip label="Use username:'goldfish', password:'goldfish'" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
+                    <button type="submit" value="Login" class="button is-primary">
+                      Login
+                    </button>
+                  </tooltip>
+
+                  <p v-if="type === 'Github'" class="control">
+                  <tooltip label="Github login is disabled on demo mode" placement="bottom-right" type="info" size="large" rounded="true" :always="true">
+                    <button type="submit" value="Login" class="button is-primary is-disabled">
+                      Login
+                    </button>
+                  </tooltip>
                 </p>
               </div>
 
@@ -165,7 +183,13 @@
 </template>
 
 <script>
+import Tooltip from 'vue-bulma-tooltip'
+
 export default {
+  components: {
+    Tooltip
+  },
+
   data () {
     return {
       csrf: '',
