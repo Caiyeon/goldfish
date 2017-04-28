@@ -17,9 +17,9 @@
               <tbody>
                 <tr v-for="(mount, index) in mounts">
                   <td width="68">
-                    <a class="tag is-danger is-disabled is-pulled-left">
+                    <span class="tag is-danger is-pulled-left">
                       {{ mount.type }}
-                    </a>
+                    </span>
                   </td>
                   <td>
                     <tooltip v-bind:label="mount.desc" placement="right" type="info" :rounded="true" >
@@ -29,14 +29,14 @@
                     </tooltip>
                   </td>
                   <td width="68">
-                    <a class="tag is-primary is-disabled is-pulled-left">
+                    <span class="tag is-primary is-pulled-left">
                       {{ mount.conf.default_lease_ttl === 0 ? 'Default' : mount.conf.default_lease_ttl }}
-                    </a>
+                    </span>
                   </td>
                   <td width="68">
-                    <a class="tag is-primary is-disabled is-pulled-left">
+                    <span class="tag is-primary is-pulled-left">
                       {{ mount.conf.max_lease_ttl === 0 ? 'Default' : mount.conf.max_lease_ttl }}
-                    </a>
+                    </span>
                   </td>
                 </tr>
               </tbody>
@@ -48,19 +48,26 @@
       <div class="tile is-parent is-vertical is-6">
         <article class="tile is-child box">
           <h4 class="title is-4">Mount Config</h4>
-          <p class="control">
-            <textarea class="textarea" placeholder="Select a mount" v-model="mountConfigModified"></textarea>
-          </p>
-          <p class="control is-pulled-right">
-            <a @click="postMountConfig"
-            class="button is-primary is-outlined"
-            v-bind:class="{ 'is-disabled': (mountConfig === mountConfigModified) }">
-              Submit Changes
-              <span class="icon is-small">
-                <i class="fa fa-check"></i>
-              </span>
-            </a>
-          </p>
+
+          <div class="field">
+            <p class="control">
+              <textarea class="textarea" placeholder="Select a mount" v-model="mountConfigModified"></textarea>
+            </p>
+          </div>
+
+          <div class="field">
+            <p class="control is-pulled-right">
+              <button @click="postMountConfig"
+                class="button is-primary is-outlined"
+                :disabled="mountConfig === mountConfigModified">
+                <span>Submit Changes</span>
+                <span class="icon is-small">
+                  <i class="fa fa-check"></i>
+                </span>
+              </button>
+            </p>
+          </div>
+
         </article>
       </div>
 

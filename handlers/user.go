@@ -6,6 +6,7 @@ import (
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
+	"github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
 )
 
@@ -69,3 +70,10 @@ func DeleteUser() echo.HandlerFunc {
 		return logError(c, "Deletion attempted", "Deletion not supported in demo mode")
 	}
 }
+
+func CreateUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+    return logError(c, "Creation attempted", "Creation not supported in demo mode")
+	}
+}
+

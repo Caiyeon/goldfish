@@ -3,6 +3,8 @@ package vault
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/hashicorp/vault/api"
 )
 
 func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) {
@@ -165,4 +167,12 @@ func (auth AuthInfo) GetTokenCount() (int, error) {
 	}
 
 	return len(accessors), nil
+}
+
+func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest) (*api.Secret, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	return client.Auth().Token().Create(opts)
 }

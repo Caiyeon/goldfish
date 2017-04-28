@@ -11,7 +11,7 @@
               <li v-bind:class="tabName === 'token' ? 'is-active' : ''" v-on:click="switchTab(0)"><a>Tokens</a></li>
               <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''" v-on:click="switchTab(1)"><a>Userpass</a></li>
               <li v-bind:class="tabName === 'approle' ? 'is-active' : ''" v-on:click="switchTab(2)"><a>Approle</a></li>
-              <li class="is-disabled"><a>Certificates</a></li>
+              <li disabled><a>Certificates</a></li>
             </ul>
           </div>
 
@@ -19,13 +19,18 @@
           <div v-if="tabName === 'token'" class="tile is-parent table-responsive is-vertical">
             <!-- Token pages -->
             <nav class="pagination is-right">
+              <!-- styling hack until level component plays nice with pagination -->
+              <a class="pagination-previous"
+                v-on:click="search.show = !search.show"
+                :disabled="loading"
+              >Search</a>
               <a class="pagination-previous"
                 v-on:click="loadPage(currentPage - 1)"
-                v-bind:class="currentPage < 2 || loading ? 'is-disabled' : ''"
+                :disabled="loading || currentPage < 2"
               >Previous</a>
               <a class="pagination-next"
                 v-on:click="loadPage(currentPage + 1)"
-                v-bind:class="currentPage > lastPage - 1 || loading ? 'is-disabled' : ''"
+                :disabled="loading || currentPage > lastPage - 1"
               >Next page</a>
 
               <ul class="pagination-list">
@@ -46,10 +51,10 @@
                   >{{ page }}</a>
                 </li>
 
-                <li v-if="lastPage - currentPage > 2 && lastPage > 5">
+                <li v-if="lastPage - currentPage > 2 && lastPage > 5 && lastPage !== 1">
                   <span class="pagination-ellipsis">&hellip;</span>
                 </li>
-                <li>
+                <li v-if="lastPage !== 1">
                   <a class="pagination-link"
                     v-on:click="loadPage(lastPage)"
                     v-bind:class="currentPage === lastPage ? 'is-current' : ''"
@@ -57,6 +62,28 @@
                 </li>
               </ul>
             </nav>
+
+            <div v-if="search.show" class="field">
+              <label class="label"></label>
+              <p v-if="search.searched !== 0" class="help is-info">
+                Found {{ search.found }} matches out of {{ search.searched }}
+              </p>
+              <div class="field has-addons">
+                <p class="control">
+                  <input class="input" type="text"
+                    placeholder="Match this string"
+                    v-model="search.str"
+                    @keyup.enter="searchByString(search.str)">
+                </p>
+                <p class="control">
+                  <a class="button is-info" @click="searchByString(search.str)">
+                    Search
+                  </a>
+                </p>
+              </div>
+            </div>
+            <!-- spacing -->
+            <label v-else class="label"></label>
 
             <!-- Tokens table -->
             <table class="table is-striped is-narrow">
@@ -78,8 +105,11 @@
                     </a>
                   </span>
                   </td>
-                  <td v-for="key in tableColumns">
+                  <td v-if="entry" v-for="key in tableColumns">
                     {{ entry[key] }}
+                  </td>
+                  <td v-else>
+                    ERROR: An invalid token-accessor has been found
                   </td>
                   <td width="34">
                   <span class="icon">
@@ -221,28 +251,38 @@ export default {
       tabName: 'token',
       tableData: [],
       tableColumns: [
-        'Token_Accessor',
-        'Display_Name',
-        'Num_Uses',
-        'Orphan',
-        'Path',
-        'Policies',
-        'TTL'
+        'accessor',
+        'display_name',
+        'num_uses',
+        'orphan',
+        'policies',
+        'ttl'
       ],
       showModal: false,
       showDeleteModal: false,
       selectedIndex: -1,
       currentPage: 1,
-      lastPage: 6,
-      loading: false
+      lastPage: 1,
+      loading: false,
+      search: {
+        show: false,
+        str: '',
+        found: 0,
+        searched: 0
+      }
     }
   },
 
   mounted: function () {
     this.switchTab(0)
+    this.$http.get('/api/users/csrf').then((response) => {
+      this.csrf = response.headers['x-csrf-token']
+    })
+    .catch((error) => {
+      this.$onError(error)
+    })
     this.$http.get('/api/tokencount').then((response) => {
       this.lastPage = Math.ceil(response.data.result / 300)
-      this.csrf = response.headers['x-csrf-token']
     })
     .catch((error) => {
       this.$onError(error)
@@ -294,6 +334,12 @@ export default {
       this.tableData = []
       this.tabName = TabNames[index]
       this.tableColumns = TabColumns[index]
+      this.search = {
+        show: false,
+        str: '',
+        found: 0,
+        searched: 0
+      }
       // populate new table data according to tab name
       this.$http.get('/api/users?type=' + this.tabName).then((response) => {
         this.tableData = response.data.result
@@ -344,6 +390,9 @@ export default {
     },
 
     loadPage: function (pageNumber) {
+      if (pageNumber < 1 || pageNumber > this.lastPage) {
+        return
+      }
       this.currentPage = pageNumber
       this.loading = true
       this.$http.get('/api/users?type=token&offset=' + ((this.currentPage - 1) * 300).toString()).then((response) => {
@@ -355,6 +404,38 @@ export default {
         this.$onError(error)
         this.loading = false
       })
+    },
+
+    itemContainsSearchString: function (item) {
+      if (item) {
+        for (var i = 0; i < this.tableColumns.length; i++) {
+          if (item[this.tableColumns[i]].toString().includes(this.search.str)) {
+            return true
+          }
+        }
+      }
+      return false
+    },
+
+    searchByString: function (str) {
+      this.tableData = []
+      this.search.found = 0
+      this.search.searched = 0
+      this.loading = this.lastPage // each completed async call will decrement this until false
+      // make an async call for each page
+      for (var i = 0; i < this.lastPage; i++) {
+        this.$http.get('/api/users?type=token&offset=' + (i * 300).toString()).then((response) => {
+          var found = response.data.result.filter(this.itemContainsSearchString)
+          this.search.found += found.length
+          this.search.searched += response.data.result.length
+          this.tableData = this.tableData.concat(found)
+          this.loading = this.loading - 1 || false
+        })
+        .catch((error) => {
+          this.$onError(error)
+          this.loading = this.loading - 1 || false
+        })
+      }
     }
   }
 

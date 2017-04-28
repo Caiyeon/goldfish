@@ -11,6 +11,11 @@ export default {
       name: 'Transit',
       path: '/transit',
       component: lazyLoading('tools/Transit')
+    },
+    {
+      name: 'Token Creator',
+      path: '/create-token',
+      component: lazyLoading('tools/CreateToken')
     }
   ]
 }
