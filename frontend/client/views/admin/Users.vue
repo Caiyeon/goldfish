@@ -49,7 +49,7 @@
                 <li v-if="lastPage - currentPage > 2 && lastPage > 5 && lastPage !== 1">
                   <span class="pagination-ellipsis">&hellip;</span>
                 </li>
-                <li>
+                <li v-if="lastPage !== 1">
                   <a class="pagination-link"
                     v-on:click="loadPage(lastPage)"
                     v-bind:class="currentPage === lastPage ? 'is-current' : ''"
