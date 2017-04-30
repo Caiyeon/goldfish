@@ -76,8 +76,11 @@
                     @keyup.enter="searchByString(search.str)">
                 </p>
                 <p class="control">
-                  <a class="button is-info" @click="searchByString(search.str)">
-                    Search
+                  <a class="button is-info"
+                    :class="loading ? 'is-loading' : ''"
+                    :disabled="search.str === ''"
+                    @click="searchByString(search.str)"
+                  >Search
                   </a>
                 </p>
               </div>
@@ -418,6 +421,9 @@ export default {
     },
 
     searchByString: function (str) {
+      if (str === '') {
+        return
+      }
       this.tableData = []
       this.search.found = 0
       this.search.searched = 0
