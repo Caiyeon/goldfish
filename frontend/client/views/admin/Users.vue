@@ -65,13 +65,14 @@
 
             <div v-if="search.show" class="field">
               <label class="label"></label>
+              <label class="label"></label>
               <p v-if="search.searched !== 0" class="help is-info">
                 Found {{ search.found }} matches out of {{ search.searched }}
               </p>
-              <div class="field has-addons">
+              <div class="field has-addons is-marginless">
                 <p class="control">
                   <input class="input" type="text"
-                    placeholder="Match this string"
+                    :placeholder="search.regex ? 'Match this by regex' : 'Match this string'"
                     v-model="search.str"
                     @keyup.enter="searchByString(search.str)">
                 </p>
@@ -84,9 +85,16 @@
                   </a>
                 </p>
               </div>
+              <p v-if="search.show" class="control">
+                <label class="checkbox" >
+                  <input type="checkbox" :checked="search.regex" @click="search.regex = !search.regex">
+                  Search by regex
+                </label>
+              </p>
             </div>
+
             <!-- spacing -->
-            <label v-else class="label"></label>
+            <label class="label"></label>
 
             <!-- Tokens table -->
             <table class="table is-striped is-narrow">
@@ -267,11 +275,15 @@ export default {
       currentPage: 1,
       lastPage: 1,
       loading: false,
+      // when adding properties here,
+      // be careful with reactivity (overwritten by switchTab())
       search: {
         show: false,
         str: '',
         found: 0,
-        searched: 0
+        searched: 0,
+        regex: false,
+        regexp: null
       }
     }
   },
@@ -322,6 +334,10 @@ export default {
       } else {
         return [this.currentPage - 1, this.currentPage, this.currentPage + 1]
       }
+    },
+
+    searchRegex: function () {
+      return this.search.regex
     }
   },
 
@@ -341,7 +357,9 @@ export default {
         show: false,
         str: '',
         found: 0,
-        searched: 0
+        searched: 0,
+        regex: false,
+        regexp: null
       }
       // populate new table data according to tab name
       this.$http.get('/api/users?type=' + this.tabName).then((response) => {
@@ -420,6 +438,17 @@ export default {
       return false
     },
 
+    itemContainsRegexExpr: function (item) {
+      if (item) {
+        for (var i = 0; i < this.tableColumns.length; i++) {
+          if (this.search.regexp.test(item[this.tableColumns[i].toString()])) {
+            return true
+          }
+        }
+      }
+      return false
+    },
+
     searchByString: function (str) {
       if (str === '') {
         return
@@ -428,10 +457,17 @@ export default {
       this.search.found = 0
       this.search.searched = 0
       this.loading = this.lastPage // each completed async call will decrement this until false
+      this.search.regexp = new RegExp(this.search.str)
+
       // make an async call for each page
       for (var i = 0; i < this.lastPage; i++) {
         this.$http.get('/api/users?type=token&offset=' + (i * 300).toString()).then((response) => {
-          var found = response.data.result.filter(this.itemContainsSearchString)
+          var found = false
+          if (this.search.regex) {
+            found = response.data.result.filter(this.itemContainsRegexExpr)
+          } else {
+            found = response.data.result.filter(this.itemContainsSearchString)
+          }
           this.search.found += found.length
           this.search.searched += response.data.result.length
           this.tableData = this.tableData.concat(found)
