@@ -1,47 +1,101 @@
 <template>
   <div>
-    <div class="tile is-ancestor">
+    <div class="tile is-ancestor is-vertical">
 
-      <div class="tile is-parent is-vertical is-6">
+      <!-- Nav bar -->
+      <div class="tile is-parent">
         <article class="tile is-child box">
-          <div class="table-responsive">
-            <table class="table is-striped is-narrow">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Policy Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(entry, index) in policies">
-                  <td width="34">
-                    <span class="icon">
-                    <a @click="getPolicyRules(index)">
-                      <i class="fa fa-info"></i>
-                    </a>
+          <nav class="level">
+
+            <!-- Search by name -->
+            <div class="level-left">
+              <div class="level-item">
+                <p class="control has-icons-left">
+                  <input class="input" type="text" placeholder="Filter by policy name" v-model="nameFilter">
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-search"></i>
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div class="level-item">
+              <p class="subtitle is-5">
+                Displaying <strong> {{ filteredPolicies.length}} </strong> out of <strong>{{ policies.length }}</strong> policies
+              </p>
+            </div>
+
+            <!-- Search by content -->
+            <div class="level-right">
+              <div class="level-item">
+                <div class="field has-addons">
+                  <p class="control">
+                    <span class="select">
+                      <select v-model="search.regex">
+                      <option v-bind:value="false">Contains string</option>
+                      <option v-bind:value="true">Match by regex</option>
+                      </select>
                     </span>
-                  </td>
-                  <td>
-                    {{ entry }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  </p>
+                  <p class="control">
+                    <input class="input" type="text" placeholder="Filter by policy details" v-model="search.str">
+                  </p>
+                  <p class="control">
+                    <button class="button is-info" @click="filterByDetails()">
+                      Search
+                    </button>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </nav>
         </article>
       </div>
 
-      <div class="tile is-parent is-vertical is-6">
-        <article class="tile is-child box">
-          <h4 class="title is-4">Policy Rules</h4>
-          <p class="control">
-            <textarea class="textarea" placeholder="Select a policy" v-model="policyRules"></textarea>
-          </p>
-        </article>
+      <!-- Policies table -->
+      <div class="tile is-parent is-marginless is-paddingless">
+        <div class="tile is-parent is-child is-vertical is-5">
+          <article class="tile is-child box">
+            <div class="table-responsive">
+              <table class="table is-striped is-narrow">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Policy Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(entry, index) in filteredPolicies">
+                    <td width="34">
+                      <span class="icon">
+                      <a @click="getPolicyRules(entry)">
+                        <i class="fa fa-info"></i>
+                      </a>
+                      </span>
+                    </td>
+                    <td>
+                      {{ entry }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+      <!-- Policy details -->
+        <div class="tile is-parent is-vertical">
+          <article class="tile is-child box">
+            <h4 class="title is-4">Policy Rules</h4>
+            <p class="control">
+              <textarea class="textarea" placeholder="Select a policy" v-model="policyRules"></textarea>
+            </p>
+          </article>
+        </div>
       </div>
 
     </div>
-
   </div>
 </template>
 
@@ -51,7 +105,14 @@ export default {
     return {
       policies: [],
       policyRules: '',
-      selectedIndex: -1
+      loading: false,
+      nameFilter: '',
+      search: {
+        str: '',
+        found: [],
+        searched: 0,
+        regex: false
+      }
     }
   },
 
@@ -64,15 +125,66 @@ export default {
     })
   },
 
+  computed: {
+    filteredPolicies: function () {
+      if (this.nameFilter) {
+        // filter by name
+        var filter = this.nameFilter
+        return this.policies.filter(
+          function (policy) {
+            return policy.includes(filter)
+          }
+        )
+      }
+      if (this.search.str) {
+        // filter by policy details
+        return this.search.found
+      }
+      return this.policies
+    }
+  },
+
   methods: {
-    getPolicyRules: function (index) {
+    getPolicyRules: function (policyName) {
       this.policyRules = ''
-      this.$http.get('/api/policies/' + this.policies[index]).then((response) => {
+      this.$http.get('/api/policies/' + policyName).then((response) => {
         this.policyRules = response.data.result
       })
       .catch((error) => {
         this.$onError(error)
       })
+    },
+
+    filterByDetails: function () {
+      if (this.search.str === '') {
+        return
+      }
+      this.search.found = []
+      this.search.searched = 0
+      this.loading = this.policies.length
+
+      // crawl through each policy
+      for (var i = 0; i < this.policies.length; i++) {
+        let policyName = this.policies[i]
+        this.$http.get('/api/policies/' + policyName).then((response) => {
+          if (this.search.regex) {
+            if (response.data.result.match(this.search.str)) {
+              this.search.found.push(policyName)
+            }
+          } else {
+            if (response.data.result.includes(this.search.str)) {
+              this.search.found.push(policyName)
+            }
+          }
+          this.search.searched++
+          this.loading = this.loading - 1 || false
+        })
+        .catch((error) => {
+          this.$onError(error)
+          this.search.searched++
+          this.loading = this.loading - 1 || false
+        })
+      }
     }
   }
 }
@@ -93,5 +205,9 @@ export default {
 
   .fa-info {
     color: lightskyblue;
+  }
+
+  .textarea {
+    height: 500px;
   }
 </style>
