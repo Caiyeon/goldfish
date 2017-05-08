@@ -74,13 +74,13 @@
                   <input class="input" type="text"
                     :placeholder="search.regex ? 'Match this by regex' : 'Match this string'"
                     v-model="search.str"
-                    @keyup.enter="searchByString(search.str)">
+                    @keyup.enter="searchByString()">
                 </p>
                 <p class="control">
                   <a class="button is-info"
                     :class="loading ? 'is-loading' : ''"
                     :disabled="search.str === ''"
-                    @click="searchByString(search.str)"
+                    @click="searchByString()"
                   >Search
                   </a>
                 </p>
@@ -449,8 +449,8 @@ export default {
       return false
     },
 
-    searchByString: function (str) {
-      if (str === '') {
+    searchByString: function () {
+      if (this.search.str === '') {
         return
       }
       this.tableData = []
