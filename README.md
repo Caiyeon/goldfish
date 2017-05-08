@@ -18,25 +18,26 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 
 * [x] Hot-loadable server settings from a provided vault endpoint
 * [x] Displaying a vault endpoint as a 'bulletin board' in homepage
-* [x] Logging in with token, userpass, or github
-* [x] Reading/editing/creating/listing secrets
-* [x] Listing users, policies, mounts
-* [x] Limit user listing to pages to avoid stress on server
-* [x] Creating tokens
-* [x] Deleting tokens and users
+* [x] **Logging in** with token, userpass, or github
+* [x] **Secret** Reading/editing/creating/listing
+* [x] **Auth** Searching/creating/listing/deleting
+* [x] **Mounts** Listing
+* [x] **Policies** Searching/Listing
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 
 #### Planned major features: Soon<sup>TM</sup>
-* [x] Searching users by policy
-	- E.g. Display all users that have the policy 'admins'
-* [ ] Searching policy by path
+* [x] Searching tokens by policy
+	- E.g. Display all tokens that have the policy 'admins'
+* [x] Searching policy by rule
 	- E.g. Display all policies that can access 'secret/data*'
 * [ ] Displaying a server audit log in real-time
 	- Authorization would be mapped to a (configurable) policy name
 * [ ] Request & approval based policy/mount changes
-	- An edit will cause goldfish to keep track of the request body to vault
-	- Admins must then provide unseal tokens for that specific edit
+	- Users can place a policy change request in vault
+	- Admins must then provide unseal tokens for that specific request
 	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
+* [ ] Resource dependency chain
+	- E.g. Will removing a particular policy affect current users?
 * [ ] SAML to LDAP integration
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
@@ -103,13 +104,11 @@ cd $GOPATH/src/github.com/caiyeon/goldfish
 go build server.go
 
 # run backend server with secret_id generated from approle
-server -addr=http://127.0.0.1:8200 -token=$(vault write -f -wrap-ttl=20m -format=json \
-auth/approle/role/goldfish/secret-id | \
-jq -r .wrap_info.token) \
--role_id=goldfish \
--approle_path=auth/approle/login
--config_path=data/goldfish
-
+./server -addr http://127.0.0.1:8200 \
+-approle_path auth/approle/login \
+-config_path secret/goldfish \
+-role_id goldfish \
+-token $(vault write -f -wrap-ttl=20m -format=json auth/approle/role/goldfish/secret-id | jq -r .wrap_info.token)
 
 # run frontend in dev mode (with hot reload)
 cd frontend
@@ -117,6 +116,9 @@ npm install
 npm run dev
 
 # a browser window/tab should open, pointing directly to goldfish
+
+# for production instances, change server.go to start an https server
+# (certbot, self-signed, or provided certificate)
 ```
 
 
