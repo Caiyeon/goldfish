@@ -80,7 +80,7 @@ vault write -f transit/keys/goldfish
 
 # see vagrant/policies/goldfish.hcl for the required policy.
 # transit key is not changable, but the secret path containing run-time settings can be changed
-vault policy-write goldfish /vagrant/policies/goldfish.hcl
+vault policy-write goldfish vagrant/policies/goldfish.hcl
 
 # goldfish launches strictly from approle, because passing a token that humans can see would be silly
 vault auth-enable approle

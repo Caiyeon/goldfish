@@ -8,7 +8,7 @@ path "transit/decrypt/goldfish" {
   policy = "sudo"
 }
 
-# [optional]
+# [mandatory] [changable]
 # store goldfish run-time settings here
 path "data/goldfish*" {
   policy = "read"
