@@ -32,8 +32,8 @@
                   <p class="control">
                     <span class="select">
                       <select v-model="search.regex">
-                      <option v-bind:value="false">Contains string</option>
-                      <option v-bind:value="true">Match by regex</option>
+                      <option v-bind:value="false">Substring</option>
+                      <option v-bind:value="true">Regex</option>
                       </select>
                     </span>
                   </p>
