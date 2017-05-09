@@ -41,6 +41,8 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [ ] SAML to LDAP integration
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
+
+
 <!--
 -->
 ## Screenshots
@@ -60,30 +62,6 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 ![](screenshots/Users.png)
 
 
-<!--
--->
-## Components
-
-Frontend:
-* VueJS
-* Bulma CSS
-* Vue Admin
-
-Backend:
-* [Vault API](https://godoc.org/github.com/hashicorp/vault/api) wrapper
-
-<!--
--->
-## Design
-
-User credentials are always encrypted using [transit backend](https://www.vaultproject.io/docs/secrets/transit/), and will never remain unencrypted at rest (both server and client-side). Cipher is then sent as an unforgeable [secure cookie](http://www.gorillatoolkit.org/pkg/securecookie)
-
-Any future actions from the user will be verified by decrypting the user's cookie with the [transit backend](https://www.vaultproject.io/docs/secrets/transit/) before being validated and used for the action.
-
-Any actions performed (except user credential encryption/decryption via transit) will **only** be done using the user's credentials, and never using the goldfish server's token. This ensures traceability.
-
-If Vault implements CORS, there is a possibility of goldfish becoming serverless, and being shipped as a desktop application using electron.
-
 
 <!--
 -->
@@ -96,7 +74,24 @@ You'll need go (v1.8), npm (>=3), and nodejs (>=5).
 # you'll need a vault instance
 vault server -dev &
 
-# see vagrant/provision/vault.sh for setup data to populate vault with
+# this transit key is needed to encrypt/decrypt user credentials
+vault mount transit
+vault write -f transit/keys/goldfish
+
+# see vagrant/policies/goldfish.hcl for the required policy.
+# transit key is not changable, but the secret path containing run-time settings can be changed
+vault policy-write goldfish /vagrant/policies/goldfish.hcl
+
+# goldfish launches strictly from approle, because passing a token that humans can see would be silly
+vault auth-enable approle
+vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token_ttl=480h \
+token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
+vault write auth/approle/role/goldfish/role-id role_id=goldfish
+
+# run-time settings can be stored wherever you like, just make sure to change it in the policy and the launch cmd arg
+vault write secret/goldfish DefaultSecretPath="secret/" TransitBackend="transit" UserTransitKey="usertransit" \
+ServerTransitKey="goldfish" BulletinPath="secret/bulletins/"
+# explanations on what each key means: https://github.com/Caiyeon/goldfish#configuration
 
 # build the backend server
 go get github.com/caiyeon/goldfish
@@ -163,3 +158,30 @@ Contributions are welcomed. Feel free to pick up an issue and make a pull reques
 
 The Vagrant setup should provide a consistent dev environment.
 
+
+
+<!--
+-->
+## Components
+
+Frontend:
+* VueJS
+* Bulma CSS
+* Vue Admin
+
+Backend:
+* [Vault API](https://godoc.org/github.com/hashicorp/vault/api) wrapper
+
+
+
+<!--
+-->
+## Design
+
+User credentials are always encrypted using [transit backend](https://www.vaultproject.io/docs/secrets/transit/), and will never remain unencrypted at rest (both server and client-side). Cipher is then sent as an unforgeable [secure cookie](http://www.gorillatoolkit.org/pkg/securecookie)
+
+Any future actions from the user will be verified by decrypting the user's cookie with the [transit backend](https://www.vaultproject.io/docs/secrets/transit/) before being validated and used for the action.
+
+Any actions performed (except user credential encryption/decryption via transit) will **only** be done using the user's credentials, and never using the goldfish server's token. This ensures traceability.
+
+If Vault implements CORS, there is a possibility of goldfish becoming serverless, and being shipped as a desktop application using electron.
