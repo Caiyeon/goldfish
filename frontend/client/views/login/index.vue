@@ -16,9 +16,10 @@
                   <label class="label">Authentication Type</label>
                   <div class="select is-fullwidth">
                     <select v-model="type" @change="clearFormData">
-                      <option>Token</option>
-                      <option>Userpass</option>
-                      <option>Github</option>
+                      <option v-bind:value="'Token'">Token</option>
+                      <option v-bind:value="'Userpass'">Userpass</option>
+                      <option v-bind:value="'Github'">Github</option>
+                      <option v-bind:value="'LDAP'">LDAP</option>
                     </select>
                   </div>
                 </div>
@@ -62,6 +63,26 @@
                     <i class="fa fa-lock"></i>
                   </span>
                 </p>
+              </div>
+
+              <!-- LDAP login form -->
+              <div v-if="type === 'LDAP'" class="field">
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="text" placeholder="Username" v-model="ID">
+                    <span class="icon is-small">
+                      <i class="fa fa-user-circle-o"></i>
+                    </span>
+                  </p>
+                </div>
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="password" placeholder="Password" v-model="Password">
+                    <span class="icon is-small">
+                      <i class="fa fa-lock"></i>
+                    </span>
+                  </p>
+                </div>
               </div>
 
               <div class="field">
@@ -268,7 +289,7 @@ export default {
         window.localStorage.setItem('session', JSON.stringify(this.sessionData))
 
         // notify user of generated client-token
-        if (this.type === 'Userpass') {
+        if (this.type === 'Userpass' || this.type === 'LDAP') {
           this.$message({
             message: 'Your access token is: ' + response.data.data['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',

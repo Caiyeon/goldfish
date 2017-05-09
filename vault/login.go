@@ -38,7 +38,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 	case "userpass":
 		client.SetToken("")
 		// fetch client access token by performing a login
-		resp, err := client.Logical().Write("auth/userpass/login/"+auth.ID,
+		resp, err := client.Logical().Write("auth/userpass/login/" + auth.ID,
 			map[string]interface{}{
 				"password": auth.Pass,
 			})
@@ -55,7 +55,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		// if the login was valid, set auth to the access token
+		// let future requests re-use the client token
 		auth.Type = "token"
 		auth.ID = resp.Auth.ClientToken
 		auth.Pass = ""
@@ -81,8 +81,34 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 			return nil, err
 		}
 
+		// let future requests re-use the client token
 		auth.Type = "token"
 		auth.ID = resp.Auth.ClientToken
+		return lookupResp.Data, nil
+
+	case "ldap":
+		client.SetToken("")
+		resp, err := client.Logical().Write("auth/ldap/login" + auth.ID,
+			map[string]interface{}{
+				"password": auth.Pass,
+			})
+		if err != nil {
+			return nil, err
+		}
+		if resp.Auth == nil || resp.Auth.ClientToken == "" {
+			return nil, errors.New("Unable to parse vault response")
+		}
+
+		client.SetToken(resp.Auth.ClientToken)
+		lookupResp, err := client.Auth().Token().LookupSelf()
+		if err != nil {
+			return nil, err
+		}
+
+		// let future requests re-use the client token
+		auth.Type = "token"
+		auth.ID = resp.Auth.ClientToken
+		auth.Pass = ""
 		return lookupResp.Data, nil
 
 	default:
