@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -124,6 +125,47 @@ func CreateUser() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, H{
 			"result": resp,
+		})
+	}
+}
+
+func ListRoles() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &vault.AuthInfo{}
+		defer auth.Clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		result, err := auth.ListRoles()
+		if err != nil {
+			log.Println("[ERROR]:", err.Error())
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Could not list roles",
+			})
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": result,
+		})
+	}
+}
+
+func GetRole() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &vault.AuthInfo{}
+		defer auth.Clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		result, err := auth.GetRole(c.QueryParam("rolename"))
+		if err != nil {
+			return logError(c, err.Error(), "Could not read role")
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": result,
 		})
 	}
 }

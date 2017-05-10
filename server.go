@@ -35,6 +35,8 @@ func main() {
 	e.GET("/api/users", handlers.GetUsers())
 	e.GET("/api/users/csrf", handlers.FetchCSRF())
 	e.GET("/api/tokencount", handlers.GetTokenCount())
+	e.GET("/api/users/role", handlers.GetRole())
+	e.GET("/api/users/listroles", handlers.ListRoles())
 	e.POST("/api/users/revoke", handlers.DeleteUser())
 	e.POST("/api/users/create", handlers.CreateUser())
 

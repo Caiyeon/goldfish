@@ -176,3 +176,33 @@ func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest) (*api.Secret, err
 	}
 	return client.Auth().Token().Create(opts)
 }
+
+func (auth AuthInfo) ListRoles() (interface{}, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Logical().List("/auth/token/roles")
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data["keys"], nil
+}
+
+func (auth AuthInfo) GetRole(rolename string) (interface{}, error) {
+	if rolename == "" {
+		return nil, errors.New("Empty rolename")
+	}
+
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Logical().Read("/auth/token/roles/" + rolename)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+}

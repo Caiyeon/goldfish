@@ -9,6 +9,20 @@
         <!-- Left column (Form) -->
         <div class="column">
 
+          <!-- Role -->
+          <div v-if="availableRoles.length > 0" class="field">
+            <label class="label">Load preset from role</label>
+            <div class="control">
+              <span class="select">
+                <select v-model="selectedRole" @change="loadRoleDetails(selectedRole)">
+                  <option v-for="role in availableRoles">
+                    {{role}}
+                  </option>
+                </select>
+              </span>
+            </div>
+          </div>
+
           <!-- ID -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field">
             <label class="label">ID</label>
@@ -142,6 +156,7 @@
           <div class="field">
             <div class="control">
               <nav class="panel">
+
                 <p class="panel-heading">Available Policies</p>
                 <div class="panel-block">
                   <p class="control has-icons-left">
@@ -160,11 +175,24 @@
                     @click="toggle(policy)"
                     > {{ policy }} </label>
                 </label>
+
+                <p v-if="selectedRoleDetails" class="panel-heading">Role Allowed Policies</p>
+                <label
+                  class="panel-block"
+                  v-for="policy in filteredRolePolicies">
+                  <input
+                    type="checkbox"
+                    :checked="selectedPolicies.indexOf(policy) > -1"
+                    @click="toggle(policy)"
+                    > {{ policy }} </label>
+                </label>
+
                 <div class="panel-block">
                   <button class="button is-danger is-outlined is-fullwidth" @click="selectedPolicies = []">
                     Reset selected policies
                   </button>
                 </div>
+
               </nav>
             </div>
           </div>
@@ -189,6 +217,23 @@
         <!-- Right column -->
         <div class="column">
 
+          <!-- Role warning -->
+          <div v-if="selectedRole" class="field">
+            <article class="message is-warning">
+              <div class="message-body">
+                <strong>Role selected: </strong>writing to /auth/token/create/{{selectedRole}}
+              </div>
+            </article>
+          </div>
+
+          <!-- Role details -->
+          <div v-if="selectedRole && selectedRoleDetails" class="field">
+            <label class="label">Selected role: {{selectedRole}}</label>
+            <article class="message is-info">
+              <div class="message-body" style="white-space: pre;">{{JSON.stringify(selectedRoleDetails, null, '\t')}}</div>
+            </article>
+          </div>
+
           <!-- Token creation response -->
           <div v-if="createdToken" class="field">
             <label class="label">Created token:</label>
@@ -200,7 +245,7 @@
           <!-- Payload preview -->
           <div class="field">
             <label class="label">Payload preview:</label>
-            <article class="message is-warning">
+            <article class="message is-primary">
               <div class="message-body" style="white-space: pre;">{{JSON.stringify(payloadJSON, null, '\t')}}</div>
             </article>
           </div>
@@ -240,7 +285,11 @@ export default {
       policyFilter: '',
       num_uses: 0,
       period_ttl: '',
-      createdToken: null
+      createdToken: null,
+      availableRoles: [],
+      selectedRole: '',
+      selectedRoleDetails: '',
+      selectedRoleLoading: false
     }
   },
 
@@ -253,6 +302,17 @@ export default {
           return policy.includes(filter)
         }
       )
+    },
+
+    filteredRolePolicies: function () {
+      var filter = this.policyFilter
+      if (this.selectedRoleDetails) {
+        return this.selectedRoleDetails['allowed_policies'].filter(
+          function (policy) {
+            return policy.includes(filter)
+          }
+        )
+      }
     },
 
     // constructs the JSON payload that needs to be sent to the server
@@ -295,7 +355,16 @@ export default {
         message: 'Please login',
         type: 'danger'
       })
+      return
     }
+
+    // check if roles are available to logged in user
+    this.$http.get('/api/users/listroles').then((response) => {
+      this.availableRoles = response.data.result
+    })
+    .catch(() => {
+      // user likely does not have permission. Simply don't make roles available.
+    })
 
     // if root policy, fetch all available policies from server
     if (this.availablePolicies.indexOf('root') > -1) {
@@ -373,6 +442,20 @@ export default {
       })
       .catch((error) => {
         this.$onError(error)
+      })
+    },
+
+    loadRoleDetails: function (rolename) {
+      this.selectedRoleLoading = true
+      this.selectedRoleDetails = ''
+      this.$http.get('/api/users/role?rolename=' + rolename)
+      .then((response) => {
+        this.selectedRoleDetails = response.data.result
+        this.selectedRoleLoading = false
+      })
+      .catch((error) => {
+        this.$onError(error)
+        this.selectedRoleLoading = false
       })
     }
 
