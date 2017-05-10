@@ -88,7 +88,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 
 	case "ldap":
 		client.SetToken("")
-		resp, err := client.Logical().Write("auth/ldap/login" + auth.ID,
+		resp, err := client.Logical().Write("auth/ldap/login/" + auth.ID,
 			map[string]interface{}{
 				"password": auth.Pass,
 			})
