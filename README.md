@@ -56,10 +56,10 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 ![](screenshots/TokenCreator.png)
 
 
-![](screenshots/Secrets.png)
-
-
 ![](screenshots/Users.png)
+
+
+![](screenshots/Policies.png)
 
 
 
@@ -88,9 +88,10 @@ vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token
 token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
 vault write auth/approle/role/goldfish/role-id role_id=goldfish
 
-# run-time settings can be stored wherever you like, just make sure to change it in the policy and the launch cmd arg
-vault write secret/goldfish DefaultSecretPath="secret/" TransitBackend="transit" UserTransitKey="usertransit" \
-ServerTransitKey="goldfish" BulletinPath="secret/bulletins/"
+# run-time settings can be stored wherever you like,
+# just make sure to change it in the policy and the launch cmd arg
+vault write secret/goldfish DefaultSecretPath="secret/" TransitBackend="transit" \
+UserTransitKey="usertransit" ServerTransitKey="goldfish" BulletinPath="secret/bulletins/"
 # explanations on what each key means: https://github.com/Caiyeon/goldfish#configuration
 
 # build the backend server
@@ -185,3 +186,11 @@ Any future actions from the user will be verified by decrypting the user's cooki
 Any actions performed (except user credential encryption/decryption via transit) will **only** be done using the user's credentials, and never using the goldfish server's token. This ensures traceability.
 
 If Vault implements CORS, there is a possibility of goldfish becoming serverless, and being shipped as a desktop application using electron.
+
+
+
+<!--
+-->
+## Why 'Goldfish'?
+
+This server should behave as a goldfish, forgetting everything immediately after a request is completed. That, and other inside-joke reasons.
