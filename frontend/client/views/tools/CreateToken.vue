@@ -4,6 +4,20 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
 
+          <article v-if="createdToken" class="message is-success">
+            <div class="message-header">
+              <p>Created token details:</p>
+            </div>
+            <div class="message-body">
+              <strong>Accessor:</strong> {{ createdToken.accessor }} <br>
+              <strong>Token:</strong> {{ createdToken.client_token }} <br>
+              <strong>Renewable:</strong> {{ createdToken.renewable }} <br>
+              <strong>Lease Duration:</strong> {{ createdToken.lease_duration }} <br>
+              <strong>Metadata:</strong> {{ createdToken.metadata }} <br>
+              <strong>Policies:</strong> {{ createdToken.policies }}
+            </div>
+          </article>
+
           <!-- ID -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
@@ -211,10 +225,10 @@
             <div class="field-body">
               <div class="field">
                 <div class="control">
-                  <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="log()">
+                  <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="createToken()">
                     Create Root Token
                   </button>
-                  <button v-else class="button is-primary" @click="log()">
+                  <button v-else class="button is-primary" @click="createToken()">
                     Create Token
                   </button>
                   <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
@@ -253,7 +267,8 @@ export default {
       selectedPolicies: ['default'],
       policyFilter: '',
       num_uses: 0,
-      period_ttl: ''
+      period_ttl: '',
+      createdToken: null
     }
   },
 
@@ -371,8 +386,8 @@ export default {
       }
     },
 
-    log: function () {
-      console.log(this.payloadJSON)
+    createToken: function () {
+      this.createdToken = null
       this.$http.post('/api/users/create?type=token', this.payloadJSON, {
         headers: {'X-CSRF-Token': this.csrf}
       })
@@ -382,7 +397,7 @@ export default {
           message: '',
           type: 'success'
         })
-        console.log(response.data)
+        this.createdToken = response.data.result.auth
       })
       .catch((error) => {
         this.$onError(error)
@@ -413,4 +428,5 @@ export default {
   .switch {
     top: 7px;
   }
+
 </style>
