@@ -38,9 +38,8 @@ func main() {
 	e.POST("/api/users/revoke", handlers.DeleteUser())
 	e.POST("/api/users/create", handlers.CreateUser())
 
-	e.GET("/api/policies", handlers.ListPolicies())
-	e.GET("/api/policies/:policyname", handlers.GetPolicy())
-	e.DELETE("/api/policies/:policyname", handlers.DeletePolicy())
+	e.GET("/api/policy", handlers.GetPolicy())
+	e.DELETE("/api/policy", handlers.DeletePolicy())
 
 	e.GET("/api/transit", handlers.TransitInfo())
 	e.POST("/api/transit/encrypt", handlers.EncryptString())

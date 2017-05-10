@@ -18,7 +18,7 @@ func (auth AuthInfo) GetPolicy(name string) (string, error) {
 		return "", err
 	}
 	if name == "" {
-		return "", errors.New("Invalid policy name")
+		return "", errors.New("Empty policy name")
 	}
 	return client.Sys().GetPolicy(name)
 }
@@ -29,7 +29,7 @@ func (auth AuthInfo) DeletePolicy(name string) error {
 		return err
 	}
 	if name == "" {
-		return errors.New("Invalid policy name")
+		return errors.New("Empty policy name")
 	}
 	return client.Sys().DeletePolicy(name)
 }

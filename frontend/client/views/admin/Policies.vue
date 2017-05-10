@@ -41,7 +41,7 @@
                     <input class="input" type="text" placeholder="Filter by policy details" v-model="search.str">
                   </p>
                   <p class="control">
-                    <button class="button is-info" @click="filterByDetails()">
+                    <button class="button is-info" @click="filterByDetails()" :class="loading ? 'is-loading' : ''">
                       Search
                     </button>
                   </p>
@@ -117,7 +117,7 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/policies').then((response) => {
+    this.$http.get('/api/policy').then((response) => {
       this.policies = response.data.result
     })
     .catch((error) => {
@@ -147,7 +147,7 @@ export default {
   methods: {
     getPolicyRules: function (policyName) {
       this.policyRules = ''
-      this.$http.get('/api/policies/' + policyName).then((response) => {
+      this.$http.get('/api/policy?policy=' + policyName).then((response) => {
         this.policyRules = response.data.result
       })
       .catch((error) => {
@@ -166,13 +166,13 @@ export default {
       // crawl through each policy
       for (var i = 0; i < this.policies.length; i++) {
         let policyName = this.policies[i]
-        this.$http.get('/api/policies/' + policyName).then((response) => {
+        this.$http.get('/api/policy?policy=' + policyName).then((response) => {
           if (this.search.regex) {
-            if (response.data.result.match(this.search.str)) {
+            if (response.data.result.match(this.search.str) || policyName.match(this.search.str)) {
               this.search.found.push(policyName)
             }
           } else {
-            if (response.data.result.includes(this.search.str)) {
+            if (response.data.result.includes(this.search.str) || policyName.includes(this.search.str)) {
               this.search.found.push(policyName)
             }
           }
