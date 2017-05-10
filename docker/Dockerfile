@@ -17,9 +17,10 @@ RUN npm run build
 
 EXPOSE 8000
 
-ARG VAULT_ADDR
-ARG VAULT_TOKEN
-ENV VAULT_ADDR ${VAULT_ADDR}
-ENV VAULT_TOKEN ${VAULT_TOKEN}
+ENV VAULT_ADDR http://127.0.0.1:8200
+ENV VAULT_TOKEN goldfish
 
-CMD ["./server", "-addr=${VAULT_ADDR}", "-token=${VAULT_TOKEN}"]
+WORKDIR $GOPATH/src/github.com/caiyeon/goldfish
+RUN mv server /usr/local/goldfish
+
+CMD "/usr/local/goldfish" "-addr=${VAULT_ADDR}" "-approle_path=auth/approle/login" "-config_path=data/goldfish" "-role_id=goldfish" "-token=${VAULT_TOKEN}"
