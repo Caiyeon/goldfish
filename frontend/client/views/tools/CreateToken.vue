@@ -4,83 +4,64 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
 
+        <div class="columns">
+
+        <!-- Left column (Form) -->
+        <div class="column">
+
           <!-- ID -->
-          <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">ID</label>
+          <div v-if="availablePolicies.indexOf('root') > -1" class="field">
+            <label class="label">ID</label>
+            <div class="control">
+              <input class="input is-info" type="text" placeholder="Default will be a UUID" v-model="ID">
             </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <input class="input" type="text" placeholder="Default will be a UUID" v-model="ID">
-                </div>
-                <p class="help is-info">
-                  Root privilege
-                </p>
-              </div>
-            </div>
+            <p class="help is-info">
+              Root privilege
+            </p>
           </div>
 
           <!-- Display name -->
-          <div class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">Display Name</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <input class="input" type="text" placeholder="Default will be 'token'" v-model="displayName">
-                </div>
-                <p v-if="displayName !== ''" class="help is-info">
-                  Display name will be 'token-{{ displayName }}'
-                </p>
-              </div>
+          <div class="field">
+            <label class="label">Display Name</label>
+            <div class="control">
+              <input class="input" type="text" placeholder="Default will be 'token'" v-model="displayName">
+              <p v-if="displayName !== ''" class="help is-info">
+                Display name will be 'token-{{ displayName }}'
+              </p>
             </div>
           </div>
 
           <!-- TTL -->
-          <div class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">TTL</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <input class="input" type="text"
-                    placeholder="e.g. '2d 12h' or '10h 30m 20s'"
-                    v-model="ttl"
-                    :class="stringToSeconds(this.ttl) < 0 ? 'is-danger' : ''">
-                </div>
-                <p v-if="stringToSeconds(this.ttl) < 0" class="help is-danger">
-                  TTL cannot be negative
-                </p>
-                <p v-if="stringToSeconds(this.ttl) > 0" class="help is-info">
-                  {{ stringToSeconds(this.ttl) }} seconds
-                </p>
-              </div>
+          <div class="field">
+            <label class="label">TTL</label>
+            <div class="control">
+              <input class="input" type="text"
+                placeholder="e.g. '2d 12h' or '10h 30m 20s'"
+                v-model="ttl"
+                :class="stringToSeconds(this.ttl) < 0 ? 'is-danger' : ''">
+              <p v-if="stringToSeconds(this.ttl) < 0" class="help is-danger">
+                TTL cannot be negative
+              </p>
+              <p v-if="stringToSeconds(this.ttl) > 0" class="help is-info">
+                {{ stringToSeconds(this.ttl) }} seconds
+              </p>
             </div>
           </div>
 
           <!-- Max_TTL -->
-          <div class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">Explicit Max TTL</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <input class="input" type="text"
-                    placeholder="e.g. '2d 12h' or '10h 30m 20s'"
-                    v-model="max_ttl"
-                    :class="stringToSeconds(this.max_ttl) < 0 ? 'is-danger' : ''">
-                </div>
-                <p v-if="stringToSeconds(this.max_ttl) < 0" class="help is-danger">
-                  TTL cannot be negative
-                </p>
-                <p v-if="stringToSeconds(this.max_ttl) > 0" class="help is-info">
-                  {{ stringToSeconds(this.max_ttl) }} seconds
-                </p>
-              </div>
+          <div class="field">
+            <label class="label">Explicit Max TTL</label>
+            <div class="control">
+              <input class="input" type="text"
+                placeholder="e.g. '2d 12h' or '10h 30m 20s'"
+                v-model="max_ttl"
+                :class="stringToSeconds(this.max_ttl) < 0 ? 'is-danger' : ''">
+              <p v-if="stringToSeconds(this.max_ttl) < 0" class="help is-danger">
+                TTL cannot be negative
+              </p>
+              <p v-if="stringToSeconds(this.max_ttl) > 0" class="help is-info">
+                {{ stringToSeconds(this.max_ttl) }} seconds
+              </p>
             </div>
           </div>
 
@@ -101,16 +82,15 @@
           <!-- No-parent -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">No parent?</label>
+              <label class="label">
+                No parent?
+              </label>
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control">
                   <vb-switch type="danger" :checked="bNoParent" v-model="bNoParent"></vb-switch>
                 </div>
-                <p class="help is-info">
-                  Root privilege
-                </p>
               </div>
             </div>
           </div>
@@ -118,38 +98,31 @@
           <!-- Period -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Periodic?</label>
+              <label class="label">
+                Periodic?
+              </label>
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control">
                   <vb-switch type="danger" :checked="bPeriodic" v-model="bPeriodic"></vb-switch>
                 </div>
-                <p class="help is-info">
-                  Root privilege
-                </p>
               </div>
             </div>
           </div>
-          <div v-if="availablePolicies.indexOf('root') > -1 && this.bPeriodic" class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">Period TTL</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <input class="input" type="text"
-                    placeholder="e.g. '2d 12h' or '10h 30m 20s'"
-                    v-model="period_ttl"
-                    :class="stringToSeconds(this.period_ttl) < 0 ? 'is-danger' : ''">
-                </div>
-                <p v-if="stringToSeconds(this.period_ttl) < 0" class="help is-danger">
-                  TTL cannot be negative
-                </p>
-                <p v-if="stringToSeconds(this.period_ttl) > 0" class="help is-info">
-                  {{ stringToSeconds(this.period_ttl) }} seconds
-                </p>
-              </div>
+          <div v-if="availablePolicies.indexOf('root') > -1 && this.bPeriodic" class="field">
+            <label class="label">Period TTL</label>
+            <div class="control">
+              <input class="input is-danger" type="text"
+                placeholder="e.g. '2d 12h' or '10h 30m 20s'"
+                v-model="period_ttl"
+                :class="stringToSeconds(this.period_ttl) < 0 ? 'is-danger' : ''">
+              <p v-if="stringToSeconds(this.period_ttl) < 0" class="help is-danger">
+                TTL cannot be negative
+              </p>
+              <p v-if="stringToSeconds(this.period_ttl) > 0" class="help is-info">
+                {{ stringToSeconds(this.period_ttl) }} seconds
+              </p>
             </div>
           </div>
 
@@ -166,86 +139,76 @@
           </div> -->
 
           <!-- Policies -->
-          <div class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">Policies</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <nav class="panel">
-                    <p class="panel-heading">Available Policies</p>
-                    <div class="panel-block">
-                      <p class="control has-icons-left">
-                        <input class="input is-small" type="text" placeholder="Search" v-model="policyFilter">
-                        <span class="icon is-small is-left">
-                          <i class="fa fa-search"></i>
-                        </span>
-                      </p>
-                    </div>
-                    <label
-                      class="panel-block"
-                      v-for="policy in filteredPolicies">
-                      <input
-                        type="checkbox"
-                        :checked="selectedPolicies.indexOf(policy) > -1"
-                        @click="toggle(policy)"
-                        > {{ policy }} </label>
-                    </label>
-                    <div class="panel-block">
-                      <button class="button is-primary is-outlined is-fullwidth" @click="selectedPolicies = []">
-                        Reset all filters
-                      </button>
-                    </div>
-                  </nav>
+          <div class="field">
+            <div class="control">
+              <nav class="panel">
+                <p class="panel-heading">Available Policies</p>
+                <div class="panel-block">
+                  <p class="control has-icons-left">
+                    <input class="input is-small" type="text" placeholder="Search" v-model="policyFilter">
+                    <span class="icon is-small is-left">
+                      <i class="fa fa-search"></i>
+                    </span>
+                  </p>
                 </div>
-              </div>
+                <label
+                  class="panel-block"
+                  v-for="policy in filteredPolicies">
+                  <input
+                    type="checkbox"
+                    :checked="selectedPolicies.indexOf(policy) > -1"
+                    @click="toggle(policy)"
+                    > {{ policy }} </label>
+                </label>
+                <div class="panel-block">
+                  <button class="button is-danger is-outlined is-fullwidth" @click="selectedPolicies = []">
+                    Reset selected policies
+                  </button>
+                </div>
+              </nav>
             </div>
           </div>
 
           <!-- Confirm button -->
-          <div class="field is-horizontal">
-            <div class="field-label">
-              <!-- Left empty for spacing -->
+          <div class="field">
+            <div class="control">
+              <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="createToken()">
+                Create Root Token
+              </button>
+              <button v-else class="button is-primary" @click="createToken()" :disabled="selectedPolicies.length === 0">
+                Create Token
+              </button>
+              <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
+              <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
             </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control">
-                  <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="createToken()">
-                    Create Root Token
-                  </button>
-                  <button v-else class="button is-primary" @click="createToken()">
-                    Create Token
-                  </button>
-                  <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
-                  <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
-                </div>
-              </div>
-            </div>
+          </div>
+
+        <!-- ends column -->
+        </div>
+
+        <!-- Right column -->
+        <div class="column">
+
+          <!-- Token creation response -->
+          <div v-if="createdToken" class="field">
+            <label class="label">Created token:</label>
+            <article class="message is-success">
+              <div class="message-body" style="white-space: pre;">{{JSON.stringify(createdToken, null, '\t')}}</div>
+            </article>
           </div>
 
           <!-- Payload preview -->
-          <div class="field is-horizontal">
-            <div class="field-label">
-              <label class="label">Payload preview:</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <article class="message is-warning">
-                  <div class="message-body" style="white-space: pre;">{{JSON.stringify(payloadJSON, null, '\t')}}</div>
-                </article>
-              </div>
-              <div v-if="createdToken" class="field-label">
-                <label class="label">Created token:</label>
-              </div>
-              <div v-if="createdToken" class="field">
-                <article class="message is-success">
-                  <div class="message-body" style="white-space: pre;">{{JSON.stringify(createdToken, null, '\t')}}</div>
-                </article>
-              </div>
-            </div>
+          <div class="field">
+            <label class="label">Payload preview:</label>
+            <article class="message is-warning">
+              <div class="message-body" style="white-space: pre;">{{JSON.stringify(payloadJSON, null, '\t')}}</div>
+            </article>
           </div>
 
+        <!-- ends column -->
+        </div>
+
+        </div>
         </article>
       </div>
     </div>
@@ -266,6 +229,7 @@ export default {
       bRenewable: true,
       bNoParent: false,
       bPeriodic: false,
+      bRole: false,
       ID: '',
       displayName: '',
       ttl: '',
