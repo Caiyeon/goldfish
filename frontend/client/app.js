@@ -74,6 +74,12 @@ function handleError (error) {
         message: 'Invalid CSRF. Try refreshing the page',
         type: 'danger'
       })
+    } if (error.response.status === 404) {
+      openNotification({
+        title: 'Error: 404',
+        message: 'Not found',
+        type: 'danger'
+      })
     } else if (error.response.status === 504) {
     // Gateway timeout means vault is down/unreachable
       openNotification({
