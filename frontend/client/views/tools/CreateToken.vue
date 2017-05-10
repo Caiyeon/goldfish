@@ -4,20 +4,6 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
 
-          <article v-if="createdToken" class="message is-success">
-            <div class="message-header">
-              <p>Created token details:</p>
-            </div>
-            <div class="message-body">
-              <strong>Accessor:</strong> {{ createdToken.accessor }} <br>
-              <strong>Token:</strong> {{ createdToken.client_token }} <br>
-              <strong>Renewable:</strong> {{ createdToken.renewable }} <br>
-              <strong>Lease Duration:</strong> {{ createdToken.lease_duration }} <br>
-              <strong>Metadata:</strong> {{ createdToken.metadata }} <br>
-              <strong>Policies:</strong> {{ createdToken.policies }}
-            </div>
-          </article>
-
           <!-- ID -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
@@ -238,6 +224,28 @@
             </div>
           </div>
 
+          <!-- Payload preview -->
+          <div class="field is-horizontal">
+            <div class="field-label">
+              <label class="label">Payload preview:</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <article class="message is-warning">
+                  <div class="message-body" style="white-space: pre;">{{JSON.stringify(payloadJSON, null, '\t')}}</div>
+                </article>
+              </div>
+              <div v-if="createdToken" class="field-label">
+                <label class="label">Created token:</label>
+              </div>
+              <div v-if="createdToken" class="field">
+                <article class="message is-success">
+                  <div class="message-body" style="white-space: pre;">{{JSON.stringify(createdToken, null, '\t')}}</div>
+                </article>
+              </div>
+            </div>
+          </div>
+
         </article>
       </div>
     </div>
@@ -394,7 +402,7 @@ export default {
       .then((response) => {
         this.$notify({
           title: 'Token created!',
-          message: '',
+          message: 'Scroll down for details',
           type: 'success'
         })
         this.createdToken = response.data.result.auth
