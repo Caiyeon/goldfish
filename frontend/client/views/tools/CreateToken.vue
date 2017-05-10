@@ -335,7 +335,7 @@ export default {
 
     // if root policy, fetch all available policies from server
     if (this.availablePolicies.indexOf('root') > -1) {
-      this.$http.get('/api/policies').then((response) => {
+      this.$http.get('/api/policy').then((response) => {
         this.availablePolicies = response.data.result
         // default policy is always an option, and the first item in list
         var i = this.availablePolicies.indexOf('default')
