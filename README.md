@@ -4,6 +4,8 @@
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
+<h3>Show support for development by starring this repo!</a></h3>
+
 </div>
 
 ## What is this?

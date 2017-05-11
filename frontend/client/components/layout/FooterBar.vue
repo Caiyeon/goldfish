@@ -3,15 +3,14 @@
     <div class="container">
       <div class="content has-text-centered">
         <p class="social">
-          <a :href="'https://github.com/' + repository">
-            <span class="icon">
-              <i class="fa fa-github"></i>
-            </span>
+          <a>
+            <iframe src="https://ghbtns.com/github-btn.html?user=caiyeon&repo=goldfish&type=watch&count=true&size=large&v=2" frameborder="0" scrolling="0" width="140px" height="30px"></iframe>
           </a>
           <a>
-            <span class="icon">
-              <i class="fa fa-twitter"></i>
-            </span>
+            <iframe src="https://ghbtns.com/github-btn.html?user=caiyeon&repo=goldfish&type=star&count=true&size=large" frameborder="0" scrolling="0" width="140px" height="30px"></iframe>
+          </a>
+          <a>
+            <iframe src="https://ghbtns.com/github-btn.html?user=caiyeon&repo=goldfish&type=fork&count=true&size=large" frameborder="0" scrolling="0" width="140px" height="30px"></iframe>
           </a>
         </p>
         <p><span class="icon"><i class="fa fa-code"></i></span> with <span class="icon"><i class="fa fa-heart"></i></span> by <a href="https://github.com/caiyeon">caiyeon</a>.</p>
