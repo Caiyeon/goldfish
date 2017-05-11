@@ -7,7 +7,7 @@
         <div class="columns">
 
         <!-- Left column (Form) -->
-        <div class="column">
+        <div class="column is-6">
 
           <!-- Role -->
           <div v-if="availableRoles.length > 0" class="field">

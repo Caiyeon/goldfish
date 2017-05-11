@@ -17,6 +17,7 @@
 
           <!-- Tokens tab -->
           <div v-if="tabName === 'token'" class="tile is-parent table-responsive is-vertical">
+
             <!-- Token pages -->
             <nav class="pagination is-right">
               <!-- styling hack until level component plays nice with pagination -->
@@ -26,11 +27,11 @@
               >Search</a>
               <a class="pagination-previous"
                 v-on:click="loadPage(currentPage - 1)"
-                :disabled="loading || currentPage < 2"
+                :disabled="loading || currentPage < 2 || !!this.search.searched"
               >Previous</a>
               <a class="pagination-next"
                 v-on:click="loadPage(currentPage + 1)"
-                :disabled="loading || currentPage > lastPage - 1"
+                :disabled="loading || currentPage > lastPage - 1 || !!this.search.searched"
               >Next page</a>
 
               <ul class="pagination-list">
@@ -38,6 +39,7 @@
                   <a class="pagination-link"
                     v-on:click="loadPage(1)"
                     v-bind:class="currentPage === 1 ? 'is-current' : ''"
+                    :disabled="!!this.search.searched"
                   >1</a>
                 </li>
                 <li v-if="currentPage > 3 && lastPage > 5">
@@ -48,6 +50,7 @@
                   <a class="pagination-link"
                     v-on:click="loadPage(page)"
                     v-bind:class="page === currentPage ? 'is-current' : ''"
+                    :disabled="!!this.search.searched"
                   >{{ page }}</a>
                 </li>
 
@@ -58,40 +61,74 @@
                   <a class="pagination-link"
                     v-on:click="loadPage(lastPage)"
                     v-bind:class="currentPage === lastPage ? 'is-current' : ''"
+                    :disabled="!!this.search.searched"
                   >{{ lastPage }}</a>
                 </li>
               </ul>
             </nav>
 
-            <div v-if="search.show" class="field">
-              <label class="label"></label>
-              <label class="label"></label>
-              <p v-if="search.searched !== 0" class="help is-info">
-                Found {{ search.found }} matches out of {{ search.searched }}
-              </p>
-              <div class="field has-addons is-marginless">
-                <p class="control">
-                  <input class="input" type="text"
-                    :placeholder="search.regex ? 'Match this by regex' : 'Match this string'"
-                    v-model="search.str"
-                    @keyup.enter="searchByString()">
-                </p>
-                <p class="control">
-                  <a class="button is-info"
-                    :class="loading ? 'is-loading' : ''"
-                    :disabled="search.str === ''"
-                    @click="searchByString()"
-                  >Search
-                  </a>
-                </p>
-              </div>
-              <p v-if="search.show" class="control">
-                <label class="checkbox" >
-                  <input type="checkbox" :checked="search.regex" @click="search.regex = !search.regex">
-                  Search by regex
-                </label>
-              </p>
-            </div>
+            <!-- spacing -->
+            <label class="label"></label>
+
+            <!-- Token search bar -->
+            <article v-if="search.show" class="tile is-child box">
+              <nav class="level">
+
+                <!-- Search by name -->
+                <div class="level-left">
+                  <div class="level-item">
+                    <p class="control">
+                      <button class="button is-danger"
+                      :class="loading ? 'is-loading' : ''"
+                      :disabled="search.searched === 0"
+                      @click="resetSearch()">
+                        Reset
+                      </button>
+                    </p>
+                  </div>
+                </div>
+
+                <div class="level-item">
+                  <p v-if="search.searched !== 0" class="subtitle is-5">
+                    Found <strong>{{ search.found }}</strong> matches out of <strong>{{ search.searched }}</strong> tokens
+                  </p>
+                  <p v-else class="subtitle is-5">
+                    Displaying <strong>{{Math.min(tokenCount, 300)}}</strong> out of <strong>{{tokenCount}}</strong> tokens
+                  </p>
+                </div>
+
+                <!-- Search by content -->
+                <div class="level-right">
+                  <div class="level-item">
+                    <div class="field has-addons">
+                      <p class="control">
+                        <span class="select">
+                          <select v-model="search.regex">
+                          <option v-bind:value="false">Substring</option>
+                          <option v-bind:value="true">Regex</option>
+                          </select>
+                        </span>
+                      </p>
+                      <p class="control">
+                        <input class="input" type="text"
+                        placeholder="Search all tokens"
+                        v-model="search.str"
+                        @keyup.enter="searchByString()">
+                      </p>
+                      <p class="control">
+                        <button class="button is-info"
+                        :class="loading ? 'is-loading' : ''"
+                        :disabled="search.str === ''"
+                        @click="searchByString()">
+                          Search
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </nav>
+            </article>
 
             <!-- spacing -->
             <label class="label"></label>
@@ -274,6 +311,7 @@ export default {
       selectedIndex: -1,
       currentPage: 1,
       lastPage: 1,
+      tokenCount: 0,
       loading: false,
       // when adding properties here,
       // be careful with reactivity (overwritten by switchTab())
@@ -297,6 +335,7 @@ export default {
       this.$onError(error)
     })
     this.$http.get('/api/tokencount').then((response) => {
+      this.tokenCount = response.data.result
       this.lastPage = Math.ceil(response.data.result / 300)
     })
     .catch((error) => {
@@ -411,7 +450,7 @@ export default {
     },
 
     loadPage: function (pageNumber) {
-      if (pageNumber < 1 || pageNumber > this.lastPage) {
+      if (pageNumber < 1 || pageNumber > this.lastPage || this.search.searched) {
         return
       }
       this.currentPage = pageNumber
@@ -478,7 +517,15 @@ export default {
           this.loading = this.loading - 1 || false
         })
       }
+    },
+
+    resetSearch: function () {
+      this.search.str = ''
+      this.search.found = 0
+      this.search.searched = 0
+      this.loadPage(this.currentPage)
     }
+
   }
 
 }
