@@ -221,7 +221,7 @@
           <div v-if="selectedRole" class="field">
             <article class="message is-warning">
               <div class="message-body">
-                <strong>Role selected: </strong>writing to /auth/token/create/{{selectedRole}}
+                <strong>Warning: Some options may be overridden by role details</strong>
               </div>
             </article>
           </div>
@@ -435,7 +435,7 @@ export default {
       .then((response) => {
         this.$notify({
           title: 'Token created!',
-          message: 'Scroll down for details',
+          message: 'Details will be only shown once!',
           type: 'success'
         })
         this.createdToken = response.data.result.auth
