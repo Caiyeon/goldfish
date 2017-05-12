@@ -4,13 +4,18 @@
       <div class="content has-text-centered">
         <p class="social">
           <a>
-            <iframe src="https://ghbtns.com/github-btn.html?user=caiyeon&repo=goldfish&type=watch&count=true&size=large&v=2" frameborder="0" scrolling="0" width="140px" height="30px"></iframe>
+            <github-button
+            href="https://github.com/caiyeon/goldfish"
+            data-show-count="true"
+            data-size="large"
+            data-icon="octicon-star">Stars</github-button>
           </a>
           <a>
-            <iframe src="https://ghbtns.com/github-btn.html?user=caiyeon&repo=goldfish&type=star&count=true&size=large" frameborder="0" scrolling="0" width="140px" height="30px"></iframe>
-          </a>
-          <a>
-            <iframe src="https://ghbtns.com/github-btn.html?user=caiyeon&repo=goldfish&type=fork&count=true&size=large" frameborder="0" scrolling="0" width="140px" height="30px"></iframe>
+            <github-button
+            href="https://github.com/caiyeon/goldfish/fork"
+            data-show-count="true"
+            data-size="large"
+            data-icon="octicon-repo-forked">Forks</github-button>
           </a>
         </p>
         <p><span class="icon"><i class="fa fa-code"></i></span> with <span class="icon"><i class="fa fa-heart"></i></span> by <a href="https://github.com/caiyeon">caiyeon</a>.</p>
@@ -22,12 +27,16 @@
 </template>
 
 <script>
+import GithubButton from 'github-buttons/dist/vue/GithubButton'
+
 export default {
+  components: {
+    GithubButton
+  },
 
   data () {
     return this.$store.state.pkg
   }
-
 }
 </script>
 

@@ -38,6 +38,7 @@
     "axios": "^0.15.3",
     "bulma": "^0.4.1",
     "font-awesome": "4.7.0",
+    "github-buttons": "https://github.com/ntkme/github-buttons.git",
     "mdi": "^1.8.36",
     "plotly.js": "^1.24.0",
     "vue": "^2.2.1",
