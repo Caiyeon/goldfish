@@ -107,7 +107,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 
 		// let future requests re-use the client token
 		auth.Type = "token"
-		auth.ID = resp.Auth.ClientToken
+		auth.ID   = resp.Auth.ClientToken
 		auth.Pass = ""
 		return lookupResp.Data, nil
 
@@ -122,4 +122,12 @@ func (auth AuthInfo) RenewSelf() (*api.Secret, error) {
 		return nil, err
 	}
 	return client.Auth().Token().RenewSelf(0)
+}
+
+func (auth AuthInfo) LookupSelf() (*api.Secret, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	return client.Auth().Token().LookupSelf()
 }

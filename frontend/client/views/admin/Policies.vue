@@ -88,9 +88,26 @@
         <div class="tile is-parent is-vertical">
           <article class="tile is-child box">
             <h4 class="title is-4">Policy Rules</h4>
-            <p class="control">
-              <textarea class="textarea" placeholder="Select a policy" v-model="policyRules"></textarea>
-            </p>
+
+            <div class="field">
+              <p class="control">
+                <textarea class="textarea" placeholder="Select a policy" v-model="policyRulesModified"></textarea>
+              </p>
+            </div>
+
+            <div class="field">
+              <p class="control is-pulled-right">
+                <a class="button is-primary is-outlined"
+                  @click="addPolicyRequest()"
+                  :disabled="policyRules === policyRulesModified">
+                  <span>Request changes</span>
+                  <span class="icon is-small">
+                    <i class="fa fa-check"></i>
+                  </span>
+                </a>
+              </p>
+            </div>
+
           </article>
         </div>
       </div>
@@ -100,11 +117,15 @@
 </template>
 
 <script>
+const querystring = require('querystring')
+
 export default {
   data () {
     return {
+      csrf: '',
       policies: [],
       policyRules: '',
+      policyRulesModified: '',
       loading: false,
       nameFilter: '',
       search: {
@@ -112,13 +133,15 @@ export default {
         found: [],
         searched: 0,
         regex: false
-      }
+      },
+      selectedPolicy: ''
     }
   },
 
   mounted: function () {
     this.$http.get('/api/policy').then((response) => {
       this.policies = response.data.result
+      this.csrf = response.headers['x-csrf-token']
     })
     .catch((error) => {
       this.$onError(error)
@@ -147,8 +170,11 @@ export default {
   methods: {
     getPolicyRules: function (policyName) {
       this.policyRules = ''
+      this.policyRulesModified = ''
+      this.selectedPolicy = policyName
       this.$http.get('/api/policy?policy=' + policyName).then((response) => {
         this.policyRules = response.data.result
+        this.policyRulesModified = this.policyRules
       })
       .catch((error) => {
         this.$onError(error)
@@ -185,7 +211,30 @@ export default {
           this.loading = this.loading - 1 || false
         })
       }
+    },
+
+    addPolicyRequest: function () {
+      this.$http.post('/api/policy/request?policy=' + this.selectedPolicy,
+        querystring.stringify({ rules: this.policyRulesModified }),
+       { headers: {'X-CSRF-Token': this.csrf} })
+      .then((response) => {
+        this.$notify({
+          title: 'Under construction!',
+          message: 'Functionality is not fully implemented yet!',
+          type: 'warning'
+        })
+        this.$message({
+          message: 'Your request hash is: ' + response.data.result,
+          type: 'success',
+          duration: 0,
+          showCloseButton: true
+        })
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
     }
+
   }
 }
 </script>

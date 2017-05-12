@@ -59,3 +59,24 @@ func VaultHealth() (string, error) {
 
 	return string(body), nil
 }
+
+// lookup current root generation status
+func GenerateRootStatus() (*api.GenerateRootStatusResponse, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	client.SetToken(vaultToken)
+	return client.Sys().GenerateRootStatus()
+}
+
+func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	client.SetToken(vaultToken)
+	return vaultClient.Logical().Write("cubbyhole/" + name, data)
+}
