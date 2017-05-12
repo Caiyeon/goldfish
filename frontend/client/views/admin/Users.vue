@@ -27,11 +27,11 @@
               >Search</a>
               <a class="pagination-previous"
                 v-on:click="loadPage(currentPage - 1)"
-                :disabled="loading || currentPage < 2 || !!this.search.searched"
+                :disabled="loading || currentPage < 2 || !!search.searched"
               >Previous</a>
               <a class="pagination-next"
                 v-on:click="loadPage(currentPage + 1)"
-                :disabled="loading || currentPage > lastPage - 1 || !!this.search.searched"
+                :disabled="loading || currentPage > lastPage - 1 || !!search.searched"
               >Next page</a>
 
               <ul class="pagination-list">
@@ -39,7 +39,7 @@
                   <a class="pagination-link"
                     v-on:click="loadPage(1)"
                     v-bind:class="currentPage === 1 ? 'is-current' : ''"
-                    :disabled="!!this.search.searched"
+                    :disabled="!!search.searched"
                   >1</a>
                 </li>
                 <li v-if="currentPage > 3 && lastPage > 5">
@@ -50,7 +50,7 @@
                   <a class="pagination-link"
                     v-on:click="loadPage(page)"
                     v-bind:class="page === currentPage ? 'is-current' : ''"
-                    :disabled="!!this.search.searched"
+                    :disabled="!!search.searched"
                   >{{ page }}</a>
                 </li>
 
@@ -61,7 +61,7 @@
                   <a class="pagination-link"
                     v-on:click="loadPage(lastPage)"
                     v-bind:class="currentPage === lastPage ? 'is-current' : ''"
-                    :disabled="!!this.search.searched"
+                    :disabled="!!search.searched"
                   >{{ lastPage }}</a>
                 </li>
               </ul>
