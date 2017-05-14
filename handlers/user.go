@@ -114,7 +114,7 @@ func CreateUser() echo.HandlerFunc {
 				return logError(c, err.Error(), "Invalid format")
 			}
 
-			resp, err = auth.CreateToken(request)
+			resp, err = auth.CreateToken(request, c.QueryParam("wrap-ttl"))
 			if err != nil {
 				return logError(c, err.Error(), "Could not create token")
 			}

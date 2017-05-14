@@ -169,11 +169,19 @@ func (auth AuthInfo) GetTokenCount() (int, error) {
 	return len(accessors), nil
 }
 
-func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest) (*api.Secret, error) {
+func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest, wrapttl string) (*api.Secret, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
 	}
+
+	// if requester wants response wrapped
+	if wrapttl != "" {
+		client.SetWrappingLookupFunc(func(operation, path string) string {
+			return wrapttl
+		})
+	}
+
 	return client.Auth().Token().Create(opts)
 }
 

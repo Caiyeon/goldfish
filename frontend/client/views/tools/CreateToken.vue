@@ -93,6 +93,32 @@
             </div>
           </div>
 
+          <!-- Wrapping -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Wrapped?</label>
+            </div>
+            <div class="field-body">
+              <div class="field is-grouped">
+                <div class="control">
+                  <vb-switch type="info" :checked="bWrapped" v-model="bWrapped"></vb-switch>
+                </div>
+              </div>
+              <div v-if="bWrapped" class="field">
+                <input class="input" type="text"
+                  placeholder="Wrap-ttl e.g. '5m'"
+                  v-model="wrap_ttl"
+                  :class="stringToSeconds(this.wrap_ttl) < 0 ? 'is-danger' : ''">
+                <p v-if="stringToSeconds(this.wrap_ttl) < 0" class="help is-danger">
+                  TTL cannot be negative
+                </p>
+                <p v-if="stringToSeconds(this.wrap_ttl) > 0" class="help is-info">
+                  {{ stringToSeconds(this.wrap_ttl) }} seconds
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- No-parent -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
@@ -275,10 +301,12 @@ export default {
       bNoParent: false,
       bPeriodic: false,
       bRole: false,
+      bWrapped: false,
       ID: '',
       displayName: '',
       ttl: '',
       max_ttl: '',
+      wrap_ttl: '',
       metadata: '',
       availablePolicies: ['default'],
       selectedPolicies: ['default'],
@@ -329,6 +357,13 @@ export default {
         'policies': this.selectedPolicies
       }
       return payload
+    },
+
+    wrapParam: function () {
+      if (this.bWrapped) {
+        return '&wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
+      }
+      return ''
     }
   },
 
@@ -429,7 +464,7 @@ export default {
 
     createToken: function () {
       this.createdToken = null
-      this.$http.post('/api/users/create?type=token', this.payloadJSON, {
+      this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
         headers: {'X-CSRF-Token': this.csrf}
       })
       .then((response) => {
@@ -438,7 +473,7 @@ export default {
           message: 'Details will be only shown once!',
           type: 'success'
         })
-        this.createdToken = response.data.result.auth
+        this.createdToken = response.data.result.auth || response.data.result.wrap_info
       })
       .catch((error) => {
         this.$onError(error)
