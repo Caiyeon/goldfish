@@ -36,9 +36,9 @@
               <p class="control">
                 <button class="button is-success" @click="bConfirm = true">Approve</button>
               </p>
-              <p class="control">
-                <button class="button is-danger" @click="bConfirm = false">Reject</button>
-              </p>
+              <!-- <p class="control">
+                <button class="button is-danger" @click="reject()">Reject</button>
+              </p> -->
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
                   <input class="input" type="text"
@@ -123,18 +123,27 @@ export default {
       })
       .then((response) => {
         this.unsealToken = ''
-        this.request.Current = this.request.New
-        this.$notify({
-          title: 'Change success',
-          message: 'Root token generated and revoked',
-          type: 'success'
-        })
+        if (response.data.progress) {
+          this.$notify({
+            title: 'Progress',
+            message: response.data.progress.toString() + ' unseal tokens received so far',
+            type: 'success'
+          })
+        } else {
+          this.request.Current = response.data.result || this.request.Current
+          this.$notify({
+            title: 'Change success',
+            message: 'Root token generated and revoked',
+            type: 'success'
+          })
+        }
       })
       .catch((error) => {
         this.unsealToken = ''
         this.$onError(error)
       })
     }
+
   }
 
 }

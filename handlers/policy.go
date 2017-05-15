@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -185,42 +186,25 @@ func GetPolicyRequest() echo.HandlerFunc {
 			return logError(c, err.Error(), "Change appears to be malformed")
 		}
 
-		// verify hash
-		hash_uint64, err := hashstructure.Hash(request, nil)
-		if err != nil {
-			return logError(c, err.Error(), "Could not hash request. Aborting")
-		} else if strconv.FormatUint(hash_uint64, 16) != hash {
-			return logError(c, err.Error(), "Hashes do not match. Aborting")
-		}
-
 		// verify current user has rights to see policy
 		policyCurrent, err := auth.GetPolicy(request.Policy)
 		if err != nil {
 			return logError(c, err.Error(), "Could not read existing policy")
 		}
 
-		// verify that policy has not been changed since change was requested
-		if policyCurrent != request.Current {
-			return logError(c, "", "Policy has been changed since the time of request. Aborting")
+		// verify hash
+		statusCode, err := verifyRequest(request, hash, policyCurrent)
+		if err != nil {
+			return c.JSON(statusCode, H{
+				"error": err.Error(),
+			})
 		}
 
-		// verify new policy conforms to HCL formatting
-		if _, err := hcl.Parse(request.New); err != nil {
-			return logError(c, err.Error(), "Could not parse proposed policy rules")
-		}
-
-		// verify change is still... well, a change.
-		if policyCurrent == request.New {
-			return logError(c, "", "No changes detected")
-		}
-
-		// get number of unseal keys required to generate root token
+		// if vault has been re-keyed, the request is invalid
 		status, err := vault.GenerateRootStatus()
 		if err != nil {
 			return logError(c, err.Error(), "Could not check root generation status")
 		}
-
-		// if vault has been re-keyed, the request is invalid
 		if request.Required != status.Required {
 			return logError(c, "", "Number of unseal tokens required differs. Aborting")
 		}
@@ -265,42 +249,25 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 			return logError(c, err.Error(), "Change appears to be malformed")
 		}
 
-		// verify hash
-		hash_uint64, err := hashstructure.Hash(request, nil)
-		if err != nil {
-			return logError(c, err.Error(), "Could not hash request. Aborting")
-		} else if strconv.FormatUint(hash_uint64, 16) != hash {
-			return logError(c, err.Error(), "Hashes do not match. Aborting")
-		}
-
 		// verify current user has rights to see policy
 		policyCurrent, err := auth.GetPolicy(request.Policy)
 		if err != nil {
 			return logError(c, err.Error(), "Could not read existing policy")
 		}
 
-		// verify that policy has not been changed since change was requested
-		if policyCurrent != request.Current {
-			return logError(c, "", "Policy has been changed since the time of request. Aborting")
+		// verify hash
+		statusCode, err := verifyRequest(request, hash, policyCurrent)
+		if err != nil {
+			return c.JSON(statusCode, H{
+				"error": err.Error(),
+			})
 		}
 
-		// verify new policy conforms to HCL formatting
-		if _, err := hcl.Parse(request.New); err != nil {
-			return logError(c, err.Error(), "Could not parse proposed policy rules")
-		}
-
-		// verify change is still... well, a change.
-		if policyCurrent == request.New {
-			return logError(c, "", "No changes detected")
-		}
-
-		// get number of unseal keys required to generate root token
+		// if vault has been re-keyed, the request is invalid
 		status, err := vault.GenerateRootStatus()
 		if err != nil {
 			return logError(c, err.Error(), "Could not check root generation status")
 		}
-
-		// if vault has been re-keyed, the request is invalid
 		if request.Required != status.Required {
 			return logError(c, "", "Number of unseal tokens required differs. Aborting")
 		}
@@ -317,6 +284,7 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 			unseals = strings.Split(resp.Data["unseals"].(string), ";")
 		}
 
+		// add the provided new unseal token
 		unseals = append(unseals, unsealKey)
 
 		// if not enough unseals yet, store it and return progress
@@ -370,7 +338,8 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 					}
 
 					// reset progress in request and cubbyhole
-					if _, err := vault.WriteToCubbyhole("unseal/" + hash, map[string]interface{}{
+					if _, err := vault.WriteToCubbyhole("unseal/" + hash,
+						map[string]interface{}{
 							"unseals": "",
 						}); err != nil {
 							return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
@@ -424,15 +393,46 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 		defer vault.DeleteFromCubbyhole("unseals/" + hash)
 		defer rootauth.RevokeSelf()
 
+		// make requested change
 		err = rootauth.PutPolicy(request.Policy, request.New)
 		if err != nil {
 			return logError(c, err.Error(), "Could not change policy")
 		}
 
+		// confirm changes have been applied
+		policyNow, err := auth.GetPolicy(request.Policy)
+		if err != nil {
+			return logError(c, err.Error(), "Could not read policy after change")
+		}
+
 		// return request
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 		return c.JSON(http.StatusOK, H{
-			"result": "success",
+			"result": policyNow,
 		})
 	}
+}
+
+func verifyRequest(request PolicyRequest, hash string, policyCurrent string) (int, error) {
+	hash_uint64, err := hashstructure.Hash(request, nil)
+	if err != nil || strconv.FormatUint(hash_uint64, 16) != hash {
+		return http.StatusBadRequest, errors.New("Hashes do not match")
+	}
+
+	// verify that policy has not been changed since change was requested
+	if policyCurrent != request.Current {
+		return http.StatusBadRequest, errors.New("Policy has been changed since request was made")
+	}
+
+	// verify new policy conforms to HCL formatting
+	if _, err := hcl.Parse(request.New); err != nil {
+		return http.StatusBadRequest, errors.New("Policy details cannot be parsed as HCL")
+	}
+
+	// verify change is still... well, a change.
+	if policyCurrent == request.New {
+		return http.StatusBadRequest, errors.New("Policy details already match proposed change")
+	}
+
+	return http.StatusOK, nil
 }

@@ -28,13 +28,11 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 
 #### Planned major features: Soon<sup>TM</sup>
-* [x] Searching tokens by policy
+* [x] **DONE!** Searching tokens by policy
 	- E.g. Display all tokens that have the policy 'admins'
-* [x] Searching policy by rule
+* [x] **DONE!** Searching policy by rule
 	- E.g. Display all policies that can access 'secret/data*'
-* [ ] Displaying a server audit log in real-time
-	- Authorization would be mapped to a (configurable) policy name
-* [ ] Request & approval based policy/mount changes
+* [x] **DONE!** Request & approval based policy changes
 	- Users can place a policy change request in vault
 	- Admins must then provide unseal tokens for that specific request
 	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
@@ -50,6 +48,9 @@ Although Vault's REST API is powerful, certain operations would benefit from a v
 ## Screenshots
 
 ![](screenshots/Login.png)
+
+
+![](screenshots/Request.png)
 
 
 ![](screenshots/BulletinBoard.png)
