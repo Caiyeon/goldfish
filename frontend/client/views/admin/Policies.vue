@@ -218,11 +218,6 @@ export default {
         querystring.stringify({ rules: this.policyRulesModified }),
        { headers: {'X-CSRF-Token': this.csrf} })
       .then((response) => {
-        this.$notify({
-          title: 'Under construction!',
-          message: 'Functionality is not fully implemented yet!',
-          type: 'warning'
-        })
         this.$message({
           message: 'Your request hash is: ' + response.data.result,
           type: 'success',

@@ -12,6 +12,14 @@ func (auth *AuthInfo) Clear() {
 	auth.Pass = ""
 }
 
+func (auth AuthInfo) RevokeSelf() error {
+	client, err := auth.Client()
+	if err != nil {
+		return err
+	}
+	return client.Auth().Token().RevokeSelf("")
+}
+
 // encrypt auth details with transit backend
 func (auth *AuthInfo) EncryptAuth() error {
 	c := GetConfig()

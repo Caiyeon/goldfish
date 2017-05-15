@@ -21,6 +21,11 @@ export default {
       name: 'Mounts',
       path: '/mounts',
       component: lazyLoading('admin/Mounts')
+    },
+    {
+      name: 'Requests',
+      path: '/requests',
+      component: lazyLoading('admin/Requests')
     }
   ]
 }

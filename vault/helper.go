@@ -67,8 +67,34 @@ func GenerateRootStatus() (*api.GenerateRootStatusResponse, error) {
 		return nil, err
 	}
 	client.SetAddress(vaultAddress)
-	client.SetToken(vaultToken)
 	return client.Sys().GenerateRootStatus()
+}
+
+func GenerateRootInit(otp string) (*api.GenerateRootStatusResponse, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	return client.Sys().GenerateRootInit(otp, "")
+}
+
+func GenerateRootUpdate(shard, nonce string) (*api.GenerateRootStatusResponse, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	return client.Sys().GenerateRootUpdate(shard, nonce)
+}
+
+func GenerateRootCancel() error {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return err
+	}
+	client.SetAddress(vaultAddress)
+	return client.Sys().GenerateRootCancel()
 }
 
 func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, error) {
@@ -79,4 +105,24 @@ func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, er
 	client.SetAddress(vaultAddress)
 	client.SetToken(vaultToken)
 	return vaultClient.Logical().Write("cubbyhole/" + name, data)
+}
+
+func ReadFromCubbyhole(name string) (*api.Secret, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	client.SetToken(vaultToken)
+	return vaultClient.Logical().Read("cubbyhole/" + name)
+}
+
+func DeleteFromCubbyhole(name string) (*api.Secret, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(vaultAddress)
+	client.SetToken(vaultToken)
+	return vaultClient.Logical().Delete("cubbyhole/" + name)
 }

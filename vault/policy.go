@@ -33,3 +33,14 @@ func (auth AuthInfo) DeletePolicy(name string) error {
 	}
 	return client.Sys().DeletePolicy(name)
 }
+
+func (auth AuthInfo) PutPolicy(name, rules string) error {
+	client, err := auth.Client()
+	if err != nil {
+		return err
+	}
+	if name == "" {
+		return errors.New("Empty policy name")
+	}
+	return client.Sys().PutPolicy(name, rules)
+}
