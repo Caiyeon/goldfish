@@ -413,6 +413,53 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 	}
 }
 
+// Anyone that is able to read the policy is able to delete change requests for that policy
+func DeletePolicyRequest() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &vault.AuthInfo{}
+		defer auth.Clear()
+
+		// fetch auth from cookie
+		getSession(c, auth)
+
+		// fetch change from cubbyhole
+		hash := c.Param("id")
+		resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+		if err != nil {
+			return logError(c, err.Error(), "Change ID not found")
+		}
+		if resp == nil {
+			return logError(c, "", "Change ID not found")
+		}
+
+		// fetch policy name from change
+		policyName, ok := resp.Data["Policy"]
+		if !ok {
+			return logError(c, err.Error(), "Change appears to be malformed")
+		}
+
+		// verify current user has rights to see policy
+		_, err = auth.GetPolicy(policyName.(string))
+		if err != nil {
+			return logError(c, err.Error(), "Read permissions for policy are required to reject a change")
+		}
+
+		// purge change related data from cubbyhole
+		_, err = vault.DeleteFromCubbyhole("unseals/" + hash)
+		if err != nil {
+			return logError(c, err.Error(), "Could not delete from cubbyhole")
+		}
+		_, err = vault.DeleteFromCubbyhole("requests/" + hash)
+		if err != nil {
+			return logError(c, err.Error(), "Could not delete from cubbyhole")
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": "Request deleted",
+		})
+	}
+}
+
 func verifyRequest(request PolicyRequest, hash string, policyCurrent string) (int, error) {
 	hash_uint64, err := hashstructure.Hash(request, nil)
 	if err != nil || strconv.FormatUint(hash_uint64, 16) != hash {

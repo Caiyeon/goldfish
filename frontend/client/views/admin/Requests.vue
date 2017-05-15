@@ -36,9 +36,10 @@
               <p class="control">
                 <button class="button is-success" @click="bConfirm = true">Approve</button>
               </p>
-              <!-- <p class="control">
-                <button class="button is-danger" @click="reject()">Reject</button>
-              </p> -->
+              <p class="control">
+                <button v-if="!bReject" class="button is-warning" @click="bReject = true">Reject</button>
+                <button v-else class="button is-danger" @click="reject()">Confirm Reject</button>
+              </p>
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
                   <input class="input" type="text"
@@ -93,6 +94,7 @@ export default {
       request: null,
       changeID: '',
       bConfirm: false,
+      bReject: false,
       unsealToken: ''
     }
   },
@@ -140,6 +142,23 @@ export default {
       })
       .catch((error) => {
         this.unsealToken = ''
+        this.$onError(error)
+      })
+    },
+
+    reject: function () {
+      this.$http.delete('/api/policy/request/' + this.searchString, {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        this.$notify({
+          title: 'Deleted',
+          message: 'Request data purged',
+          type: 'warning'
+        })
+        this.request = null
+      })
+      .catch((error) => {
         this.$onError(error)
       })
     }
