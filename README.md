@@ -1,6 +1,6 @@
 <div align="center">
 
-<h3>Goldfish Vault UI - <a href="http://67.205.184.214:8000">Live Demo</a></h3>
+<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo</a></h3>
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
