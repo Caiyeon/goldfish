@@ -113,6 +113,7 @@ goldfish -dev -vault_token $(vault write -f -wrap-ttl=20m \
 
 # run frontend in dev mode (with hot reload)
 cd frontend
+sudo npm install -g cross-env
 npm install
 npm run dev
 
