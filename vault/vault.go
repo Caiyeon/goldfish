@@ -63,17 +63,25 @@ func init() {
 		// load config once to ensure validity
 		if err := loadConfigFromVault(configPath); err != nil {
 			panic(err)
-		} else {
-			// continuously load config in go routine
-			go func() {
-				for {
-					time.Sleep(time.Minute)
-					if err := loadConfigFromVault(configPath); err != nil {
-						log.Println(err)
-					} // if there are errors, just try again in a minute
-				}
-			}()
 		}
+		// continuously load config in go routine
+		go func() {
+			for { // every minute
+				time.Sleep(time.Minute)
+				if err := loadConfigFromVault(configPath); err != nil {
+					log.Println(err)
+				}
+			}
+		}()
+		// continuously renew token
+		go func() {
+			for { // every hour
+				time.Sleep(time.Hour)
+				if err := RenewServerToken(); err != nil {
+					log.Println(err)
+				}
+			}
+		}()
 	}
 
 	// report back the accessor so it may be safekept
