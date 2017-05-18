@@ -80,8 +80,13 @@ Goldfish answers many auditing and administration questions that Vault API can't
 You'll need go (v1.8), npm (>=3), and nodejs (>=5).
 
 ```bash
-# you'll need a vault instance
-vault server -dev &
+go get github.com/caiyeon/goldfish
+cd $GOPATH/src/github.com/caiyeon/goldfish
+
+# you'll need a vault instance. Force a root token for consistency
+vault server -dev -dev-root-token-id=goldfish &
+export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_TOKEN=goldfish
 
 # this transit key is needed to encrypt/decrypt user credentials
 vault mount transit
@@ -97,23 +102,14 @@ vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token
 token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
 vault write auth/approle/role/goldfish/role-id role_id=goldfish
 
-# run-time settings can be stored wherever you like,
-# just make sure to change it in the policy and the launch cmd arg
-vault write secret/goldfish DefaultSecretPath="secret/" TransitBackend="transit" \
-UserTransitKey="usertransit" ServerTransitKey="goldfish" BulletinPath="secret/bulletins/"
-# explanations on what each key means: https://github.com/Caiyeon/goldfish#configuration
-
 # build the backend server
-go get github.com/caiyeon/goldfish
-cd $GOPATH/src/github.com/caiyeon/goldfish
-go build server.go
+go install
 
 # run backend server with secret_id generated from approle
-./server -addr http://127.0.0.1:8200 \
--approle_path auth/approle/login \
--config_path secret/goldfish \
--role_id goldfish \
--token $(vault write -f -wrap-ttl=20m -format=json auth/approle/role/goldfish/secret-id | jq -r .wrap_info.token)
+# -dev arg skips reading settings from vault and uses a default set
+goldfish -dev -vault_token $(vault write -f -wrap-ttl=20m \
+-format=json auth/approle/role/goldfish/secret-id \
+| jq -r .wrap_info.token)
 
 # run frontend in dev mode (with hot reload)
 cd frontend
@@ -122,8 +118,20 @@ npm run dev
 
 # a browser window/tab should open, pointing directly to goldfish
 
-# for production instances, change server.go to start an https server
-# (certbot, self-signed, or provided certificate)
+# "-dev" disables many security standards. DO NOT USE -dev IN PRODUCTION!
+
+# running in production requires a vault endpoint with settings
+# and a certificate & key file pair
+# goldfish \
+# -goldfish_addr ":443" \
+# -cert_file /path/to/certificate.crt \
+# -key_file /path/to/privatekey.pem \
+# -vault_addr http://127.0.0.1:8200 \
+# -approle_path auth/approle/login \
+# -config_path secret/goldfish \
+# -role_id goldfish \
+# -vault_token $(vault write -f -wrap-ttl=20m -format=json auth/approle/role/goldfish/secret-id \
+# | jq -r .wrap_info.token)
 ```
 
 
@@ -203,3 +211,5 @@ If Vault implements CORS, there is a possibility of goldfish becoming serverless
 ## Why 'Goldfish'?
 
 This server should behave as a goldfish, forgetting everything immediately after a request is completed. That, and other inside-joke reasons.
+
+Credits for the goldfish icon goes to [Laurel Chan](https://www.linkedin.com/in/laurel-chan-11baa286)

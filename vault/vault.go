@@ -15,8 +15,11 @@ type AuthInfo struct {
 	Pass string `json:"password" form:"Password" query:"Password"`
 }
 
-// for authenticating this web server with vault
 var (
+	// If "-dev" is provided, many safe defaults are turned off
+	DevMode      = false
+
+	// for authenticating this web server with vault
 	vaultAddress = ""
 	vaultToken   = ""
 	vaultClient  *api.Client
@@ -26,16 +29,19 @@ func init() {
 	// for gorilla securecookie to encode and decode
 	gob.Register(&AuthInfo{})
 
+	flag.BoolVar(&DevMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
+
 	// read address and wrapping token inputs
 	var wrappingToken, roleID, rolePath, configPath string
-	flag.StringVar(&vaultAddress, "addr", "http://127.0.0.1:8200", "Vault address")
-	flag.StringVar(&wrappingToken, "token", "", "Wrapping token that should contain a secret_id")
-	flag.StringVar(&roleID, "role_id", "goldfish", "The role_id the secret_id was generated from")
-	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The login path of the mount e.g. 'auth/approle/login'")
-	flag.StringVar(&configPath, "config_path", "data/goldfish", "The vault path containing goldfish config data e.g. 'secret/goldfish'")
+	flag.StringVar(&vaultAddress, "vault_addr", "http://127.0.0.1:8200", "Vault address")
+	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
+	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
+	flag.StringVar(&configPath, "config_path", "secret/goldfish", "A generic backend endpoint to store run-time settings")
+	flag.StringVar(&roleID, "role_id", "goldfish", "The approle role_id")
+
 	flag.Parse()
 	if vaultAddress == "" || wrappingToken == "" {
-		panic("Provide credentials via -addr and -token (wrapping token only)")
+		panic("Invalid cmd args. See --help for details")
 	}
 
 	// setup server's vault client, used for login transit encryption/decryption
@@ -51,19 +57,23 @@ func init() {
 	vaultClient.SetAddress(vaultAddress)
 	vaultClient.SetToken(vaultToken)
 
-	// load config once to ensure validity
-	if err := loadConfigFromVault(configPath); err != nil {
-		panic(err)
+	if DevMode {
+		loadDevModeConfig()
 	} else {
-		// continuously load config in go routine
-		go func() {
-			for {
-				time.Sleep(5 * time.Second)
-				if err := loadConfigFromVault(configPath); err != nil {
-					log.Println(err)
+		// load config once to ensure validity
+		if err := loadConfigFromVault(configPath); err != nil {
+			panic(err)
+		} else {
+			// continuously load config in go routine
+			go func() {
+				for {
+					time.Sleep(time.Minute)
+					if err := loadConfigFromVault(configPath); err != nil {
+						log.Println(err)
+					} // if there are errors, just try again in a minute
 				}
-			}
-		}()
+			}()
+		}
 	}
 
 	// report back the accessor so it may be safekept

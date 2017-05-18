@@ -23,4 +23,4 @@ ENV VAULT_TOKEN goldfish
 WORKDIR $GOPATH/src/github.com/caiyeon/goldfish
 RUN mv server /usr/local/goldfish
 
-CMD "/usr/local/goldfish" "-addr=${VAULT_ADDR}" "-approle_path=auth/approle/login" "-config_path=data/goldfish" "-role_id=goldfish" "-token=${VAULT_TOKEN}"
+CMD "/usr/local/goldfish" "-dev" "-vault_addr=${VAULT_ADDR}" "-vault_token=${VAULT_TOKEN}"

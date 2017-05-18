@@ -14,8 +14,8 @@ Restart=on-failure
 User=root
 Group=root
 
-ExecStartPre=/usr/local/go/bin/go build server.go
-ExecStart=/bin/bash -c '/home/vagrant/go/src/github.com/caiyeon/goldfish/server -token=\$(\
+ExecStartPre=/usr/local/go/bin/go install github.com/caiyeon/goldfish
+ExecStart=/bin/bash -c '/home/vagrant/go/bin/goldfish -dev -vault_token=\$(\
 /usr/bin/vault write -address=http://127.0.0.1:8200 -f -wrap-ttl=20m -format=json auth/approle/role/goldfish/secret-id | \
 /usr/bin/jq -r .wrap_info.token)'
 

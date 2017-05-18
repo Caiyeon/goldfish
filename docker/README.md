@@ -26,11 +26,6 @@ vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m \
 token_ttl=480h token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
 vault write auth/approle/role/goldfish/role-id role_id=goldfish
 
-# write goldfish config into vault
-vault remount secret/ data/
-vault write data/goldfish DefaultSecretPath="data/" TransitBackend="transit" \
-UserTransitKey="usertransit" ServerTransitKey="goldfish" BulletinPath="data/bulletins/"
-
 # On another terminal, build goldfish docker image
 docker build -t goldfish $GOPATH/src/github.com/caiyeon/goldfish/docker
 

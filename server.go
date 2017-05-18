@@ -1,12 +1,17 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/caiyeon/goldfish/handlers"
+	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/securecookie"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
+
+var devMode = vault.DevMode
 
 func main() {
 	e := echo.New()
@@ -16,10 +21,11 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(echo.WrapMiddleware(
 		csrf.Protect(
-			// Generate a new encryption key each launch
+			// Generate a new encryption key for cookies each launch
+			// invalidating previous goldfish instance's cookies is purposeful
 			[]byte(securecookie.GenerateRandomKey(32)),
-			// MUST change to true in production to only allow https requests!
-			csrf.Secure(false),
+			// when devMode is false, cookie will only be sent through https
+			csrf.Secure(!devMode),
 		)))
 
 	// file routing
@@ -61,7 +67,19 @@ func main() {
 
 	e.GET("/api/bulletins", handlers.GetBulletins())
 
-	// start the server in HTTP
-	// MUST change to HTTPS in production!
-	e.Logger.Fatal(e.Start(":8000"))
+	if (devMode) {
+		// start the server in HTTP. DO NOT USE THIS IN PRODUCTION!!
+		e.Logger.Fatal(e.Start("127.0.0.1:8000"))
+
+	} else {
+		// if not in dev mode, server must start in HTTPS, and needs cert & key
+		var goldfishAddress, certFile, keyFile string
+		flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
+		flag.StringVar(&certFile, "cert_file", "certificate.crt", "Goldfish server's certificate")
+		flag.StringVar(&keyFile, "key_file", "certificate_key.pem", "Goldfish certificate's private key file")
+		flag.Parse()
+
+		// launch server in https
+		e.Logger.Fatal(e.StartTLS(goldfishAddress, certFile, keyFile))
+	}
 }

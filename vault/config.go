@@ -60,3 +60,13 @@ func loadConfigFromVault(path string) error {
 
 	return nil
 }
+
+func loadDevModeConfig() {
+	config = Config {
+		ServerTransitKey  : "goldfish",
+		UserTransitKey    : "usertransit",
+		TransitBackend    : "transit",
+		DefaultSecretPath : "secret/",
+		BulletinPath      : "secret/bulletins/",
+	}
+}
