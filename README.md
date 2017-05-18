@@ -116,7 +116,7 @@ cd frontend
 npm install
 npm run dev
 
-# open up your browser and go to localhost:8001
+# a browser window/tab should open, pointing directly to goldfish
 
 # "-dev" disables many security standards. DO NOT USE -dev IN PRODUCTION!
 
