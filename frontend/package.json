@@ -19,7 +19,7 @@
     "golang"
   ],
   "engines": {
-    "node": ">=4",
+    "node": ">=5",
     "npm": ">=3"
   },
   "scripts": {
