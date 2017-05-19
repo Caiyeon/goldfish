@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/caiyeon/goldfish/slack"
 	"github.com/caiyeon/goldfish/vault"
+
+	"github.com/fatih/structs"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/securecookie"
@@ -25,12 +28,13 @@ import (
 )
 
 type PolicyRequest struct {
-	Policy    string
-	Current   string
-	New       string
-	Requester string
-	Required  int
-	Progress  int    `hash:"ignore"`
+	Policy        string
+	Current       string
+	New           string
+	Requester     string
+	RequesterHash string
+	Required      int
+	Progress      int    `hash:"ignore"`
 }
 
 func GetPolicy() echo.HandlerFunc {
@@ -121,17 +125,26 @@ func AddPolicyRequest() echo.HandlerFunc {
 			return logError(c, err.Error(), "Could not check root generation status")
 		}
 
-		// construct request solely for hashing purposes
+		// construct request
+		requester, ok := self.Data["display_name"].(string)
+		if !ok {
+			return logError(c, err.Error(), "Could not fetch requester display name")
+		}
+		accessor, ok := self.Data["accessor"].(string)
+		if !ok {
+			return logError(c, err.Error(), "Could not fetch requester accessor")
+		}
 		request := PolicyRequest{
-			Policy:    policy,
-			Current:   policyOld,
-			New:       policyNew,
-			Requester: self.Data["display_name"].(string),
-			Required:  status.Required,
-			Progress:  0,
+			Policy:        policy,
+			Current:       policyOld,
+			New:           policyNew,
+			Requester:     requester,
+			RequesterHash: fmt.Sprintf("%x", sha256.Sum256([]byte(accessor))),
+			Required:      status.Required,
+			Progress:      0,
 		}
 
-		// hash structure
+		// hash request structure
 		hash_uint64, err := hashstructure.Hash(request, nil)
 		if err != nil {
 			return logError(c, err.Error(), "Could not hash request. Unsafe; aborting.")
@@ -139,16 +152,7 @@ func AddPolicyRequest() echo.HandlerFunc {
 		hash := strconv.FormatUint(hash_uint64, 16)
 
 		// write to cubbyhole with details
-		_, err = vault.WriteToCubbyhole(
-			"requests/" + hash,
-			map[string]interface{}{
-				"Policy":    policy,
-				"Current":   policyOld,
-				"New":       policyNew,
-				"Requester": self.Data["display_name"].(string),
-				"Required":  status.Required,
-				"Progress":  0,
-			})
+		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
 		if err != nil {
 			return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
 		}
@@ -320,16 +324,8 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 			}
 
 			// store progress in request too
-			_, err = vault.WriteToCubbyhole(
-				"requests/" + hash,
-				map[string]interface{}{
-					"Policy":    request.Policy,
-					"Current":   request.Current,
-					"New":       request.New,
-					"Requester": request.Requester,
-					"Required":  request.Required,
-					"Progress":  len(unseals),
-				})
+			request.Progress = len(unseals)
+			_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
 			if err != nil {
 				return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
 			}
@@ -365,18 +361,12 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 						}); err != nil {
 							return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
 						}
-					if _, err := vault.WriteToCubbyhole(
-						"requests/" + hash,
-						map[string]interface{}{
-							"Policy":    request.Policy,
-							"Current":   request.Current,
-							"New":       request.New,
-							"Requester": request.Requester,
-							"Required":  request.Required,
-							"Progress":  0,
-						}); err != nil {
-							return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
-						}
+
+					request.Progress = 0
+					_, err := vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
+					if err != nil {
+						return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
+					}
 
 					// inform user that request unseals have been reset
 					return c.JSON(http.StatusBadRequest, H{

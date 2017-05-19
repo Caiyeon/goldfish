@@ -26,9 +26,11 @@
 
             <article class="message is-primary">
               <div class="message-body">
-                <strong>Requester: </strong>{{request.Requester}}<br>
+                <strong>Requester display name: </strong>{{request.Requester}}<br>
+                <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
                 <strong>Policy: </strong>{{request.Policy}}<br>
-                <strong>Unseals required: </strong>{{request.Required}}
+                <strong>Unseal progress: </strong>
+                {{request.Progress}} out of {{request.Required}}
               </div>
             </article>
 
