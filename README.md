@@ -18,6 +18,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * Which policies, users, and tokens can access this particular secret path?
 * The unseal admins are working from home, but we need a policy changed.
 	* How do we do generate a root token only for this change, and make sure it's revoked after?
+	* *Coming soon* [Optional] Send the changeID to a slack channel, so admins can pull up the details and approve/reject
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
 
 ## Running goldfish in production

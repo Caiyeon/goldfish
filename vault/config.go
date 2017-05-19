@@ -15,6 +15,8 @@ type Config struct {
 	TransitBackend    string
 	DefaultSecretPath string
 	BulletinPath      string
+	SlackWebhook      string
+	SlackChannel      string
 }
 
 var config Config
