@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 )
@@ -45,6 +46,12 @@ func loadConfigFromVault(path string) error {
 		}
 	} else {
 		return err
+	}
+
+	// improperly formed slack webhooks are not allowed
+	if !strings.HasPrefix(temp.SlackWebhook, "https://hooks.slack.com/services") {
+		temp.SlackWebhook = ""
+		temp.SlackChannel = ""
 	}
 
 	// don't waste a lock if nothing has changed

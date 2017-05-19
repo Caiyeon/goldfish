@@ -215,16 +215,27 @@ export default {
 
     addPolicyRequest: function () {
       this.$http.post('/api/policy/request?policy=' + this.selectedPolicy,
-        querystring.stringify({ rules: this.policyRulesModified }),
-       { headers: {'X-CSRF-Token': this.csrf} })
+      querystring.stringify({ rules: this.policyRulesModified }), {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+
       .then((response) => {
         this.$message({
-          message: 'Your request hash is: ' + response.data.result,
+          message: 'Your change ID is: ' + response.data.result,
           type: 'success',
           duration: 0,
           showCloseButton: true
         })
+
+        if (response.data.error !== '') {
+          this.$notify({
+            title: 'Slack webhook',
+            message: response.data.error,
+            type: 'warning'
+          })
+        }
       })
+
       .catch((error) => {
         this.$onError(error)
       })

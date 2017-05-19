@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/caiyeon/goldfish/slack"
 	"github.com/caiyeon/goldfish/vault"
 
 	"github.com/gorilla/csrf"
@@ -152,9 +153,29 @@ func AddPolicyRequest() echo.HandlerFunc {
 			return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
 		}
 
+		// if config has a slack webhook, send the hash (aka change ID) to the channel
+		conf := vault.GetConfig()
+		if webhook := conf.SlackWebhook; webhook != "" {
+			// send a message using webhook
+			err = slack.PostMessageWebhook(
+				conf.SlackChannel,
+				"A new policy change request has been submitted",
+				"Change ID: \n*" + hash + "*",
+				webhook,
+			)
+			// change request is fine, just let the frontend know it wasn't slack'd
+			if err != nil {
+				return c.JSON(http.StatusOK, H{
+					"result": hash,
+					"error": err.Error(),
+				})
+			}
+		}
+
 		// return hash
 		return c.JSON(http.StatusOK, H{
 			"result": hash,
+			"error": "",
 		})
 	}
 }
