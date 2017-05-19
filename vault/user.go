@@ -195,6 +195,10 @@ func (auth AuthInfo) ListRoles() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	if resp == nil {
+		return nil, nil
+	}
+
 	return resp.Data["keys"], nil
 }
 

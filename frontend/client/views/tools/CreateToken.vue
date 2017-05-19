@@ -395,7 +395,9 @@ export default {
 
     // check if roles are available to logged in user
     this.$http.get('/api/users/listroles').then((response) => {
-      this.availableRoles = response.data.result
+      if (response.data.result !== '') {
+        this.availableRoles = response.data.result
+      }
     })
     .catch(() => {
       // user likely does not have permission. Simply don't make roles available.
