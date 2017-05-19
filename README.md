@@ -21,6 +21,9 @@ Goldfish answers many auditing and administration questions that Vault API can't
 	* [Optional] Send the changeID to a slack channel, so admins can pull up the details and approve/reject
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
 
+
+<!--
+-->
 ## Running goldfish in production
 
 See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment)
@@ -147,20 +150,6 @@ vagrant up --provision
 ```
 
 
-#### Configuration
-Goldfish reads most of its configuration details from a provided vault endpoint (set by a cmd line arg `config_path` when launching the server)
-
-There are several keys that are used:
-
-`DefaultSecretPath`: the path that is loaded by default on Secrets page
-
-`TransitBackend`: the transit backend that goldfish will use for encryption/decryption
-
-`ServerTransitKey`: the key in `TransitBackend` used to encrypt/decrypt user credentials. Control this tightly (preferably, only allow goldfish to access this)
-
-`UserTransitKey`: the key in `TransitBackend` used by Transit page. Individual users must be granted access to this in order to use the tool.
-
-
 
 <!--
 -->
@@ -192,6 +181,7 @@ Backend:
 ## Design
 
 See: [Architecture](https://github.com/Caiyeon/goldfish/wiki/Architecture)
+
 
 
 <!--
