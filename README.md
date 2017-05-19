@@ -20,6 +20,12 @@ Goldfish answers many auditing and administration questions that Vault API can't
 	* How do we do generate a root token only for this change, and make sure it's revoked after?
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
 
+## Running goldfish in production
+
+See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment)
+
+
+
 <!--
 -->
 ## Features
@@ -74,7 +80,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 
 <!--
 -->
-## Installation
+## Developing or testing goldfish
 
 #### Running locally
 You'll need go (v1.8), npm (>=3), and nodejs (>=5).
@@ -120,19 +126,6 @@ npm run dev
 # a browser window/tab should open, pointing directly to goldfish
 
 # "-dev" disables many security standards. DO NOT USE -dev IN PRODUCTION!
-
-# running in production requires a vault endpoint with settings
-# and a certificate & key file pair
-# goldfish \
-# -goldfish_addr ":443" \
-# -cert_file /path/to/certificate.crt \
-# -key_file /path/to/privatekey.pem \
-# -vault_addr http://127.0.0.1:8200 \
-# -approle_path auth/approle/login \
-# -config_path secret/goldfish \
-# -role_id goldfish \
-# -vault_token $(vault write -f -wrap-ttl=20m -format=json auth/approle/role/goldfish/secret-id \
-# | jq -r .wrap_info.token)
 ```
 
 
@@ -197,14 +190,7 @@ Backend:
 -->
 ## Design
 
-User credentials are always encrypted using [transit backend](https://www.vaultproject.io/docs/secrets/transit/), and will never remain unencrypted at rest (both server and client-side). Cipher is then sent as an unforgeable [secure cookie](http://www.gorillatoolkit.org/pkg/securecookie)
-
-Any future actions from the user will be verified by decrypting the user's cookie with the [transit backend](https://www.vaultproject.io/docs/secrets/transit/) before being validated and used for the action.
-
-Any actions performed (except user credential encryption/decryption via transit) will **only** be done using the user's credentials, and never using the goldfish server's token. This ensures traceability.
-
-If Vault implements CORS, there is a possibility of goldfish becoming serverless, and being shipped as a desktop application using electron.
-
+See: [Architecture](https://github.com/Caiyeon/goldfish/wiki/Architecture)
 
 
 <!--
