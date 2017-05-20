@@ -38,10 +38,15 @@
                     </span>
                   </p>
                   <p class="control">
-                    <input class="input" type="text" placeholder="Filter by policy details" v-model="search.str">
+                    <input class="input" type="text"
+                    placeholder="Filter by policy details"
+                    v-model="search.str"
+                    @keyup.enter="filterByDetails()">
                   </p>
                   <p class="control">
-                    <button class="button is-info" @click="filterByDetails()" :class="loading ? 'is-loading' : ''">
+                    <button class="button is-info"
+                    @click="filterByDetails()"
+                    :class="loading ? 'is-loading' : ''">
                       Search
                     </button>
                   </p>
@@ -159,7 +164,7 @@ export default {
           }
         )
       }
-      if (this.search.str) {
+      if (this.search.searched) {
         // filter by policy details
         return this.search.found
       }
