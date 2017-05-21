@@ -30,7 +30,7 @@
                 <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
                 <strong>Policy: </strong>{{request.Policy}}<br>
                 <strong>Unseal progress: </strong>
-                {{request.Progress}} out of {{request.Required}}
+                {{request.Progress}} out of {{request.Required}} <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
               </div>
             </article>
 
@@ -136,6 +136,7 @@ export default {
           })
         } else {
           this.request.Current = response.data.result || this.request.Current
+          this.request.Progress = this.request.Required
           this.$notify({
             title: 'Change success',
             message: 'Root token generated and revoked',
