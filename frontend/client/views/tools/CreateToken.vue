@@ -395,7 +395,7 @@ export default {
 
     // check if roles are available to logged in user
     this.$http.get('/api/users/listroles').then((response) => {
-      if (response.data.result !== '') {
+      if (response.data.result !== null) {
         this.availableRoles = response.data.result
       }
     })
