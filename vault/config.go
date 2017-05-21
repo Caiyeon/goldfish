@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/fatih/structs"
+	"github.com/mitchellh/hashstructure"
 )
 
 type Config struct {
@@ -16,13 +18,16 @@ type Config struct {
 	TransitBackend    string
 	DefaultSecretPath string
 	BulletinPath      string
+
 	SlackWebhook      string
 	SlackChannel      string
+
+	LastUpdated       string `hash:"ignore"`
 }
 
 var config Config
-var configLock = new(sync.RWMutex)
-var LastUpdated time.Time
+var configLock        = new(sync.RWMutex)
+var configHash uint64 = 0
 
 func GetConfig() Config {
 	configLock.RLock()
@@ -55,18 +60,30 @@ func loadConfigFromVault(path string) error {
 	}
 
 	// don't waste a lock if nothing has changed
-	if reflect.DeepEqual(temp, config) {
+	newHash, err := hashstructure.Hash(temp, nil)
+	if err != nil {
+		return err
+	}
+	if newHash == configHash {
 		return nil
+	}
+
+	// timestamp the change in vault, notifying operators that the config has been updated
+	// if timestamp can't be written, operation should be aborted
+	temp.LastUpdated = time.Now().Format(time.UnixDate)
+	_, err = vaultClient.Logical().Write(path, structs.Map(temp))
+	if err != nil {
+		return errors.New("As of v0.2.3, goldfish needs write permissions to the config_path vault endpoint.")
 	}
 
 	// RWLock.Lock() will block read lock requests until it is done
 	configLock.Lock()
 	defer configLock.Unlock()
 
-	config = temp
-	LastUpdated = time.Now()
-	log.Println("Goldfish config reloaded")
+	config             = temp
+	configHash         = newHash
 
+	log.Println("Goldfish config reloaded")
 	return nil
 }
 

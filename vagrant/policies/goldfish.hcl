@@ -12,5 +12,5 @@ path "transit/decrypt/goldfish" {
 # store goldfish run-time settings here
 # goldfish hot-reloads from this endpoint every minute
 path "secret/goldfish*" {
-  capabilities = ["read"]
+  capabilities = ["write"]
 }
