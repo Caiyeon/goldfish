@@ -128,6 +128,7 @@ export default {
       .then((response) => {
         this.unsealToken = ''
         if (response.data.progress) {
+          this.request.Progress = response.data.progress
           this.$notify({
             title: 'Progress',
             message: response.data.progress.toString() + ' unseal tokens received so far',
@@ -144,6 +145,7 @@ export default {
       })
       .catch((error) => {
         this.unsealToken = ''
+        this.request.Progress = 0
         this.$onError(error)
       })
     },
