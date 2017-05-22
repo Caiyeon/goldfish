@@ -13,21 +13,32 @@ import (
 )
 
 type Config struct {
-	ServerTransitKey  string
-	UserTransitKey    string
-	TransitBackend    string
-	DefaultSecretPath string
-	BulletinPath      string
+	ServerTransitKey    string
+	UserTransitKey      string
+	TransitBackend      string
+	DefaultSecretPath   string
+	BulletinPath        string
 
-	SlackWebhook      string
-	SlackChannel      string
+	SlackWebhook        string
+	SlackChannel        string
 
-	LastUpdated       string `hash:"ignore"`
+	GithubAccessToken   string
+	GithubRepoOwner     string
+	GithubRepo          string
+	GithubPoliciesPath  string
+	GithubTargetBranch  string
+
+	// fields that goldfish will write
+	LastUpdated         string `hash:"ignore"`
+	GithubCurrentCommit string
 }
 
-var config Config
-var configLock        = new(sync.RWMutex)
-var configHash uint64 = 0
+var (
+	config              = Config{}
+	configLock          = new(sync.RWMutex)
+	configHash uint64   = 0
+	GithubCurrentCommit = ""
+)
 
 func GetConfig() Config {
 	configLock.RLock()
@@ -52,6 +63,9 @@ func loadConfigFromVault(path string) error {
 	} else {
 		return err
 	}
+
+	// the local copy of current commit is the source of truth
+	temp.GithubCurrentCommit = GithubCurrentCommit
 
 	// improperly formed slack webhooks are not allowed
 	if !strings.HasPrefix(temp.SlackWebhook, "https://hooks.slack.com/services") {

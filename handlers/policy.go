@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/caiyeon/goldfish/github"
 	"github.com/caiyeon/goldfish/slack"
 	"github.com/caiyeon/goldfish/vault"
 
@@ -35,6 +36,12 @@ type PolicyRequest struct {
 	RequesterHash string
 	Required      int
 	Progress      int    `hash:"ignore"`
+}
+
+type PolicyDiff struct {
+	Policy  string
+	Current string
+	New     string
 }
 
 func GetPolicy() echo.HandlerFunc {
@@ -194,52 +201,138 @@ func GetPolicyRequest() echo.HandlerFunc {
 		// fetch auth from cookie
 		getSession(c, auth)
 
-		// fetch change from cubbyhole
-		hash := c.QueryParam("id")
-		resp, err := vault.ReadFromCubbyhole("requests/" + hash)
-		if err != nil {
-			return logError(c, err.Error(), "Change ID not found")
-		}
-		if resp == nil {
-			return logError(c, "", "Change ID not found")
-		}
+		switch (c.QueryParam("type")) {
+		case "changeid":
+			if c.QueryParam("id") == "" {
+				return logError(c, "", "id param must be non-empty")
+			}
+			return getPolicyRequestByChangeID(c, auth, c.QueryParam("id"))
 
-		// decode map to struct
-		var request PolicyRequest
-		err = mapstructure.Decode(resp.Data, &request)
-		if err != nil {
-			return logError(c, err.Error(), "Change appears to be malformed")
+		case "commit":
+			if c.QueryParam("sha") == "" {
+				return logError(c, "", "sha param must be non-empty")
+			}
+			return getPolicyRequestByCommitHash(c, auth, c.QueryParam("sha"))
+
+		default:
+			return logError(c, "", "type must be either 'changeid' or 'commit'")
 		}
+	}
+}
+
+func getPolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash string) error {
+	// fetch change from cubbyhole
+	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+	if err != nil {
+		return logError(c, err.Error(), "Change ID not found")
+	}
+	if resp == nil {
+		return logError(c, "", "Change ID not found")
+	}
+
+	// decode map to struct
+	var request PolicyRequest
+	err = mapstructure.Decode(resp.Data, &request)
+	if err != nil {
+		return logError(c, err.Error(), "Change appears to be malformed")
+	}
+
+	// verify current user has rights to see policy
+	policyCurrent, err := auth.GetPolicy(request.Policy)
+	if err != nil {
+		return logError(c, err.Error(), "Could not read existing policy")
+	}
+
+	// verify hash
+	statusCode, err := verifyRequest(request, hash, policyCurrent)
+	if err != nil {
+		return c.JSON(statusCode, H{
+			"error": err.Error(),
+		})
+	}
+
+	// if vault has been re-keyed, the request is invalid
+	status, err := vault.GenerateRootStatus()
+	if err != nil {
+		return logError(c, err.Error(), "Could not check root generation status")
+	}
+	if request.Required != status.Required {
+		return logError(c, "", "Number of unseal tokens required differs. Aborting")
+	}
+
+	// return request
+	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+	return c.JSON(http.StatusOK, H{
+		"result": request,
+	})
+}
+
+func getPolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash string) error {
+	// fetch change from github
+	conf := vault.GetConfig()
+	newPolicies, err := github.GetHCLFilesFromPath(
+		conf.GithubAccessToken,
+		conf.GithubRepoOwner,
+		conf.GithubRepo,
+		conf.GithubTargetBranch,
+		conf.GithubPoliciesPath,
+		vault.GithubCurrentCommit,
+		hash,
+	)
+	if err != nil {
+		// split by colon to prevent information disclosure with github api requests
+		errtext := strings.Split(err.Error(), ":")
+		return logError(c, err.Error(), strings.Trim(errtext[len(errtext)-1], " "))
+	}
+
+	currentPolicies, err := auth.ListPolicies()
+	if err != nil {
+		return logError(c, err.Error(), "Could not list existing policies")
+	}
+
+	changes := make([]PolicyDiff, 0)
+
+	// for each hcl file in github folder, add an entry
+	for name, future := range(newPolicies) {
+		diff := PolicyDiff{Policy: name}
 
 		// verify current user has rights to see policy
-		policyCurrent, err := auth.GetPolicy(request.Policy)
+		current, err := auth.GetPolicy(name)
 		if err != nil {
 			return logError(c, err.Error(), "Could not read existing policy")
 		}
 
-		// verify hash
-		statusCode, err := verifyRequest(request, hash, policyCurrent)
-		if err != nil {
-			return c.JSON(statusCode, H{
-				"error": err.Error(),
-			})
+		// github package already verified that future string is hcl-formatted
+		if current != future {
+			diff.Current = current
+			diff.New = future
+			changes = append(changes, diff)
 		}
-
-		// if vault has been re-keyed, the request is invalid
-		status, err := vault.GenerateRootStatus()
-		if err != nil {
-			return logError(c, err.Error(), "Could not check root generation status")
-		}
-		if request.Required != status.Required {
-			return logError(c, "", "Number of unseal tokens required differs. Aborting")
-		}
-
-		// return request
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-		return c.JSON(http.StatusOK, H{
-			"result": request,
-		})
 	}
+
+	// for each current policy that doesn't exist in github, mark it as would be deleted
+	for _, name := range(currentPolicies) {
+		if name == "root" {
+			continue
+		}
+		if _, ok := newPolicies[name]; !ok {
+			// policy exists in vault but not in github
+			diff := PolicyDiff{Policy: name}
+			current, err := auth.GetPolicy(name)
+			if err != nil {
+				return logError(c, err.Error(), "Could not read existing policy")
+			}
+			diff.Current = current
+			diff.New = ""
+			changes = append(changes, diff)
+		}
+	}
+
+	// return request
+	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+	return c.JSON(http.StatusOK, H{
+		"result": changes,
+	})
 }
 
 // Provides an unseal token for a policy request

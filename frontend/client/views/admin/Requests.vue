@@ -113,10 +113,11 @@ export default {
       if (this.request !== null) {
         return
       }
-      this.$http.get('/api/policy/request' + '?id=' + this.searchString).then((response) => {
+      this.$http.get('/api/policy/request' + '?type=changeid&id=' + this.searchString).then((response) => {
         this.csrf = response.headers['x-csrf-token']
         this.request = response.data.result
         this.changeID = this.searchString
+        console.log(response.data.result)
       })
       .catch((error) => {
         this.$onError(error)
