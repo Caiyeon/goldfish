@@ -11,17 +11,18 @@
                 <input class="input" type="text"
                 placeholder="Enter a change ID"
                 v-model="searchString"
-                @keyup.enter="search()">
+                @keyup.enter="search()"
+                :disabled="request !== null">
               </p>
               <p class="control">
-                <a class="button is-info" @click="search()">
+                <a class="button is-info" @click="search()" :disabled="request !== null">
                   Search
                 </a>
               </p>
             </div>
           </div>
 
-          <article v-if="request">
+          <article v-if="request !== null">
             <br>
 
             <article class="message is-primary">
@@ -109,6 +110,9 @@ export default {
 
   methods: {
     search: function () {
+      if (this.request !== null) {
+        return
+      }
       this.$http.get('/api/policy/request' + '?id=' + this.searchString).then((response) => {
         this.csrf = response.headers['x-csrf-token']
         this.request = response.data.result
