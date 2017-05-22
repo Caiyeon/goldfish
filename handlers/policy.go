@@ -297,34 +297,40 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 			return logError(c, "", "Number of unseal tokens required differs. Aborting")
 		}
 
-		// fetch all current unseals from cubbyhole
-		// under NO circumstances should the result be sent back to the client
-		// this part assumes that the unseals key value is well-constructed
-		unseals := []string{}
+		// count how many unseals are entered so far
+		wrappingTokens := []string{}
 		if request.Progress > 0 {
-			resp, err := vault.ReadFromCubbyhole("unseal/" + hash)
+			resp, err := vault.ReadFromCubbyhole("unseal_wrapping_tokens/" + hash)
 			if err != nil {
-				return logError(c, err.Error(), "Could not check root generation status")
+				return logError(c, err.Error(), "Could not read cubbyhole")
 			}
-			unseals = strings.Split(resp.Data["unseals"].(string), ";")
+			wrappingTokens = strings.Split(resp.Data["wrapping_tokens"].(string), ";")
 		}
 
-		// add the provided new unseal token
-		unseals = append(unseals, unsealKey)
+		// wrap the unseal token
+		newWrappingToken, err := vault.WrapData("60m", map[string]interface{}{
+			"unseal_token": unsealKey,
+		})
+		if err != nil {
+			return logError(c, err.Error(), "Could not wrap unseal token")
+		}
 
-		// if not enough unseals yet, store it and return progress
-		if len(unseals) < request.Required {
-			// delimit unseal tokens by semicolon
-			_, err = vault.WriteToCubbyhole("unseal/" + hash,
+		// add the new wrapping token to the slice
+		wrappingTokens = append(wrappingTokens, newWrappingToken)
+
+		// if there aren't enough unseals yet
+		if len(wrappingTokens) < request.Required {
+			// store the wrapping tokens back in cubbyhole
+			_, err = vault.WriteToCubbyhole("unseal_wrapping_tokens/" + hash,
 				map[string]interface{}{
-					"unseals": strings.Trim(strings.Join(strings.Fields(fmt.Sprint(unseals)), ";"), "[]"),
+					"wrapping_tokens": strings.Trim(strings.Join(strings.Fields(fmt.Sprint(wrappingTokens)), ";"), "[]"),
 				})
 			if err != nil {
 				return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
 			}
 
 			// store progress in request too
-			request.Progress = len(unseals)
+			request.Progress = len(wrappingTokens)
 			_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
 			if err != nil {
 				return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
@@ -332,51 +338,58 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 
 			// return progress
 			return c.JSON(http.StatusOK, H{
-				"progress": len(unseals),
+				"progress": len(wrappingTokens),
 			})
 		}
 
 		// if we got here, it means there are enough unseals to attempt root generation
+		// so if we exit after this point, progress must be reset
+		request.Progress = 0
+		defer vault.DeleteFromCubbyhole("unseals/" + hash)
+		defer func(hash string, request PolicyRequest) {
+			_, _ = vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
+		}(hash, request)
+
+		// unwrap all the unseal tokens
+		unseals := []string{}
+		for _, wrappingToken := range(wrappingTokens) {
+			data, err := vault.UnwrapData(wrappingToken)
+			if err != nil {
+				return logError(c, err.Error(), "Wrapping token for unseal key seems to have timed out")
+			}
+			if unseal, ok := data["unseal_token"]; !ok {
+				return logError(c, err.Error(), "Wrapping token for unseal key seems to have timed out")
+			} else {
+				unseals = append(unseals, unseal.(string))
+			}
+		}
+
+		// start a root generation
 		otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
 		status, err = vault.GenerateRootInit(otp)
 		if err != nil {
-			return logError(c, err.Error(), "Another root generation may be in progress")
+			return logError(c, err.Error(), "Another root generation is in progress. All unseal tokens have been erased.")
 		}
 
+		// feed unseal tokens
 		if status.EncodedRootToken == "" {
 			for _, s := range(unseals) {
 				status, err = vault.GenerateRootUpdate(s, status.Nonce)
-
 				// an error likely means one of the unseals was not valid
 				if err != nil {
 					// delete root generation process
 					if err := vault.GenerateRootCancel(); err != nil {
 						return logError(c, err.Error(), "At least one unseal key was invalid. Could not revert root generation!")
 					}
-
-					// reset progress in request and cubbyhole
-					if _, err := vault.WriteToCubbyhole("unseal/" + hash,
-						map[string]interface{}{
-							"unseals": "",
-						}); err != nil {
-							return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
-						}
-
-					request.Progress = 0
-					_, err := vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
-					if err != nil {
-						return logError(c, err.Error(), "Could not save to cubbyhole. Unsafe; aborting.")
-					}
-
 					// inform user that request unseals have been reset
 					return c.JSON(http.StatusBadRequest, H{
 						"error": "At least one unseal key was invalid. Progress has been reset.",
 					})
 				}
-
 			}
 		}
 
+		// sanity check
 		if status.EncodedRootToken == "" {
 			return c.JSON(http.StatusInternalServerError, H{
 				"error": "Root generation failed. Was vault re-keyed just now?",
@@ -401,7 +414,6 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 
 		// ensure generated root token is revoked, and cubbyhole data is purged
 		defer vault.DeleteFromCubbyhole("requests/" + hash)
-		defer vault.DeleteFromCubbyhole("unseals/" + hash)
 		defer rootauth.RevokeSelf()
 
 		// make requested change

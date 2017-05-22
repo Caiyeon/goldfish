@@ -134,6 +134,14 @@ export default {
             message: response.data.progress.toString() + ' unseal tokens received so far',
             type: 'success'
           })
+          if (response.data.progress === 1) {
+            this.$notify({
+              title: 'Timer started',
+              message: 'Other operators have a 1 hour window to enter their unseal tokens',
+              duration: 20000,
+              type: 'warning'
+            })
+          }
         } else {
           this.request.Current = response.data.result || this.request.Current
           this.request.Progress = this.request.Required
