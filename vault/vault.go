@@ -2,6 +2,7 @@ package vault
 
 import (
 	"encoding/gob"
+	"errors"
 	"flag"
 	"log"
 	"time"
@@ -16,35 +17,37 @@ type AuthInfo struct {
 }
 
 var (
-	// If "-dev" is provided, many safe defaults are turned off
-	DevMode      = false
-
 	// for authenticating this web server with vault
-	vaultAddress = ""
-	vaultToken   = ""
-	vaultClient  *api.Client
+	vaultAddress  = ""
+	vaultToken    = ""
+	vaultClient   *api.Client
+
+	// for initializing server and fetching client token from vault
+	wrappingToken string
+	rolePath      string
+	configPath    string
+	roleID        string
 )
 
 func init() {
 	// for gorilla securecookie to encode and decode
 	gob.Register(&AuthInfo{})
 
-	flag.BoolVar(&DevMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
-
-	// read address and wrapping token inputs
-	var wrappingToken, roleID, rolePath, configPath string
+	// setup flags to be parsed by server main()
 	flag.StringVar(&vaultAddress, "vault_addr", "http://127.0.0.1:8200", "Vault address")
 	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
 	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
 	flag.StringVar(&configPath, "config_path", "", "A generic backend endpoint to store run-time settings. E.g. 'secret/goldfish'")
 	flag.StringVar(&roleID, "role_id", "goldfish", "The approle role_id")
+}
 
-	flag.Parse()
+// fetches client token from vault using wrappingtoken and approle
+func SetupServer(devMode bool) error {
 	if vaultAddress == "" || wrappingToken == "" {
-		panic("Vault address and wrapped accessor missing. See --help for details")
+		return errors.New("Vault address and wrapped accessor missing. See --help for details")
 	}
-	if configPath == "" && !DevMode {
-		panic("config_path must be set unless dev mode is enabled")
+	if configPath == "" && !devMode {
+		return errors.New("config_path must be set unless dev mode is enabled")
 	}
 
 	// setup server's vault client, used for login transit encryption/decryption
@@ -60,33 +63,46 @@ func init() {
 	vaultClient.SetAddress(vaultAddress)
 	vaultClient.SetToken(vaultToken)
 
-	if DevMode && configPath == "" {
+	// errors from go routines regarding server configuration is sent here
+	errorChannel := make(chan error)
+
+	if devMode && configPath == "" {
+		// if devMode is active, unless configPath is set, load a set of simple configs
 		loadDevModeConfig()
 	} else {
 		// load config once to ensure validity
 		if err := loadConfigFromVault(configPath); err != nil {
-			panic(err)
+			return err
 		}
-		// continuously load config in go routine
-		go func() {
-			for { // every minute
-				time.Sleep(time.Minute)
-				if err := loadConfigFromVault(configPath); err != nil {
-					log.Println(err)
-				}
-			}
-		}()
-		// continuously renew token
-		go func() {
-			for { // every hour
-				time.Sleep(time.Hour)
-				if err := RenewServerToken(); err != nil {
-					log.Println(err)
-				}
-			}
-		}()
+		go loadConfigEvery(time.Minute, errorChannel)
 	}
+
+	go renewServerTokenEvery(time.Hour, errorChannel)
+
+	// to do: ship these potential error logs somewhere
+	go func() {
+		for err := range errorChannel {
+			if err != nil {
+				log.Println("[ERROR]: ", err.Error())
+			}
+		}
+	}()
 
 	// report back the accessor so it may be safekept
 	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
+	return nil
+}
+
+func loadConfigEvery(interval time.Duration, ch chan error) {
+	for {
+		time.Sleep(interval)
+		ch <- loadConfigFromVault(configPath)
+	}
+}
+
+func renewServerTokenEvery(interval time.Duration, ch chan error) {
+	for {
+		time.Sleep(interval)
+		ch <- renewServerToken()
+	}
 }

@@ -9,11 +9,30 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
-var devMode = vault.DevMode
+var (
+	devMode         bool
+	goldfishAddress string
+	certFile        string
+	keyFile         string
+)
+
+func init() {
+	flag.BoolVar(&devMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
+	flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
+	flag.StringVar(&certFile, "cert_file", "", "Goldfish server's certificate")
+	flag.StringVar(&keyFile, "key_file", "", "Goldfish certificate's private key file")
+}
 
 func main() {
+	flag.Parse()
+	if err := vault.SetupServer(devMode); err != nil {
+		panic(err)
+	}
+
 	e := echo.New()
 
 	// middleware
@@ -27,6 +46,16 @@ func main() {
 			// when devMode is false, cookie will only be sent through https
 			csrf.Secure(!devMode),
 		)))
+
+	// if cert and key are not provided, try using let's encrypt
+	if !devMode && certFile == "" && keyFile == "" {
+		// thanks mozilla
+		e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
+		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(goldfishAddress)
+		e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
+			Code: 301,
+		}))
+	}
 
 	// file routing
 	e.Static("/", "public")
@@ -70,16 +99,10 @@ func main() {
 	if (devMode) {
 		// start the server in HTTP. DO NOT USE THIS IN PRODUCTION!!
 		e.Logger.Fatal(e.Start("127.0.0.1:8000"))
-
+	} else if certFile == "" && keyFile == "" {
+		// thanks mozilla
+		e.Logger.Fatal(e.StartAutoTLS(":443"))
 	} else {
-		// if not in dev mode, server must start in HTTPS, and needs cert & key
-		var goldfishAddress, certFile, keyFile string
-		flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
-		flag.StringVar(&certFile, "cert_file", "certificate.crt", "Goldfish server's certificate")
-		flag.StringVar(&keyFile, "key_file", "certificate_key.pem", "Goldfish certificate's private key file")
-		flag.Parse()
-
-		// launch server in https
 		e.Logger.Fatal(e.StartTLS(goldfishAddress, certFile, keyFile))
 	}
 }

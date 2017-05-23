@@ -127,7 +127,7 @@ func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 	return vaultClient.Logical().Delete("cubbyhole/" + name)
 }
 
-func RenewServerToken() (err error) {
+func renewServerToken() (err error) {
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
 		return err
