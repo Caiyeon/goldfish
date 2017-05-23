@@ -199,6 +199,16 @@ export default {
         url += '&sha=' + this.searchString
       }
       return url
+    },
+
+    updateURL: function () {
+      var url = '/api/policy/request/update?type=' + this.searchType
+      if (this.searchType === 'changeid') {
+        url += '&id=' + this.searchString
+      } else if (this.searchType === 'commit') {
+        url += '&sha=' + this.searchString
+      }
+      return url
     }
   },
 
@@ -219,21 +229,16 @@ export default {
     },
 
     approve: function () {
-      if (this.searchType === 'commit') {
-        this.$notify({
-          title: 'Under construction',
-          message: 'Github integration is view-only at the moment',
-          type: 'warning'
-        })
-        return
-      }
-      this.$http.post('/api/policy/request/' + this.searchString, querystring.stringify({
+      this.$http.post(this.updateURL, querystring.stringify({
         unseal: this.unsealToken
       }), {
         headers: {'X-CSRF-Token': this.csrf}
       })
+
       .then((response) => {
         this.unsealToken = ''
+
+        // if more unseals are needed
         if (response.data.progress) {
           this.progress = response.data.progress
           this.$notify({
@@ -249,9 +254,13 @@ export default {
               type: 'warning'
             })
           }
+
+        // if change was successfully completed
         } else {
-          this.request.Current = response.data.result || this.request.Current
           this.progress = this.required
+          if (this.searchType === 'changeid') {
+            this.request.Current = response.data.result || this.request.Current
+          }
           this.$notify({
             title: 'Change success',
             message: 'Root token generated and revoked',

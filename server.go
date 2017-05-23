@@ -51,7 +51,7 @@ func main() {
 
 	e.GET("/api/policy/request", handlers.GetPolicyRequest())
 	e.POST("/api/policy/request", handlers.AddPolicyRequest())
-	e.POST("/api/policy/request/:id", handlers.UpdatePolicyRequest())
+	e.POST("/api/policy/request/update", handlers.UpdatePolicyRequest())
 	e.DELETE("/api/policy/request/:id", handlers.DeletePolicyRequest())
 
 	e.GET("/api/transit", handlers.TransitInfo())

@@ -19,7 +19,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * The unseal admins are working from home, but we need a policy changed.
 	* How do we do generate a root token only for this change, and make sure it's revoked after?
 	* Optionally send the changeID to a slack channel, so admins can pull up the details and approve/reject
-* *Coming soon* I have dozens of policies, store in a Github repo. Can I deploy this all in one go?
+* I have dozens of policies, store in a Github repo. Can I deploy this all in one go?
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
 
 
@@ -53,10 +53,10 @@ See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production
 	- Users can place a policy change request in vault
 	- Admins must then provide unseal tokens for that specific request
 	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
-* [ ] Infrastructure as code. **terraform your vault**
-	- Extend the policy request & approval system to fetch data from a folder in Github
-	- Admins can start a request to update all vault policies according to policies found in the folder
-	- No more individually managing policies!
+* [x] **DONE!** **Terraform your vault**
+	- Fetch a folder of policies from a commit in github
+	- Admins can enter their unseal tokens for approval to set vault policies according to policies found
+	- Change dozens of policies in one go!
 * [ ] Resource dependency chain
 	- E.g. Will removing a particular policy affect current users?
 * [ ] SAML to LDAP integration
