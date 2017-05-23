@@ -264,6 +264,8 @@ func getPolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash strin
 	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
 		"result": request,
+		"progress": request.Progress,
+		"required": request.Required,
 	})
 }
 
@@ -312,7 +314,7 @@ func getPolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash str
 
 	// for each current policy that doesn't exist in github, mark it as would be deleted
 	for _, name := range(currentPolicies) {
-		if name == "root" {
+		if name == "root" || name == "default" {
 			continue
 		}
 		if _, ok := newPolicies[name]; !ok {
@@ -328,10 +330,29 @@ func getPolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash str
 		}
 	}
 
+	// check progress and total unseals required
+	status, err := vault.GenerateRootStatus()
+	if err != nil {
+		return logError(c, err.Error(), "Could not check root generation status")
+	}
+	cubbyhole, err := vault.ReadFromCubbyhole("unseal_wrapping_tokens/" + hash)
+	if err != nil {
+		return logError(c, err.Error(), "Could not read cubbyhole")
+	}
+
+	progress := 0
+	if cubbyhole != nil && cubbyhole.Data != nil {
+		if wrapping_tokens, ok := cubbyhole.Data["wrapping_tokens"]; ok {
+			progress = len(strings.Split(wrapping_tokens.(string), ";"))
+		}
+	}
+
 	// return request
 	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
 		"result": changes,
+		"progress": progress,
+		"required": status.Required,
 	})
 }
 
@@ -357,7 +378,7 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 
 		unsealKey := c.FormValue("unseal")
 		if unsealKey == "" {
-			return logError(c, err.Error(), "Must provide unseal key")
+			return logError(c, "", "Must provide unseal key")
 		}
 
 		// decode map to struct

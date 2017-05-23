@@ -5,8 +5,21 @@
         <article class="tile is-child box">
 
           <div class="field">
-            <!-- <label class="label">Search by change ID:</label> -->
+          <!-- <label class="label">Search by change ID:</label> -->
             <div class="field has-addons">
+              <p v-if="request === null" class="control">
+                <span class="select">
+                  <select v-model="searchType">
+                    <option v-bind:value="'changeid'">Change ID</option>
+                    <option v-bind:value="'commit'">Commit Hash</option>
+                  </select>
+                </span>
+              </p>
+              <p v-else class="control">
+                <a class="button is-danger" @click="request = null">
+                  Reset
+                </a>
+              </p>
               <p class="control">
                 <input class="input" type="text"
                 placeholder="Enter a change ID"
@@ -22,16 +35,16 @@
             </div>
           </div>
 
-          <article v-if="request !== null">
+          <!-- Displaying a single request via changeid -->
+          <article v-if="request !== null && !request.length">
             <br>
-
             <article class="message is-primary">
               <div class="message-body">
                 <strong>Requester display name: </strong>{{request.Requester}}<br>
                 <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
                 <strong>Policy: </strong>{{request.Policy}}<br>
                 <strong>Unseal progress: </strong>
-                {{request.Progress}} out of {{request.Required}} <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
+                {{progress}} out of {{required}} <strong>{{progress === required ? ' Done!' : ''}}</strong>
               </div>
             </article>
 
@@ -58,7 +71,6 @@
               </div>
             </div>
 
-
             <div class="columns">
               <div class="column">
                 <article class="message is-primary">
@@ -80,6 +92,77 @@
             </div>
           </article>
 
+          <!-- Displaying a set of changes via github commit hash -->
+          <article v-if="request !== null && request.length > 1">
+            <br>
+            <article class="message is-primary">
+              <div class="message-body">
+                <strong>Github commit hash: </strong>{{searchString}}<br>
+                <strong>Number of policies affected: </strong>{{request.length}}<br>
+                <strong>Unseal progress: </strong>
+                {{progress}} out of {{required}} <strong>{{progress === required ? ' Done!' : ''}}</strong>
+              </div>
+            </article>
+
+            <div class="field is-grouped">
+              <p class="control">
+                <button class="button is-success" @click="bConfirm = true">Approve</button>
+              </p>
+              <div v-if="bConfirm" class="field has-addons">
+                <p class="control">
+                  <input class="input" type="text"
+                  placeholder="Enter an unseal token"
+                  v-model="unsealToken"
+                  @keyup.enter="approve()">
+                </p>
+                <p class="control">
+                  <a class="button is-info" @click="approve()">
+                    Confirm
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div v-for="(policy, index) in request" class="box">
+              <!-- policy name title and status tag -->
+              <nav class="level">
+                <div class="level-left">
+                  <div class="level-item">
+                    <div class="content is-marginless is-paddingless">
+                      <h3 class="is-marginless is-paddingless">{{policy.Policy}}</h3>
+                    </div>
+                  </div>
+                  <div class="level-item">
+                    <span v-if="policy.New && policy.Current" class="tag is-info">Will be changed!</span>
+                    <span v-if="!policy.New && policy.Current" class="tag is-danger">Will be deleted!</span>
+                    <span v-if="policy.New && !policy.Current" class="tag is-success">Will be created!</span>
+                  </div>
+                </div>
+              </nav>
+
+              <div class="columns">
+                <div v-if="policy.Current" class="column">
+                  <article class="message is-primary" :class="policy.New ? '' : 'is-danger'">
+                    <div class="message-header">
+                      Current policy rules
+                    </div>
+                    <div class="message-body" style="white-space: pre;">{{policy.Current}}</div>
+                  </article>
+                </div>
+
+                <div v-if="policy.New" class="column">
+                  <article class="message is-info" :class="policy.Current ? '' : 'is-success'">
+                    <div class="message-header">
+                    Proposed policy rules
+                    </div>
+                    <div class="message-body" style="white-space: pre;">{{policy.New}}</div>
+                  </article>
+                </div>
+              </div>
+            </div>
+
+          </article>
+
         </article>
       </div>
     </div>
@@ -94,11 +177,13 @@ export default {
     return {
       csrf: '',
       searchString: '',
+      searchType: 'changeid',
       request: null,
-      changeID: '',
       bConfirm: false,
       bReject: false,
-      unsealToken: ''
+      unsealToken: '',
+      progress: 0,
+      required: 0
     }
   },
 
@@ -106,6 +191,15 @@ export default {
   },
 
   computed: {
+    searchURL: function () {
+      var url = '/api/policy/request?type=' + this.searchType
+      if (this.searchType === 'changeid') {
+        url += '&id=' + this.searchString
+      } else if (this.searchType === 'commit') {
+        url += '&sha=' + this.searchString
+      }
+      return url
+    }
   },
 
   methods: {
@@ -113,11 +207,11 @@ export default {
       if (this.request !== null) {
         return
       }
-      this.$http.get('/api/policy/request' + '?type=changeid&id=' + this.searchString).then((response) => {
+      this.$http.get(this.searchURL).then((response) => {
         this.csrf = response.headers['x-csrf-token']
         this.request = response.data.result
-        this.changeID = this.searchString
-        console.log(response.data.result)
+        this.progress = response.data.progress
+        this.required = response.data.required
       })
       .catch((error) => {
         this.$onError(error)
@@ -125,6 +219,14 @@ export default {
     },
 
     approve: function () {
+      if (this.searchType === 'commit') {
+        this.$notify({
+          title: 'Under construction',
+          message: 'Github integration is view-only at the moment',
+          type: 'warning'
+        })
+        return
+      }
       this.$http.post('/api/policy/request/' + this.searchString, querystring.stringify({
         unseal: this.unsealToken
       }), {
@@ -133,7 +235,7 @@ export default {
       .then((response) => {
         this.unsealToken = ''
         if (response.data.progress) {
-          this.request.Progress = response.data.progress
+          this.progress = response.data.progress
           this.$notify({
             title: 'Progress',
             message: response.data.progress.toString() + ' unseal tokens received so far',
@@ -149,7 +251,7 @@ export default {
           }
         } else {
           this.request.Current = response.data.result || this.request.Current
-          this.request.Progress = this.request.Required
+          this.progress = this.required
           this.$notify({
             title: 'Change success',
             message: 'Root token generated and revoked',
@@ -159,7 +261,7 @@ export default {
       })
       .catch((error) => {
         this.unsealToken = ''
-        this.request.Progress = 0
+        this.progress = 0
         this.$onError(error)
       })
     },

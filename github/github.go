@@ -2,7 +2,6 @@ package github
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -57,7 +56,6 @@ func GetHCLFilesFromPath(accessToken, owner, repo, branch, path, base, head stri
 	if folder == nil || len(folder) == 0 {
 		return nil, errors.New("No .hcl files found in commit and path")
 	}
-	fmt.Println(folder)
 
 	// this will be the returned map if all goes well
 	policies := make(map[string]string)
