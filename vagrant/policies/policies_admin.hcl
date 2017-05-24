@@ -1,5 +1,5 @@
 # this policy enables a user to view and perform actions
-# in the "Administration" -> "Policies" page
+# in the "Administration" -> "Policies" and "Requests" pages
 
 # allows user to list policies
 path "sys/policy" {

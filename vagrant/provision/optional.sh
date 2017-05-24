@@ -6,10 +6,12 @@ vault auth $VAULT_ROOT_TOKEN && echo 'Successfully authenticated' \
 || (echo 'Failed to authenticate with vault' && exit 1)
 
 # write some sample policies
-vault policy-write admins /vagrant/policies/admins.hcl
-vault policy-write developers /vagrant/policies/developers.hcl
-vault policy-write operations /vagrant/policies/operations.hcl
-vault policy-write readonly /vagrant/policies/readonly.hcl
+vault policy-write read_secrets /vagrant/policies/read_secrets.hcl
+vault policy-write user_admin /vagrant/policies/user_admin.hcl
+vault policy-write policies_admin /vagrant/policies/policies_admin.hcl
+vault policy-write mounts_admin /vagrant/policies/mounts_admin.hcl
+vault policy-write transit /vagrant/policies/transit.hcl
+vault policy-write token_creator /vagrant/policies/token_creator.hcl
 
 # write some sample users
 vault token-create -policy="admins" -ttl=720h -renewable=true
