@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
@@ -18,6 +19,7 @@ var (
 	goldfishAddress string
 	certFile        string
 	keyFile         string
+	errorChannel    = make(chan error)
 )
 
 func init() {
@@ -25,14 +27,37 @@ func init() {
 	flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
 	flag.StringVar(&certFile, "cert_file", "", "Goldfish server's certificate")
 	flag.StringVar(&keyFile, "key_file", "", "Goldfish certificate's private key file")
-}
 
-func main() {
+	// vars needed for vault package setup
+	var addr, config, wrappingToken, rolePath, roleID string
+	flag.StringVar(&addr, "vault_addr", "http://127.0.0.1:8200", "Vault address")
+	flag.StringVar(&config, "config_path", "", "A generic backend endpoint to store run-time settings. E.g. 'secret/goldfish'")
+	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
+	flag.StringVar(&roleID, "role_id", "goldfish", "The approle role_id")
+	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
 	flag.Parse()
-	if err := vault.SetupServer(devMode); err != nil {
+
+	// if API wrapper can't start, panic is justified
+	if err := vault.SetAddress(addr); err != nil {
+		panic(err)
+	}
+	if err := vault.UnwrapSecretID(wrappingToken, roleID, rolePath); err != nil {
+		panic(err)
+	}
+	if err := vault.LoadConfig(devMode, config, errorChannel); err != nil {
 		panic(err)
 	}
 
+	go func() {
+		for err := range errorChannel {
+			if err != nil {
+				log.Println("[ERROR]: ", err.Error())
+			}
+		}
+	}()
+}
+
+func main() {
 	e := echo.New()
 
 	// middleware

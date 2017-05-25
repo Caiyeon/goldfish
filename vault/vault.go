@@ -3,7 +3,6 @@ package vault
 import (
 	"encoding/gob"
 	"errors"
-	"flag"
 	"log"
 	"time"
 
@@ -21,51 +20,70 @@ var (
 	vaultAddress  = ""
 	vaultToken    = ""
 	vaultClient   *api.Client
-
-	// for initializing server and fetching client token from vault
-	wrappingToken string
-	rolePath      string
 	configPath    string
-	roleID        string
 )
 
 func init() {
 	// for gorilla securecookie to encode and decode
 	gob.Register(&AuthInfo{})
-
-	// setup flags to be parsed by server main()
-	flag.StringVar(&vaultAddress, "vault_addr", "http://127.0.0.1:8200", "Vault address")
-	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
-	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
-	flag.StringVar(&configPath, "config_path", "", "A generic backend endpoint to store run-time settings. E.g. 'secret/goldfish'")
-	flag.StringVar(&roleID, "role_id", "goldfish", "The approle role_id")
 }
 
-// fetches client token from vault using wrappingtoken and approle
-func SetupServer(devMode bool) error {
-	if vaultAddress == "" || wrappingToken == "" {
-		return errors.New("Vault address and wrapped accessor missing. See --help for details")
-	}
-	if configPath == "" && !devMode {
-		return errors.New("config_path must be set unless dev mode is enabled")
-	}
-
-	// setup server's vault client, used for login transit encryption/decryption
-	resp, err := loginWithSecretID(vaultAddress, wrappingToken, roleID, rolePath)
+func SetAddress(addr string) error {
+	config := api.DefaultConfig()
+	err := config.ConfigureTLS(
+		&api.TLSConfig{
+			// in preparation for tls_skip_verify option
+			Insecure: false,
+		},
+	)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	vaultToken = resp.Auth.ClientToken
-	vaultClient, err = api.NewClient(api.DefaultConfig())
+	config.Address = addr
+	vaultAddress = addr
+
+	vaultClient, err = api.NewClient(config)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	vaultClient.SetAddress(vaultAddress)
-	vaultClient.SetToken(vaultToken)
+	return nil
+}
 
-	// errors from go routines regarding server configuration is sent here
-	errorChannel := make(chan error)
+func UnwrapSecretID(wrappingToken, roleID, rolePath string) error {
+	// make a raw unwrap call. This will use the token as a header
+	vaultClient.SetToken(wrappingToken)
+	resp, err := vaultClient.Logical().Unwrap("")
+	if err != nil {
+		errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+	}
 
+	// verify that a secret_id was wrapped
+	secretID, ok := resp.Data["secret_id"].(string)
+	if !ok {
+		errors.New("Failed to unwrap provided token, revoke it if possible")
+	}
+
+	// fetch vault token with secret_id
+	resp, err = vaultClient.Logical().Write(rolePath,
+		map[string]interface{}{
+			"role_id":   roleID,
+			"secret_id": secretID,
+		})
+	if err != nil {
+		return err
+	}
+
+	// verify that the secret_id is valid
+	vaultClient.SetToken(resp.Auth.ClientToken)
+	if _, err = vaultClient.Auth().Token().LookupSelf(); err != nil {
+		return err
+	}
+
+	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
+	return nil
+}
+
+func LoadConfig(devMode bool, config string, errorChannel chan error) error {
 	if devMode && configPath == "" {
 		// if devMode is active, unless configPath is set, load a set of simple configs
 		loadDevModeConfig()
@@ -76,20 +94,7 @@ func SetupServer(devMode bool) error {
 		}
 		go loadConfigEvery(time.Minute, errorChannel)
 	}
-
 	go renewServerTokenEvery(time.Hour, errorChannel)
-
-	// to do: ship these potential error logs somewhere
-	go func() {
-		for err := range errorChannel {
-			if err != nil {
-				log.Println("[ERROR]: ", err.Error())
-			}
-		}
-	}()
-
-	// report back the accessor so it may be safekept
-	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
 	return nil
 }
 
@@ -105,4 +110,41 @@ func renewServerTokenEvery(interval time.Duration, ch chan error) {
 		time.Sleep(interval)
 		ch <- renewServerToken()
 	}
+}
+
+func loginWithSecretID(address, token, roleID, rolePath string) (*api.Secret, error) {
+	// set up vault client
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(address)
+	client.SetToken(token)
+
+	// make a raw unwrap call. This will use the token as a header
+	resp, err := client.Logical().Unwrap("")
+	if err != nil {
+		return nil, errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+	}
+
+	// verify that a secret_id was wrapped
+	secretID, ok := resp.Data["secret_id"].(string)
+	if !ok {
+		return nil, errors.New("Failed to unwrap provided token, revoke it if possible")
+	}
+
+	// fetch vault token with secret_id
+	resp, err = client.Logical().Write(rolePath,
+		map[string]interface{}{
+			"role_id":   roleID,
+			"secret_id": secretID,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	// verify that the secret_id is valid
+	client.SetToken(resp.Auth.ClientToken)
+	_, err = client.Auth().Token().LookupSelf()
+	return resp, err
 }
