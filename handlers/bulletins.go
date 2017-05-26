@@ -13,11 +13,18 @@ func GetBulletins() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		bulletins, err := auth.GetBulletins()
 		if err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{

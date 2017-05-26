@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -17,7 +16,14 @@ func GetUsers() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		var offset int
 		var err error
@@ -26,14 +32,16 @@ func GetUsers() echo.HandlerFunc {
 		} else {
 			offset, err = strconv.Atoi(c.QueryParam("offset"))
 			if err != nil {
-				return logError(c, err.Error(), "Internal error")
+				return c.JSON(http.StatusBadRequest, H{
+					"error": "Offset is not an integer",
+				})
 			}
 		}
 
 		// fetch results
 		result, err := auth.ListUsers(c.QueryParam("type"), offset)
 		if err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return parseError(c, err)
 		}
 
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
@@ -50,12 +58,19 @@ func GetTokenCount() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		// fetch results
 		result, err := auth.GetTokenCount()
 		if err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return parseError(c, err)
 		}
 
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
@@ -74,18 +89,29 @@ func DeleteUser() echo.HandlerFunc {
 		// verify form data
 		var deleteTarget = &vault.AuthInfo{}
 		if err := c.Bind(deleteTarget); err != nil {
-			return logError(c, err.Error(), "Invalid format")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Invalid format for deletion target",
+			})
 		}
 		if deleteTarget.Type == "" || deleteTarget.ID == "" {
-			return logError(c, "Received empty delete request", "Invalid format")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Deletion target cannot be empty",
+			})
 		}
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		// delete user
 		if err := auth.DeleteUser(deleteTarget.Type, deleteTarget.ID); err != nil {
-			return logError(c, err.Error(), "Deletion error")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{
@@ -100,27 +126,40 @@ func CreateUser() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		var resp *api.Secret
 		switch c.QueryParam("type") {
 		case "":
-			return logError(c, "Received empty user creation type", "Creation type cannot be empty")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "User creation type cannot be empty",
+			})
 
 		case "token":
 			var request = &api.TokenCreateRequest{}
 			err := c.Bind(request)
 			if err != nil {
-				return logError(c, err.Error(), "Invalid format")
+				return c.JSON(http.StatusBadRequest, H{
+					"error": "Invalid token creation format",
+				})
 			}
 
 			resp, err = auth.CreateToken(request, c.QueryParam("wrap-ttl"))
 			if err != nil {
-				return logError(c, err.Error(), "Could not create token")
+				return parseError(c, err)
 			}
 
 		default:
-			return logError(c, "Received unknown creation type", "Unsupported creation type")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "User creation type not supported",
+			})
 		}
 
 		return c.JSON(http.StatusOK, H{
@@ -135,14 +174,18 @@ func ListRoles() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		result, err := auth.ListRoles()
 		if err != nil {
-			log.Println("[ERROR]:", err.Error())
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Could not list roles",
-			})
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{
@@ -157,11 +200,18 @@ func GetRole() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		result, err := auth.GetRole(c.QueryParam("rolename"))
 		if err != nil {
-			return logError(c, err.Error(), "Could not read role")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{

@@ -32,6 +32,7 @@ func init() {
 	}
 }
 
+// deprecated. Will be removed soon
 func logError(c echo.Context, logstring string, responsestring string) error {
 	log.Println("[ERROR]:", logstring)
 	return c.JSON(http.StatusInternalServerError, H{
@@ -144,7 +145,14 @@ func RenewSelf() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		// verify auth details and create client access token
 		resp, err := auth.RenewSelf()
@@ -164,23 +172,9 @@ func RenewSelf() echo.HandlerFunc {
 
 func getSession(c echo.Context, auth *vault.AuthInfo) error {
 	// fetch auth from cookie
-	if cookie, err := c.Request().Cookie("auth"); err == nil {
-		if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Cookie could not be decoded",
-			})
-		}
-	} else {
-		return c.JSON(http.StatusInternalServerError, H{
-			"error": "Cookie could not be decoded",
-		})
+	cookie, err := c.Request().Cookie("auth")
+	if err != nil {
+		return err
 	}
-
-	// decode auth's ID with vault transit backend
-	if err := auth.DecryptAuth(); err != nil {
-		return c.JSON(http.StatusForbidden, H{
-			"error": "Invalid authentication",
-		})
-	}
-	return nil
+	return scookie.Decode("auth", cookie.Value, &auth)
 }

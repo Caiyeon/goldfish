@@ -14,7 +14,14 @@ func GetSecrets() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		path := c.QueryParam("path")
 		if path == "" {
@@ -27,7 +34,7 @@ func GetSecrets() echo.HandlerFunc {
 		if path == "" || path[len(path)-1:] == "/" {
 			// listing a directory
 			if result, err := auth.ListSecret(path); err != nil {
-				return logError(c, err.Error(), "Internal error")
+				return parseError(c, err)
 			} else {
 				return c.JSON(http.StatusOK, H{
 					"result": result,
@@ -37,7 +44,7 @@ func GetSecrets() echo.HandlerFunc {
 		} else {
 			// reading a specific secret's key value pairs
 			if result, err := auth.ReadSecret(path); err != nil {
-				return logError(c, err.Error(), "Internal error")
+				return parseError(c, err)
 			} else {
 				return c.JSON(http.StatusOK, H{
 					"result": result,
@@ -54,22 +61,33 @@ func PostSecrets() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		path := c.QueryParam("path")
 		body := c.FormValue("body")
 
 		if path == "" || body == "" {
-			return logError(c, "Empty path or body", "Path and body cannot be empty")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Path and body must not be empty",
+			})
 		}
 
 		if path[len(path)-1:] == "/" {
-			return logError(c, "Invalid path", "Path must not end in '/'")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Path must not end in '/'",
+			})
 		}
 
 		resp, err := auth.WriteSecret(path, body)
 		if err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{

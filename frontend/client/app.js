@@ -67,6 +67,14 @@ function handleError (error) {
     })
     console.log(error.response.data.error)
   } else {
+    if (error.response.status === 403) {
+      // either user is not logged in, or user's actions were denied by vault
+      openNotification({
+        title: 'Error: ' + error.response.status.toString(),
+        message: 'Invalid CSRF. Please refresh page',
+        type: 'danger'
+      })
+    }
     if (error.response.status === 404) {
       openNotification({
         title: 'Error: 404',
@@ -81,14 +89,13 @@ function handleError (error) {
         type: 'danger'
       })
     } else {
-    // otherwise, it's likely the user isn't logged in
       openNotification({
         title: 'Error: ' + error.response.status.toString(),
-        message: 'Please login first',
+        message: '',
         type: 'danger'
       })
     }
-    console.log(error.message)
+    console.log(error.response.data)
   }
 }
 Vue.prototype.$onError = handleError

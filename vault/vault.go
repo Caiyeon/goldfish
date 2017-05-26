@@ -74,6 +74,7 @@ func UnwrapSecretID(wrappingToken, roleID, rolePath string) error {
 	}
 
 	// verify that the secret_id is valid
+	vaultToken = resp.Auth.ClientToken
 	vaultClient.SetToken(resp.Auth.ClientToken)
 	if _, err = vaultClient.Auth().Token().LookupSelf(); err != nil {
 		return err

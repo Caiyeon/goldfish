@@ -15,11 +15,18 @@ func GetMounts() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		mounts, err := auth.ListMounts()
 		if err != nil {
-			return logError(c, err.Error(), "Unauthorized")
+			return parseError(c, err)
 		}
 
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
@@ -36,12 +43,19 @@ func GetMount() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		// fetch results
 		result, err := auth.GetMount(c.Param("mountname"))
 		if err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{
@@ -56,17 +70,26 @@ func ConfigMount() echo.HandlerFunc {
 		defer auth.Clear()
 
 		// fetch auth from cookie
-		getSession(c, auth)
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
 
 		var config *vaultapi.MountConfigInput
 		if err := c.Bind(&config); err != nil {
-			return logError(c, err.Error(), "Invalid format")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Invalid config format",
+			})
 		}
 
 		// fetch results
 		err := auth.TuneMount(c.Param("mountname"), *config)
 		if err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{
