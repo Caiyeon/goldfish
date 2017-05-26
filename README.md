@@ -19,7 +19,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * The unseal admins are working from home, but we need a policy changed.
 	* How do we do generate a root token only for this change, and make sure it's revoked after?
 	* Optionally send the changeID to a slack channel, so admins can pull up the details and approve/reject
-* I have dozens of policies, store in a Github repo. Can I deploy this all in one go?
+* I store my policies on a Github repo. Can I deploy this all in one go? [See more](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
 
 
@@ -45,15 +45,15 @@ See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 
 #### Planned major features: Soon<sup>TM</sup>
-* [x] **DONE!** Searching tokens by policy
+* [x] **DONE!** Searching tokens by policy [walkthrough](https://github.com/Caiyeon/goldfish/wiki/Features#searching-tokens)
 	- E.g. Display all tokens that have the policy 'admins'
-* [x] **DONE!** Searching policy by rule
+* [x] **DONE!** Searching policy by rule [walkthrough](https://github.com/Caiyeon/goldfish/wiki/Features#searching-policies)
 	- E.g. Display all policies that can access 'secret/data*'
-* [x] **DONE!** Request & approval based policy changes
+* [x] **DONE!** Request & approval based policy changes [walkthrough](https://github.com/Caiyeon/goldfish/wiki/Features#policy-change-requests)
 	- Users can place a policy change request in vault
 	- Admins must then provide unseal tokens for that specific request
 	- Upon reaching a set number, goldfish generates a root token, performs edit, and revokes the root token
-* [x] **DONE!** **Terraform your vault**
+* [x] **DONE!** **Terraform your vault** [walkthrough](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
 	- Fetch a folder of policies from a commit in github
 	- Admins can enter their unseal tokens for approval to set vault policies according to policies found
 	- Change dozens of policies in one go!
