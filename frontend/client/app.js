@@ -67,14 +67,7 @@ function handleError (error) {
     })
     console.log(error.response.data.error)
   } else {
-    if (error.response.status === 403) {
-    // 403s happen mostly because of invalid CSRF tokens
-      openNotification({
-        title: 'Error: 403',
-        message: 'Invalid CSRF. Try refreshing the page',
-        type: 'danger'
-      })
-    } if (error.response.status === 404) {
+    if (error.response.status === 404) {
       openNotification({
         title: 'Error: 404',
         message: 'Not found',

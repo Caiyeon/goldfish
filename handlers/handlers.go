@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
@@ -37,6 +39,25 @@ func logError(c echo.Context, logstring string, responsestring string) error {
 	})
 }
 
+// returns the http status code found in the error message
+func parseError(c echo.Context, err error) error {
+	errCode := strings.Split(err.Error(), "Code:")
+	errMsgs := strings.Split(err.Error(), "*")
+
+	// if error string did not contain error response code
+	if len(errCode) < 2 || len(errMsgs) < 2 {
+		return c.JSON(http.StatusInternalServerError, H{
+			"error": "Invalid vault response",
+		})
+	}
+
+	code := 500
+	fmt.Sscanf(errCode[1], "%d", &code)
+	return c.JSON(code, H{
+		"error": "Vault: " + errMsgs[1],
+	})
+}
+
 func FetchCSRF() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
@@ -50,7 +71,7 @@ func VaultHealth() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		resp, err := vault.VaultHealth()
 		if err != nil {
-			return logError(c, "Failed to reach vault health endpoint", "Internal error")
+			return parseError(c, err)
 		}
 		return c.JSON(http.StatusOK, H{
 			"result": string(resp),
@@ -65,21 +86,27 @@ func Login() echo.HandlerFunc {
 
 		// read form data
 		if err := c.Bind(auth); err != nil {
-			return logError(c, err.Error(), "Invalid format")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Invalid auth format",
+			})
 		}
 		if auth.Type == "" || auth.ID == "" {
-			return logError(c, "Empty authentication", "Empty authentication")
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Empty authentication",
+			})
 		}
 
 		// verify auth details and create client access token
 		data, err := auth.Login()
 		if err != nil {
-			return logError(c, err.Error(), "Invalid authentication")
+			return parseError(c, err)
 		}
 
 		// encrypt auth.ID with vault's transit backend
 		if err := auth.EncryptAuth(); err != nil {
-			return logError(c, err.Error(), "Internal error")
+			return c.JSON(http.StatusInternalServerError, H{
+				"error": "Goldfish could not use transit key",
+			})
 		}
 
 		// store auth.Type and auth.ID (now a cipher) in cookie
@@ -91,7 +118,9 @@ func Login() echo.HandlerFunc {
 			}
 			http.SetCookie(c.Response().Writer, cookie)
 		} else {
-			return logError(c, err.Error(), "Please clear site-related cookie and storage")
+			return c.JSON(http.StatusInternalServerError, H{
+				"error": "Goldfish could not encode cookie",
+			})
 		}
 
 		// return useful information to user
@@ -120,7 +149,7 @@ func RenewSelf() echo.HandlerFunc {
 		// verify auth details and create client access token
 		resp, err := auth.RenewSelf()
 		if err != nil {
-			return logError(c, err.Error(), "Could not renew token")
+			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{
@@ -137,15 +166,21 @@ func getSession(c echo.Context, auth *vault.AuthInfo) error {
 	// fetch auth from cookie
 	if cookie, err := c.Request().Cookie("auth"); err == nil {
 		if err = scookie.Decode("auth", cookie.Value, &auth); err != nil {
-			return logError(c, err.Error(), "Please clear cookies and login again")
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Cookie could not be decoded",
+			})
 		}
 	} else {
-		return logError(c, err.Error(), "Please clear cookies and login again")
+		return c.JSON(http.StatusInternalServerError, H{
+			"error": "Cookie could not be decoded",
+		})
 	}
 
 	// decode auth's ID with vault transit backend
 	if err := auth.DecryptAuth(); err != nil {
-		return logError(c, err.Error(), "Invalid authentication")
+		return c.JSON(http.StatusForbidden, H{
+			"error": "Invalid authentication",
+		})
 	}
 	return nil
 }
