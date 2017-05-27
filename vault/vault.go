@@ -85,6 +85,7 @@ func UnwrapSecretID(wrappingToken, roleID, rolePath string) error {
 }
 
 func LoadConfig(devMode bool, config string, errorChannel chan error) error {
+	configPath = config
 	if devMode && configPath == "" {
 		// if devMode is active, unless configPath is set, load a set of simple configs
 		loadDevModeConfig()
