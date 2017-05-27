@@ -44,10 +44,14 @@ func init() {
 	if err := vault.UnwrapSecretID(wrappingToken, roleID, rolePath); err != nil {
 		panic(err)
 	}
-	if err := vault.LoadConfig(devMode, config, errorChannel); err != nil {
+
+	// load config from vault, and start goroutines for token renewal & config hot reload
+	vault.ConfigPath = config
+	if err := vault.LoadConfig(devMode, errorChannel); err != nil {
 		panic(err)
 	}
 
+	// any errors sent by go routines should be logged
 	go func() {
 		for err := range errorChannel {
 			if err != nil {

@@ -20,7 +20,7 @@ var (
 	vaultAddress  = ""
 	vaultToken    = ""
 	vaultClient   *api.Client
-	configPath    string
+	ConfigPath    = ""
 )
 
 func init() {
@@ -84,14 +84,13 @@ func UnwrapSecretID(wrappingToken, roleID, rolePath string) error {
 	return nil
 }
 
-func LoadConfig(devMode bool, config string, errorChannel chan error) error {
-	configPath = config
-	if devMode && configPath == "" {
+func LoadConfig(devMode bool, errorChannel chan error) error {
+	if devMode && ConfigPath == "" {
 		// if devMode is active, unless configPath is set, load a set of simple configs
 		loadDevModeConfig()
 	} else {
 		// load config once to ensure validity
-		if err := loadConfigFromVault(configPath); err != nil {
+		if err := loadConfigFromVault(ConfigPath); err != nil {
 			return err
 		}
 		go loadConfigEvery(time.Minute, errorChannel)
@@ -103,7 +102,7 @@ func LoadConfig(devMode bool, config string, errorChannel chan error) error {
 func loadConfigEvery(interval time.Duration, ch chan error) {
 	for {
 		time.Sleep(interval)
-		ch <- loadConfigFromVault(configPath)
+		ch <- loadConfigFromVault(ConfigPath)
 	}
 }
 
