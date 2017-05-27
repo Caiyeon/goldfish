@@ -13,8 +13,8 @@ import (
 // if head commit is somewhere between current commit state and head of target branch,
 // find all hcl files in the path folder of commit, and return contents as a map
 func GetHCLFilesFromPath(accessToken, owner, repo, branch, path, base, head string) (map[string]string, error) {
-	if owner == "" || repo == "" || head == "" {
-		return nil, errors.New("Required fields are empty")
+	if accessToken == "" || owner == "" || repo == "" || head == "" {
+		return nil, errors.New("Config_path does not include GitHub info required")
 	}
 
 	// construct oauth github client from personal access token
