@@ -17,7 +17,14 @@
             </tooltip>
           </a>
         </div>
-        <div class="nav-right is-flex"></div>
+        <div class="nav-right is-flex">
+          <a class="nav-item" href="https://github.com/Caiyeon/goldfish">
+            <span class="icon">
+              <i class="fa fa-github"></i>
+            </span>
+            Source on GitHub
+          </a>
+        </div>
       </nav>
     </div>
   </section>
