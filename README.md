@@ -6,6 +6,8 @@
 
 <h3>Show support for development by starring this repo!</a></h3>
 
+<a href="https://circleci.com/gh/Caiyeon/goldfish"><img src="https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg" alt="Circle CI"></a>
+
 </div>
 
 ## What is this?
