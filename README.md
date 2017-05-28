@@ -1,6 +1,6 @@
 <div align="center">
 
-<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo </a> <a href="https://circleci.com/gh/Caiyeon/goldfish"><img src="https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg" alt="Circle CI"></a></h3>
+<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo</a></h3>
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 

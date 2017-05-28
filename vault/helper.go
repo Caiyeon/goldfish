@@ -25,7 +25,7 @@ func VaultHealth() (string, error) {
 
 // lookup current root generation status
 func GenerateRootStatus() (*api.GenerateRootStatusResponse, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func GenerateRootStatus() (*api.GenerateRootStatusResponse, error) {
 }
 
 func GenerateRootInit(otp string) (*api.GenerateRootStatusResponse, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func GenerateRootInit(otp string) (*api.GenerateRootStatusResponse, error) {
 }
 
 func GenerateRootUpdate(shard, nonce string) (*api.GenerateRootStatusResponse, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func GenerateRootUpdate(shard, nonce string) (*api.GenerateRootStatusResponse, e
 }
 
 func GenerateRootCancel() error {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func GenerateRootCancel() error {
 }
 
 func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, er
 }
 
 func ReadFromCubbyhole(name string) (*api.Secret, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func ReadFromCubbyhole(name string) (*api.Secret, error) {
 }
 
 func DeleteFromCubbyhole(name string) (*api.Secret, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 }
 
 func renewServerToken() (err error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func renewServerToken() (err error) {
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +122,7 @@ func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
 
 func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	// set up vault client
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}

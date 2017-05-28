@@ -29,7 +29,9 @@ func init() {
 	flag.StringVar(&keyFile, "key_file", "", "Goldfish certificate's private key file")
 
 	// vars needed for vault package setup
+	var tlsSkipVerify bool
 	var addr, config, wrappingToken, rolePath, roleID string
+	flag.BoolVar(&tlsSkipVerify, "tls_skip_verify", false, "Set to true to not verify vault's certificate (e.g. if it was self-signed")
 	flag.StringVar(&addr, "vault_addr", "http://127.0.0.1:8200", "Vault address")
 	flag.StringVar(&config, "config_path", "", "A generic backend endpoint to store run-time settings. E.g. 'secret/goldfish'")
 	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
@@ -38,7 +40,7 @@ func init() {
 	flag.Parse()
 
 	// if API wrapper can't start, panic is justified
-	if err := vault.SetAddress(addr); err != nil {
+	if err := vault.SetAddress(addr, tlsSkipVerify); err != nil {
 		panic(err)
 	}
 	if err := vault.UnwrapSecretID(wrappingToken, roleID, rolePath); err != nil {

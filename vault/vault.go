@@ -20,6 +20,7 @@ var (
 	vaultAddress  = ""
 	vaultToken    = ""
 	vaultClient   *api.Client
+	vaultConfig   *api.Config
 	ConfigPath    = ""
 )
 
@@ -28,19 +29,19 @@ func init() {
 	gob.Register(&AuthInfo{})
 }
 
-func SetAddress(addr string) error {
+func SetAddress(addr string, insecure bool) error {
 	config := api.DefaultConfig()
 	err := config.ConfigureTLS(
 		&api.TLSConfig{
-			// in preparation for tls_skip_verify option
-			Insecure: false,
+			Insecure: insecure,
 		},
 	)
 	if err != nil {
 		return err
 	}
 	config.Address = addr
-	vaultAddress = addr
+	vaultAddress   = addr
+	vaultConfig    = config
 
 	vaultClient, err = api.NewClient(config)
 	if err != nil {
@@ -115,7 +116,7 @@ func renewServerTokenEvery(interval time.Duration, ch chan error) {
 
 func loginWithSecretID(address, token, roleID, rolePath string) (*api.Secret, error) {
 	// set up vault client
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
