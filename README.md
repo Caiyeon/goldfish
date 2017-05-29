@@ -17,7 +17,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * Right now, are there any root tokens in Vault?
 * Which policies, users, and tokens can access this particular secret path?
 * The unseal admins are working from home, but we need a policy changed.
-	* How do we do generate a root token only for this change, and make sure it's revoked after?
+	* How do we generate a root token only for this change, and make sure it's revoked after?
 	* Optionally send the changeID to a slack channel, so admins can pull up the details and approve/reject
 * I store my policies on a Github repo. Can I deploy this all in one go? [See more](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
