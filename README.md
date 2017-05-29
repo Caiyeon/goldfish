@@ -1,6 +1,6 @@
 <div align="center">
 
-<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo</a></h3>
+<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo </a> <img height="22" src=https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg></h3>
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
@@ -95,6 +95,9 @@ See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production
 You'll need go (v1.8), npm (>=3), and nodejs (>=5).
 
 ```bash
+# hashicorp vault ui
+
+# download goldfish first
 go get github.com/caiyeon/goldfish
 cd $GOPATH/src/github.com/caiyeon/goldfish
 
