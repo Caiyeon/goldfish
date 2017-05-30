@@ -16,7 +16,7 @@ path "auth/token/lookup-accessor*" {
 # }
 
 # allows user to list users and their details
-path "auth/userpass/users" {
+path "auth/userpass/users/" {
 	capabilities = ["list"]
 }
 path "auth/userpass/users/*" {
@@ -26,7 +26,7 @@ path "auth/userpass/users/*" {
 }
 
 # allows users to list approle details
-path "auth/approle/role" {
+path "auth/approle/role/" {
 	capabilities = ["list"]
 }
 path "auth/approle/role/*" {
