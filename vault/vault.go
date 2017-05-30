@@ -17,10 +17,10 @@ type AuthInfo struct {
 
 var (
 	// for authenticating this web server with vault
-	vaultAddress  = ""
+	VaultAddress  = ""
 	vaultToken    = ""
 	vaultClient   *api.Client
-	vaultConfig   *api.Config
+	VaultSkipTLS  = false
 	ConfigPath    = ""
 )
 
@@ -29,28 +29,31 @@ func init() {
 	gob.Register(&AuthInfo{})
 }
 
-func SetAddress(addr string, insecure bool) error {
+func NewVaultClient() (*api.Client, error) {
 	config := api.DefaultConfig()
 	err := config.ConfigureTLS(
 		&api.TLSConfig{
-			Insecure: insecure,
+			Insecure: VaultSkipTLS,
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	config.Address = addr
-	vaultAddress   = addr
-	vaultConfig    = config
+	client, err := api.NewClient(config)
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(VaultAddress)
+	return client, nil
+}
 
-	vaultClient, err = api.NewClient(config)
+func StartGoldfishWrapper(wrappingToken, roleID, rolePath string) error {
+	client, err := NewVaultClient()
 	if err != nil {
 		return err
 	}
-	return nil
-}
+	vaultClient = client
 
-func UnwrapSecretID(wrappingToken, roleID, rolePath string) error {
 	// make a raw unwrap call. This will use the token as a header
 	vaultClient.SetToken(wrappingToken)
 	resp, err := vaultClient.Logical().Unwrap("")
@@ -115,12 +118,10 @@ func renewServerTokenEvery(interval time.Duration, ch chan error) {
 }
 
 func loginWithSecretID(address, token, roleID, rolePath string) (*api.Secret, error) {
-	// set up vault client
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(address)
 	client.SetToken(token)
 
 	// make a raw unwrap call. This will use the token as a header

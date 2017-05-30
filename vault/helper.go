@@ -9,7 +9,7 @@ import (
 )
 
 func VaultHealth() (string, error) {
-	resp, err := http.Get(vaultAddress + "/v1/sys/health")
+	resp, err := http.Get(VaultAddress + "/v1/sys/health")
 	if err != nil {
 		return "", err
 	}
@@ -25,88 +25,79 @@ func VaultHealth() (string, error) {
 
 // lookup current root generation status
 func GenerateRootStatus() (*api.GenerateRootStatusResponse, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	return client.Sys().GenerateRootStatus()
 }
 
 func GenerateRootInit(otp string) (*api.GenerateRootStatusResponse, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	return client.Sys().GenerateRootInit(otp, "")
 }
 
 func GenerateRootUpdate(shard, nonce string) (*api.GenerateRootStatusResponse, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	return client.Sys().GenerateRootUpdate(shard, nonce)
 }
 
 func GenerateRootCancel() error {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return err
 	}
-	client.SetAddress(vaultAddress)
 	return client.Sys().GenerateRootCancel()
 }
 
 func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(vaultToken)
 	return vaultClient.Logical().Write("cubbyhole/" + name, data)
 }
 
 func ReadFromCubbyhole(name string) (*api.Secret, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(vaultToken)
 	return vaultClient.Logical().Read("cubbyhole/" + name)
 }
 
 func DeleteFromCubbyhole(name string) (*api.Secret, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(vaultToken)
 	return vaultClient.Logical().Delete("cubbyhole/" + name)
 }
 
 func renewServerToken() (err error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(vaultToken)
 	_, err = client.Auth().Token().RenewSelf(0)
 	return
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return "", err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(vaultToken)
 
 	client.SetWrappingLookupFunc(func(operation, path string) string {
@@ -122,11 +113,10 @@ func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
 
 func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	// set up vault client
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(wrappingToken)
 
 	// make a raw unwrap call. This will use the token as a header

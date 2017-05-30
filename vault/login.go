@@ -7,11 +7,10 @@ import (
 
 // constructs a client with server's vault address and client access token
 func (auth AuthInfo) Client() (*api.Client, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 	client.SetToken(auth.ID)
 	_, err = client.Auth().Token().LookupSelf()
 	return client, err
@@ -20,11 +19,10 @@ func (auth AuthInfo) Client() (*api.Client, error) {
 // verifies whether auth ID and password are valid
 // if valid, creates a client access token and returns the metadata
 func (auth *AuthInfo) Login() (map[string]interface{}, error) {
-	client, err := api.NewClient(vaultConfig)
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(vaultAddress)
 
 	switch auth.Type {
 	case "token":

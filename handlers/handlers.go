@@ -47,6 +47,7 @@ func parseError(c echo.Context, err error) error {
 
 	// if error string did not contain error response code
 	if len(errCode) < 2 || len(errMsgs) < 2 {
+		log.Println("[ERROR]: ", err.Error())
 		return c.JSON(http.StatusInternalServerError, H{
 			"error": "Invalid vault response",
 		})
