@@ -116,38 +116,3 @@ func renewServerTokenEvery(interval time.Duration, ch chan error) {
 		ch <- renewServerToken()
 	}
 }
-
-func loginWithSecretID(address, token, roleID, rolePath string) (*api.Secret, error) {
-	client, err := NewVaultClient()
-	if err != nil {
-		return nil, err
-	}
-	client.SetToken(token)
-
-	// make a raw unwrap call. This will use the token as a header
-	resp, err := client.Logical().Unwrap("")
-	if err != nil {
-		return nil, errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
-	}
-
-	// verify that a secret_id was wrapped
-	secretID, ok := resp.Data["secret_id"].(string)
-	if !ok {
-		return nil, errors.New("Failed to unwrap provided token, revoke it if possible")
-	}
-
-	// fetch vault token with secret_id
-	resp, err = client.Logical().Write(rolePath,
-		map[string]interface{}{
-			"role_id":   roleID,
-			"secret_id": secretID,
-		})
-	if err != nil {
-		return nil, err
-	}
-
-	// verify that the secret_id is valid
-	client.SetToken(resp.Auth.ClientToken)
-	_, err = client.Auth().Token().LookupSelf()
-	return resp, err
-}
