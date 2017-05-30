@@ -21,7 +21,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func WithPreparedVault(t *testing.T, f func(rootToken string)) func() {
+func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) func() {
 	return func() {
 		// setup a vault core
 		logger := logformat.NewVaultLogger(log.LevelTrace)
@@ -138,10 +138,11 @@ func WithPreparedVault(t *testing.T, f func(rootToken string)) func() {
 		args = []string{
 			"-address", addr,
 			"secret/goldfish",
-			"TransitBackend='transit'",
-			"UserTransitKey='usertransit'",
-			"ServerTransitKey='goldfish'",
-			"BulletinPath='secret/bulletins/'",
+			"TransitBackend=transit",
+			"UserTransitKey=usertransit",
+			"ServerTransitKey=goldfish",
+			"DefaultSecretPath=secret/",
+			"BulletinPath=secret/bulletins/",
 		}
 		code = c7.Run(args)
 		So(code, ShouldEqual, 0)
@@ -159,14 +160,66 @@ func WithPreparedVault(t *testing.T, f func(rootToken string)) func() {
 		token := strings.Split(ui.OutputWriter.String(), "wrapping_token:")[1]
 		token = strings.TrimSpace(strings.Split(token, "\n")[0])
 
-		// perform convey with root token
-		f(token)
+		// return address, root token, and goldfish's token in a wrapping token
+		f(addr, result.RootToken, token)
 	}
 }
 
-func TestServer(t *testing.T) {
-	Convey("Starting a server", t, WithPreparedVault(t, func(rootToken string) {
-		So(len(rootToken), ShouldEqual, 36)
-		fmt.Println("Started vault core with root token:", rootToken)
-	}))
-}
+func TestGoldfishWrapper(t *testing.T) {
+
+Convey("Launching goldfish with vault instance", t, WithPreparedVault(t,
+func(addr, root, wrappingToken string) {
+	// make sure vault was started properly
+	So(len(root), ShouldEqual, 36)
+	So(len(wrappingToken), ShouldEqual, 36)
+	fmt.Println("Started vault core with root token:", root)
+
+	// setup cmd line args
+	VaultSkipTLS = false
+	VaultAddress = addr
+	ConfigPath   = "secret/goldfish"
+
+	// function will output the token accessor
+	err := StartGoldfishWrapper(
+		wrappingToken,
+		"goldfish",
+		"auth/approle/login",
+	)
+	So(err, ShouldBeNil)
+
+	// test loading config from secret path
+	errorChannel := make(chan error)
+	err = LoadConfig(true, errorChannel)
+	So(err, ShouldBeNil)
+	go func() {
+		for err := range errorChannel {
+			So(err, ShouldBeNil)
+		}
+	}()
+
+	// this will be imitating the client token
+	rootAuth := &AuthInfo{ID: root, Type: "token"}
+
+	// run-time config
+	Convey("Config should be loaded", func() {
+		c := GetConfig()
+		So(c, ShouldResemble, Config{
+			ServerTransitKey  : "goldfish",
+			UserTransitKey    : "usertransit",
+			TransitBackend    : "transit",
+			DefaultSecretPath : "secret/",
+			BulletinPath      : "secret/bulletins/",
+			LastUpdated       : c.LastUpdated,
+		})
+	})
+
+	// credentials
+	Convey("Encrypting and decrypting credentials should work", func() {
+		So(rootAuth.EncryptAuth(), ShouldBeNil)
+		So(rootAuth.DecryptAuth(), ShouldBeNil)
+		So(rootAuth.ID, ShouldEqual, root)
+	})
+
+})) // end prepared vault convey
+
+} // end test function
