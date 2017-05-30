@@ -24,7 +24,7 @@ func (auth AuthInfo) ListSecret(path string) ([]interface{}, error) {
 	}
 }
 
-func (auth AuthInfo) ReadSecret(path string) (interface{}, error) {
+func (auth AuthInfo) ReadSecret(path string) (map[string]interface{}, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
