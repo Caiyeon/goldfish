@@ -2,7 +2,7 @@ package vault
 
 import ()
 
-func (auth AuthInfo) GetBulletins() ([]interface{}, error) {
+func (auth AuthInfo) GetBulletins() ([]map[string]interface{}, error) {
 	c := GetConfig()
 
 	bulletins, err := auth.ListSecret(c.BulletinPath)
@@ -10,7 +10,7 @@ func (auth AuthInfo) GetBulletins() ([]interface{}, error) {
 		return nil, err
 	}
 
-	results := make([]interface{}, len(bulletins))
+	results := make([]map[string]interface{}, len(bulletins))
 	for i, bulletin := range bulletins {
 		b, ok := bulletin.(string)
 		if ok {
