@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/meta"
 	"github.com/hashicorp/vault/physical"
+	"github.com/hashicorp/vault/api"
 
 	vaultcore "github.com/hashicorp/vault/vault"
 	log "github.com/mgutz/logxi/v1"
@@ -218,6 +219,78 @@ func(addr, root, wrappingToken string) {
 		So(rootAuth.EncryptAuth(), ShouldBeNil)
 		So(rootAuth.DecryptAuth(), ShouldBeNil)
 		So(rootAuth.ID, ShouldEqual, root)
+	})
+
+	// secrets
+	Convey("Writing secrets should work", func() {
+		resp, err := rootAuth.WriteSecret("secret/bulletins/testbulletin",
+			"{\"title\": \"Message title\", \"message\": \"Message body\"," +
+			"\"type\": \"is-success\"}",
+		)
+		So(err, ShouldBeNil)
+		So(resp, ShouldBeNil)
+
+		Convey("Reading secrets should work", func() {
+			resp, err := rootAuth.ReadSecret("secret/bulletins/testbulletin")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp["title"].(string), ShouldEqual, "Message title")
+			So(resp["message"].(string), ShouldEqual, "Message body")
+			So(resp["type"].(string), ShouldEqual, "is-success")
+		})
+
+		Convey("Reading bulletins should work", func() {
+			bulletins, err := rootAuth.GetBulletins()
+			So(err, ShouldBeNil)
+			So(len(bulletins), ShouldEqual, 1)
+			So(bulletins[0], ShouldResemble, map[string]interface{}{
+				"title": "Message title",
+				"message": "Message body",
+				"type": "is-success",
+			})
+		})
+
+		Convey("Listing secrets should work", func() {
+			secrets, err := rootAuth.ListSecret("secret/bulletins")
+			So(err, ShouldBeNil)
+			So(len(secrets), ShouldEqual, 1)
+			So(secrets[0], ShouldEqual, "testbulletin")
+		})
+	})
+
+	// tokens
+	Convey("Creating a token", func() {
+		request := &api.TokenCreateRequest{}
+		resp, err := rootAuth.CreateToken(request, "")
+		So(err, ShouldBeNil)
+		So(len(resp.Auth.ClientToken), ShouldEqual, 36)
+
+		Convey("With a wrapped ttl", func() {
+			resp, err := rootAuth.CreateToken(request, "300s")
+			So(err, ShouldBeNil)
+			So(len(resp.WrapInfo.Token), ShouldEqual, 36)
+
+			// SoonTM
+			// Convey("And unwrapping that wrapped token", func() {})
+		})
+
+		Convey("Token should be able to clear self", func() {
+			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+			tempAuth.Clear()
+			So(tempAuth, ShouldResemble, &AuthInfo{})
+		})
+
+		Convey("Token should be able to revoke self", func() {
+			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+			So(tempAuth.RevokeSelf(), ShouldBeNil)
+		})
+
+		Convey("Token should be deleteable via accessor", func() {
+			So(rootAuth.DeleteUser("token", resp.Auth.Accessor), ShouldBeNil)
+			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+			_, err := tempAuth.LookupSelf()
+			So(err, ShouldNotBeNil)
+		})
 	})
 
 })) // end prepared vault convey
