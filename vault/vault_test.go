@@ -285,12 +285,43 @@ func(addr, root, wrappingToken string) {
 			So(tempAuth.RevokeSelf(), ShouldBeNil)
 		})
 
+		Convey("Token should be able to lookup self", func() {
+			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+			_, err := tempAuth.LookupSelf()
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Token should be able to renew self", func() {
+			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+			_, err := tempAuth.RenewSelf()
+			So(err, ShouldNotBeNil)
+		})
+
 		Convey("Token should be deleteable via accessor", func() {
 			So(rootAuth.DeleteUser("token", resp.Auth.Accessor), ShouldBeNil)
 			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
 			_, err := tempAuth.LookupSelf()
 			So(err, ShouldNotBeNil)
+			_, err = tempAuth.RenewSelf()
+			So(err, ShouldNotBeNil)
 		})
+	})
+
+	// mounts
+	Convey("Mount operations", func() {
+		resp, err := rootAuth.ListMounts()
+		So(err, ShouldBeNil)
+		So(len(resp), ShouldEqual, 4) // transit, secret, sys, cubbyhole
+
+		settings, err := rootAuth.GetMount("secret")
+		So(err, ShouldBeNil)
+		So(settings, ShouldNotBeNil)
+
+		// writing a mount's settings again will actually trigger a proper vault write
+		So(rootAuth.TuneMount("secret", api.MountConfigInput{
+			DefaultLeaseTTL: "",
+			MaxLeaseTTL:     "",
+		}), ShouldBeNil)
 	})
 
 })) // end prepared vault convey
