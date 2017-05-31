@@ -313,7 +313,7 @@ func(addr, root, wrappingToken string) {
 	Convey("Mount operations", func() {
 		resp, err := rootAuth.ListMounts()
 		So(err, ShouldBeNil)
-		So(len(resp), ShouldEqual, 4) // transit, secret, sys, cubbyhole
+		So(resp, ShouldContain, "cubbyhole")
 
 		settings, err := rootAuth.GetMount("secret")
 		So(err, ShouldBeNil)
@@ -373,6 +373,31 @@ func(addr, root, wrappingToken string) {
 		wrappedData, err := UnwrapData(wrap)
 		So(err, ShouldBeNil)
 		So(wrappedData["key"].(string), ShouldEqual, "value")
+	})
+
+	// transit
+	Convey("Transit functionality should work", func() {
+		cipher, err := rootAuth.EncryptTransit("value")
+		So(err, ShouldBeNil)
+
+		plaintext, err := rootAuth.DecryptTransit(cipher)
+		So(err, ShouldBeNil)
+		So(plaintext, ShouldEqual, "value")
+	})
+
+	// policies
+	Convey("Policy wrappers should work", func() {
+		policies, err := rootAuth.ListPolicies()
+		So(err, ShouldBeNil)
+		So(policies, ShouldContain, "goldfish")
+
+		details, err := rootAuth.GetPolicy("goldfish")
+		So(err, ShouldBeNil)
+		So(details, ShouldNotBeBlank)
+
+		So(rootAuth.PutPolicy("testpolicy", "# this is an empty policy"), ShouldBeNil)
+
+		So(rootAuth.DeletePolicy("testpolicy"), ShouldBeNil)
 	})
 
 })) // end prepared vault convey
