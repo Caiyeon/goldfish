@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/vault/builtin/credential/approle"
+	"github.com/hashicorp/vault/builtin/credential/userpass"
 	"github.com/hashicorp/vault/builtin/logical/transit"
 	"github.com/hashicorp/vault/command"
 	"github.com/hashicorp/vault/helper/logformat"
@@ -32,10 +33,11 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 		coreConfig := &vaultcore.CoreConfig{
 			Physical: inm,
 			LogicalBackends: map[string]logical.Factory{
-				"transit": transit.Factory,
+				"transit":  transit.Factory,
 			},
 			CredentialBackends: map[string]logical.Factory{
-				"approle": approle.Factory,
+				"approle":  approle.Factory,
+				"userpass": userpass.Factory,
 			},
 			DisableMlock: true,
 			Seal:         nil,
@@ -74,37 +76,41 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			Ui:          ui,
 		}
 
+		var code int
+
+		// REQUIRED -----------------------------------------------
 		// mount transit backend
-		c := &command.MountCommand{Meta: m}
-		args := []string{
+		code = (&command.MountCommand{Meta: m}).Run([]string{
 			"-address", addr,
 			"transit",
-		}
-		code := c.Run(args)
+		})
 		So(code, ShouldEqual, 0)
 
-		// mount approle backend
-		c2 := &command.AuthEnableCommand{Meta: m}
-		args = []string{
+		// initialize transit key
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
 			"-address", addr,
-			"approle",
-		}
-		code = c2.Run(args)
+			"-f",
+			"transit/keys/goldfish",
+		})
 		So(code, ShouldEqual, 0)
 
 		// write goldfish policy
-		c3 := &command.PolicyWriteCommand{Meta: m}
-		args = []string{
+		code = (&command.PolicyWriteCommand{Meta: m}).Run([]string{
 			"-address", addr,
 			"goldfish",
 			"../vagrant/policies/goldfish.hcl",
-		}
-		code = c3.Run(args)
+		})
+		So(code, ShouldEqual, 0)
+
+		// mount approle auth backend
+		code = (&command.AuthEnableCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"approle",
+		})
 		So(code, ShouldEqual, 0)
 
 		// write goldfish approle
-		c4 := &command.WriteCommand{Meta: m}
-		args = []string{
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
 			"-address", addr,
 			"auth/approle/role/goldfish",
 			"role_name=goldfish",
@@ -113,32 +119,17 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			"token_ttl_max=720h",
 			"secret_id_num_uses=1",
 			"policies=default,goldfish",
-		}
-		code = c4.Run(args)
+		})
 		So(code, ShouldEqual, 0)
-
-		c5 := &command.WriteCommand{Meta: m}
-		args = []string{
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
 			"-address", addr,
 			"auth/approle/role/goldfish/role-id",
 			"role_id=goldfish",
-		}
-		code = c5.Run(args)
-		So(code, ShouldEqual, 0)
-
-		// initialize transit key
-		c6 := &command.WriteCommand{Meta: m}
-		args = []string{
-			"-address", addr,
-			"-f",
-			"transit/keys/goldfish",
-		}
-		code = c6.Run(args)
+		})
 		So(code, ShouldEqual, 0)
 
 		// write goldfish run-time settings
-		c7 := &command.WriteCommand{Meta: m}
-		args = []string{
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
 			"-address", addr,
 			"secret/goldfish",
 			"TransitBackend=transit",
@@ -146,22 +137,39 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			"ServerTransitKey=goldfish",
 			"DefaultSecretPath=secret/",
 			"BulletinPath=secret/bulletins/",
-		}
-		code = c7.Run(args)
+		})
 		So(code, ShouldEqual, 0)
 
-		// fetch a token
-		c8 := &command.WriteCommand{Meta: m}
-		args = []string{
+		// fetch a token from approle
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
 			"-address", addr,
 			"-f",
 			"-wrap-ttl=20m",
 			"auth/approle/role/goldfish/secret-id",
-		}
-		code = c8.Run(args)
+		})
 		So(code, ShouldEqual, 0)
 		token := strings.Split(ui.OutputWriter.String(), "wrapping_token:")[1]
 		token = strings.TrimSpace(strings.Split(token, "\n")[0])
+
+		// OPTIONAL -----------------------------------------------
+		// mount userpass auth backend
+		code = (&command.AuthEnableCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"userpass",
+		})
+		So(code, ShouldEqual, 0)
+
+		// write a test user
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/userpass/users/testuser",
+			"password=foo",
+			"policies=admins",
+			"ttl=480h",
+			"max_ttl=720h",
+		})
+		So(code, ShouldEqual, 0)
+
 
 		// return address, root token, and goldfish's token in a wrapping token
 		f(addr, result.RootToken, token)
@@ -262,13 +270,26 @@ func(addr, root, wrappingToken string) {
 
 	// tokens
 	Convey("Creating a token", func() {
-		request := &api.TokenCreateRequest{}
-		resp, err := rootAuth.CreateToken(request, "")
+		resp, err := rootAuth.CreateToken(&api.TokenCreateRequest{}, "")
 		So(err, ShouldBeNil)
 		So(len(resp.Auth.ClientToken), ShouldEqual, 36)
 
+		tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+
+		Convey("List of tokens should increase by one", func() {
+			countBefore, err := rootAuth.GetTokenCount()
+			So(err, ShouldBeNil)
+
+			_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, "")
+			So(err, ShouldBeNil)
+
+			countAfter, err := rootAuth.GetTokenCount()
+			So(err, ShouldBeNil)
+			So(countBefore + 1, ShouldEqual, countAfter)
+		})
+
 		Convey("With a wrapped ttl", func() {
-			resp, err := rootAuth.CreateToken(request, "300s")
+			resp, err := rootAuth.CreateToken(&api.TokenCreateRequest{}, "300s")
 			So(err, ShouldBeNil)
 			So(len(resp.WrapInfo.Token), ShouldEqual, 36)
 
@@ -276,32 +297,23 @@ func(addr, root, wrappingToken string) {
 			// Convey("And unwrapping that wrapped token", func() {})
 		})
 
-		Convey("Token should be able to clear self", func() {
-			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
+		Convey("Token lookup self, renew self, and revoke self", func() {
+			_, err := tempAuth.LookupSelf()
+			So(err, ShouldBeNil)
+
+			_, err = tempAuth.RenewSelf()
+			So(err, ShouldNotBeNil)
+
+			So(tempAuth.RevokeSelf(), ShouldBeNil)
+		})
+
+		Convey("Token clear self", func() {
 			tempAuth.Clear()
 			So(tempAuth, ShouldResemble, &AuthInfo{})
 		})
 
-		Convey("Token should be able to revoke self", func() {
-			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
-			So(tempAuth.RevokeSelf(), ShouldBeNil)
-		})
-
-		Convey("Token should be able to lookup self", func() {
-			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
-			_, err := tempAuth.LookupSelf()
-			So(err, ShouldBeNil)
-		})
-
-		Convey("Token should be able to renew self", func() {
-			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
-			_, err := tempAuth.RenewSelf()
-			So(err, ShouldNotBeNil)
-		})
-
 		Convey("Token should be deleteable via accessor", func() {
 			So(rootAuth.DeleteUser("token", resp.Auth.Accessor), ShouldBeNil)
-			tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
 			_, err := tempAuth.LookupSelf()
 			So(err, ShouldNotBeNil)
 			_, err = tempAuth.RenewSelf()
@@ -313,7 +325,7 @@ func(addr, root, wrappingToken string) {
 	Convey("Mount operations", func() {
 		resp, err := rootAuth.ListMounts()
 		So(err, ShouldBeNil)
-		So(len(resp), ShouldEqual, 4) // transit, secret, sys, cubbyhole
+		So(resp, ShouldContainKey, "transit/")
 
 		settings, err := rootAuth.GetMount("secret")
 		So(err, ShouldBeNil)
@@ -398,6 +410,10 @@ func(addr, root, wrappingToken string) {
 		So(rootAuth.PutPolicy("testpolicy", "# this is an empty policy"), ShouldBeNil)
 
 		So(rootAuth.DeletePolicy("testpolicy"), ShouldBeNil)
+
+		details, err = rootAuth.GetPolicy("testpolicy")
+		So(err, ShouldBeNil)
+		So(details, ShouldEqual, "")
 	})
 
 })) // end prepared vault convey
