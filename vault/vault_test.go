@@ -170,6 +170,13 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 		})
 		So(code, ShouldEqual, 0)
 
+		// write a test role
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/token/roles/testrole",
+			"allowed_roles=abc",
+		})
+		So(code, ShouldEqual, 0)
 
 		// return address, root token, and goldfish's token in a wrapping token
 		f(addr, result.RootToken, token)
@@ -414,6 +421,44 @@ func(addr, root, wrappingToken string) {
 		details, err = rootAuth.GetPolicy("testpolicy")
 		So(err, ShouldBeNil)
 		So(details, ShouldEqual, "")
+	})
+
+	// users
+	Convey("Listing users of all types should work", func() {
+		// there should be only two tokens: root and goldfish
+		resp, err := rootAuth.ListUsers("token", 0)
+		So(err, ShouldBeNil)
+		So(len(resp.([]interface{})), ShouldEqual, 2)
+
+		// should be an out of bounds error
+		resp, err = rootAuth.ListUsers("token", 300)
+		So(err, ShouldNotBeNil)
+		So(resp, ShouldBeNil)
+
+		// there should be only one user created in PrepareVault()
+		_, err = rootAuth.ListUsers("userpass", 0)
+		So(err, ShouldBeNil)
+		// So(len(resp.([]interface{})), ShouldEqual, 1)
+		err = rootAuth.DeleteUser("userpass", "testuser")
+		So(err, ShouldBeNil)
+
+		// there should be only one approle (goldfish)
+		_, err = rootAuth.ListUsers("approle", 0)
+		So(err, ShouldBeNil)
+		// So(len(resp.([]interface{})), ShouldEqual, 1)
+		err = rootAuth.DeleteUser("approle", "goldfish")
+		So(err, ShouldBeNil)
+	})
+
+	// roles
+	Convey("Listing token roles should work", func() {
+		resp, err := rootAuth.ListRoles()
+		So(err, ShouldBeNil)
+		So(len(resp.([]interface{})), ShouldEqual, 1)
+
+		resp, err = rootAuth.GetRole("testrole")
+		So(err, ShouldBeNil)
+		fmt.Println(resp)
 	})
 
 })) // end prepared vault convey
