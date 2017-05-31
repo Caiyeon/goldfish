@@ -461,6 +461,25 @@ func(addr, root, wrappingToken string) {
 		fmt.Println(resp)
 	})
 
+	// logging in
+	Convey("Logging in with different methods", func() {
+		resp, err := rootAuth.Login()
+		So(err, ShouldBeNil)
+		So(resp, ShouldNotBeNil)
+
+		resp, err = (&AuthInfo{ID: "not_a_token", Type: "token"}).Login()
+		So(err, ShouldNotBeNil)
+		So(resp, ShouldBeNil)
+
+		resp, err = (&AuthInfo{ID: "testuser", Pass: "foo", Type: "userpass"}).Login()
+		So(err, ShouldBeNil)
+		So(resp, ShouldNotBeNil)
+
+		resp, err = (&AuthInfo{ID: "testuser", Pass: "foobar", Type: "userpass"}).Login()
+		So(err, ShouldNotBeNil)
+		So(resp, ShouldBeNil)
+	})
+
 })) // end prepared vault convey
 
 } // end test function
