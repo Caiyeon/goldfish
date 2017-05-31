@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
@@ -22,6 +23,9 @@ var (
 )
 
 func init() {
+	var version bool
+	flag.BoolVar(&version, "version", false, "Display goldfish's version and exit")
+
 	flag.BoolVar(&devMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
 	flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
 	flag.StringVar(&certFile, "cert_file", "", "Goldfish server's certificate")
@@ -38,6 +42,11 @@ func init() {
 	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
 
 	flag.Parse()
+
+	if version {
+		log.Println("Goldfish version: v0.2.5")
+		os.Exit(0)
+	}
 
 	// if API wrapper can't start, panic is justified
 	if err := vault.StartGoldfishWrapper(wrappingToken, roleID, rolePath); err != nil {
