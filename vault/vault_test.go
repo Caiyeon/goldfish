@@ -313,7 +313,7 @@ func(addr, root, wrappingToken string) {
 	Convey("Mount operations", func() {
 		resp, err := rootAuth.ListMounts()
 		So(err, ShouldBeNil)
-		So(resp, ShouldContain, "cubbyhole")
+		So(len(resp), ShouldEqual, 4) // transit, secret, sys, cubbyhole
 
 		settings, err := rootAuth.GetMount("secret")
 		So(err, ShouldBeNil)
