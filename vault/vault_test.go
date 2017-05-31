@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	vaultcore "github.com/hashicorp/vault/vault"
 	log "github.com/mgutz/logxi/v1"
 	"github.com/mitchellh/cli"
+	"github.com/gorilla/securecookie"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -322,6 +324,55 @@ func(addr, root, wrappingToken string) {
 			DefaultLeaseTTL: "",
 			MaxLeaseTTL:     "",
 		}), ShouldBeNil)
+	})
+
+	// helper functions
+	Convey("Helper functions should not return errors if vault is healthy", func() {
+		// state checks
+		_, err = VaultHealth()
+		So(err, ShouldBeNil)
+		_, err = GenerateRootStatus()
+		So(err, ShouldBeNil)
+
+		// generating a new root token
+		otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
+		status, err := GenerateRootInit(otp)
+		So(err, ShouldBeNil)
+		So(status.Progress, ShouldEqual, 0)
+
+		// supplying a fake unseal token
+		status, err = GenerateRootUpdate("YWJjZGVmZ2hpamtsbW5vcHFyc3Q=", status.Nonce)
+		So(err, ShouldBeNil)
+		So(status.Progress, ShouldEqual, 1)
+
+		// cancelling unseal process
+		So(GenerateRootCancel(), ShouldBeNil)
+
+		// cubbyhole operations
+		_, err = WriteToCubbyhole("testsecret", map[string]interface{}{
+			"key": "value",
+		})
+		So(err, ShouldBeNil)
+
+		resp, err := ReadFromCubbyhole("testsecret")
+		So(err, ShouldBeNil)
+		So(resp.Data["key"].(string), ShouldEqual, "value")
+
+		_, err = DeleteFromCubbyhole("testsecret")
+		So(err, ShouldBeNil)
+
+		// server operations
+		So(renewServerToken(), ShouldBeNil)
+
+		wrap, err := WrapData("300s", map[string]interface{}{
+			"key": "value",
+		})
+		So(err, ShouldBeNil)
+		So(len(wrap), ShouldEqual, 36)
+
+		wrappedData, err := UnwrapData(wrap)
+		So(err, ShouldBeNil)
+		So(wrappedData["key"].(string), ShouldEqual, "value")
 	})
 
 })) // end prepared vault convey
