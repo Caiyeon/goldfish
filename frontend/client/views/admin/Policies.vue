@@ -246,7 +246,41 @@ export default {
       })
     }
 
+  },
+  makeRegex: function (searchInput) {
+  var lastSlash = str.lastIndexOf("/")
+  var returnString
+  var lastWord
+
+  if(searchInput.includes("/")){
+  lastWord = searchInput.substring(lastSlash+1,searchInput.length)
+  returnString = searchInput.substring(0,lastSlash) + "\\/(" + lastWord
+  if (lastWord == ""){
+   returnString = searchInput.replace("/","\\/\\*")
+   return returnString
   }
+   for(i=lastWord.length+1; i>0; i--) {
+    returnString += "|" + lastWord + "\\*"
+    lastWord = lastWord.substring(0,i-2)
+  }
+  returnString +=")"
+  }
+ 
+  else {
+  lastWord = searchInput
+  returnString = searchInput
+  for(i=searchInput.length+1; i>0; i--) {
+    if(lastWord !=""){
+    returnString += "|" + lastWord + "\\*"
+    lastWord = lastWord.substring(0,i-2)
+    }
+    else{returnString += "|" + "*"}
+  }
+  }
+  return returnString
+}
+
+    }
 }
 </script>
 
