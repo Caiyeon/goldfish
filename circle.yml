@@ -7,9 +7,5 @@ test:
         parallel: true
 
     # frontend
-    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then nvm install v7.10.0 && nvm use 7.10.0 ; fi:
-        parallel: true
-    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then cd frontend && sudo $(which npm) install -g cross-env && npm link webpack ; fi:
-        parallel: true
-    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then npm install && npm run build ; fi:
+    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then nvm install v7.10.0 && cd frontend && sudo -E env "PATH=$PATH" npm install -g cross-env && npm link webpack && npm install && npm run build ; fi:
         parallel: true
