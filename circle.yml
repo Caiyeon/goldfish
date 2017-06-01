@@ -1,0 +1,9 @@
+dependencies:
+  overide:
+    - go get -t -d -v ./... && go build -v -a && curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash && sudo npm install -g cross-env && cd frontend && npm install:
+        parallel: true
+
+test:
+  override:
+    - case $CIRCLE_NODE_INDEX in 0) go get -t -d -v ./... && go build -v -a && go test ./... -v ;; 2) cd frontend && npm run build ;; esac:
+        parallel: true
