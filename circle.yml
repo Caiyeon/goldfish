@@ -1,5 +1,12 @@
+dependencies:
+  override:
+    - go get -t -d -v ./...
+    - curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
+
 test:
   override:
-    # - case $CIRCLE_NODE_INDEX in 0) go get -t -d -v ./... && go build -v -a && go test ./... -v ;; 2) curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash - && sudo npm install -g cross-env && cd frontend && npm install && npm run build ;; esac:
-    - echo $CIRCLE_NODE_INDEX:
+    # -& && cd frontend && npm install && npm run build ;; esac:
+    - if [ "$CIRCLE_NODE_INDEX" -eq "0" ] ;; then go build -v -a ;; go test ./... -v ;; fi:
+        parallel: true
+    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ;; then cd frontend ;; sudo npm install -g cross-env ;; npm install ;; npm run build ;; fi:
         parallel: true
