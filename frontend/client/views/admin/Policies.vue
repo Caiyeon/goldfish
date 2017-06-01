@@ -244,38 +244,38 @@ export default {
       .catch((error) => {
         this.$onError(error)
       })
-    }
+    },
 
-  },
-  makeRegex: function (str) {
-    var lastSlash = str.lastIndexOf('/')
-    if (lastSlash === -1) {
-      // if slash doesn't exist, match 'foo', 'foo*', 'fo*', 'f*', '*'
-      var lastWord = str
-      var returnString = '"(' + str
-      for (var i = str.length + 1; i > 0; i--) {
-        returnString += '|' + lastWord + '\\*'
-        lastWord = lastWord.substring(0, i - 2)
+    makeRegex: function (str) {
+      var lastSlash = str.lastIndexOf('/')
+      if (lastSlash === -1) {
+        // if slash doesn't exist, match 'foo', 'foo*', 'fo*', 'f*', '*'
+        var lastWord = str
+        var returnString = '"(' + str
+        for (var i = str.length + 1; i > 0; i--) {
+          returnString += '|' + lastWord + '\\*'
+          lastWord = lastWord.substring(0, i - 2)
+        }
+      } else {
+      // if slash does exist, match 'foo/bar', 'foo/bar*', 'foo/ba*', 'foo/b*', 'foo/*'
+        lastWord = str.substring(lastSlash + 1, str.length)
+        if (lastWord === '') {
+          var replaced = str.replace('/', '\\/')
+          return '"(' + replaced + '|' + replaced + '\\*)"'
+        }
+        returnString = '"' + str.substring(0, lastSlash)
+        returnString = returnString.replace('/', '\\/') + '\\/(' + lastWord
+        for (i = lastWord.length + 1; i > 0; i--) {
+          returnString += '|' + lastWord + '\\*'
+          lastWord = lastWord.substring(0, i - 2)
+        }
       }
-    } else {
-    // if slash does exist, match 'foo/bar', 'foo/bar*', 'foo/ba*', 'foo/b*', 'foo/*'
-      lastWord = str.substring(lastSlash + 1, str.length)
-      if (lastWord === '') {
-        var replaced = str.replace('/', '\\/')
-        return '"(' + replaced + '|' + replaced + '\\*)"'
-      }
-      returnString = '"' + str.substring(0, lastSlash)
-      returnString = returnString.replace('/', '\\/') + '\\/(' + lastWord
-      for (i = lastWord.length + 1; i > 0; i--) {
-        returnString += '|' + lastWord + '\\*'
-        lastWord = lastWord.substring(0, i - 2)
-      }
+      // prefix and suffix return with double quotes to ensure it matches the full path only
+      return returnString + ')"'
     }
-    // prefix and suffix return with double quotes to ensure it matches the full path only
-    return returnString + ')"'
   }
-
 }
+
 </script>
 
 <style scoped>
