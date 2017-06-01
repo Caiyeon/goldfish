@@ -1,16 +1,4 @@
 test:
   override:
-    - ? |
-        if [ "$CIRCLE_NODE_INDEX" -eq "0" ]; then
-          go build -v -a
-          go test ./... -v
-        elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
-          nvm install v7.10.0
-          cd frontend
-          sudo -E env "PATH=$PATH" npm install -g cross-env
-          npm link webpack
-          npm install
-          npm run build
-        fi
-      :
-          - parallel
+    - if [ "$CIRCLE_NODE_INDEX" -eq "0" ] ; then go build -v -a && go test ./... -v ; elif [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then nvm install v7.10.0 && cd frontend && sudo -E env "PATH=$PATH" npm install -g cross-env && npm link webpack && npm install && npm run build ; fi:
+        - parallel
