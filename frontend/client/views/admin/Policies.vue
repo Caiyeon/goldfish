@@ -247,40 +247,34 @@ export default {
     }
 
   },
-  makeRegex: function (searchInput) {
-  var lastSlash = str.lastIndexOf("/")
-  var returnString
-  var lastWord
-
-  if(searchInput.includes("/")){
-  lastWord = searchInput.substring(lastSlash+1,searchInput.length)
-  returnString = searchInput.substring(0,lastSlash) + "\\/(" + lastWord
-  if (lastWord == ""){
-   returnString = searchInput.replace("/","\\/\\*")
-   return returnString
-  }
-   for(i=lastWord.length+1; i>0; i--) {
-    returnString += "|" + lastWord + "\\*"
-    lastWord = lastWord.substring(0,i-2)
-  }
-  returnString +=")"
-  }
- 
-  else {
-  lastWord = searchInput
-  returnString = searchInput
-  for(i=searchInput.length+1; i>0; i--) {
-    if(lastWord !=""){
-    returnString += "|" + lastWord + "\\*"
-    lastWord = lastWord.substring(0,i-2)
+  makeRegex: function (str) {
+    var lastSlash = str.lastIndexOf('/')
+    if (lastSlash === -1) {
+      // if slash doesn't exist, match 'foo', 'foo*', 'fo*', 'f*', '*'
+      var lastWord = str
+      var returnString = '"(' + str
+      for (var i = str.length + 1; i > 0; i--) {
+        returnString += '|' + lastWord + '\\*'
+        lastWord = lastWord.substring(0, i - 2)
+      }
+    } else {
+    // if slash does exist, match 'foo/bar', 'foo/bar*', 'foo/ba*', 'foo/b*', 'foo/*'
+      lastWord = str.substring(lastSlash + 1, str.length)
+      if (lastWord === '') {
+        var replaced = str.replace('/', '\\/')
+        return '"(' + replaced + '|' + replaced + '\\*)"'
+      }
+      returnString = '"' + str.substring(0, lastSlash)
+      returnString = returnString.replace('/', '\\/') + '\\/(' + lastWord
+      for (i = lastWord.length + 1; i > 0; i--) {
+        returnString += '|' + lastWord + '\\*'
+        lastWord = lastWord.substring(0, i - 2)
+      }
     }
-    else{returnString += "|" + "*"}
+    // prefix and suffix return with double quotes to ensure it matches the full path only
+    return returnString + ')"'
   }
-  }
-  return returnString
-}
 
-    }
 }
 </script>
 
