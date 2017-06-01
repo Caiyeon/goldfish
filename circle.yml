@@ -1,11 +1,10 @@
+dependencies:
+  override:
+    - go get -t -d -v
+
 test:
   override:
     # backend
-    - if [ "$CIRCLE_NODE_INDEX" -eq "0" ] ; then go get -t -d -v ; fi:
-        parallel: true
-    - if [ "$CIRCLE_NODE_INDEX" -eq "0" ] ; then go build -v -a && go test ./... -v ; fi:
-        parallel: true
-
+    - if [ "$CIRCLE_NODE_INDEX" -eq "0" ] ; then go build -v -a && go test ./... -v ; fi
     # frontend
-    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then nvm install v7.10.0 && cd frontend && sudo -E env "PATH=$PATH" npm install -g cross-env && npm link webpack && npm install && npm run build ; fi:
-        parallel: true
+    - if [ "$CIRCLE_NODE_INDEX" -eq "1" ] ; then nvm install v7.10.0 && cd frontend && sudo -E env "PATH=$PATH" npm install -g cross-env && npm link webpack && npm install && npm run build ; fi
