@@ -4,6 +4,7 @@ dependencies:
     - go get -t -d -v ./...
     # frontend
     - nvm install v7.10.0
+    - nvm use 7.10.0
     - sudo $(which npm) install -g cross-env
     - npm link webpack
 
