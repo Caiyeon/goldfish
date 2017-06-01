@@ -1,9 +1,16 @@
+dependencies:
+  override:
+    - go get -t -d -v ./...
+
 test:
   override:
     - ? |
+        # compile server binary and run acceptance tests
         if [ "$CIRCLE_NODE_INDEX" -eq "0" ]; then
           go build -v -a
           go test ./... -v
+
+        # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
           nvm install v7.10.0
           cd frontend
@@ -13,4 +20,4 @@ test:
           npm run build
         fi
       :
-          parallel: true
+          parallel: true # make full use of 2 containers
