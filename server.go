@@ -44,7 +44,7 @@ func init() {
 	flag.Parse()
 
 	if version {
-		log.Println("Goldfish version: v0.2.5")
+		log.Println("Goldfish version: v0.3.0")
 		os.Exit(0)
 	}
 
