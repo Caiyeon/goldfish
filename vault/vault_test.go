@@ -417,10 +417,10 @@ func(addr, root, wrappingToken string) {
 
 	// transit
 	Convey("Transit functionality should work", func() {
-		cipher, err := rootAuth.EncryptTransit("value")
+		cipher, err := rootAuth.EncryptTransit("usertransit", "value")
 		So(err, ShouldBeNil)
 
-		plaintext, err := rootAuth.DecryptTransit(cipher)
+		plaintext, err := rootAuth.DecryptTransit("usertransit", cipher)
 		So(err, ShouldBeNil)
 		So(plaintext, ShouldEqual, "value")
 	})

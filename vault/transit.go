@@ -6,8 +6,16 @@ import (
 )
 
 // encrypt given string with userTransitKey
-func (auth AuthInfo) EncryptTransit(plaintext string) (string, error) {
+func (auth AuthInfo) EncryptTransit(key string, plaintext string) (string, error) {
 	c := GetConfig()
+
+	// if no key is specified, use run-time defaults
+	if key == "" {
+		key = c.UserTransitKey
+		if key == "" {
+			return "", errors.New("No transit key specified")
+		}
+	}
 
 	client, err := auth.Client()
 	if err != nil {
@@ -15,7 +23,7 @@ func (auth AuthInfo) EncryptTransit(plaintext string) (string, error) {
 	}
 
 	resp, err := client.Logical().Write(
-		c.TransitBackend+"/encrypt/"+c.UserTransitKey,
+		c.TransitBackend + "/encrypt/" + key,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(plaintext)),
 		})
@@ -32,8 +40,16 @@ func (auth AuthInfo) EncryptTransit(plaintext string) (string, error) {
 }
 
 // decrypt given cipher with userTransitKey
-func (auth AuthInfo) DecryptTransit(cipher string) (string, error) {
+func (auth AuthInfo) DecryptTransit(key string, cipher string) (string, error) {
 	c := GetConfig()
+
+	// if no key is specified, use run-time defaults
+	if key == "" {
+		key = c.UserTransitKey
+		if key == "" {
+			return "", errors.New("No transit key specified")
+		}
+	}
 
 	client, err := auth.Client()
 	if err != nil {
@@ -41,7 +57,7 @@ func (auth AuthInfo) DecryptTransit(cipher string) (string, error) {
 	}
 
 	resp, err := client.Logical().Write(
-		c.TransitBackend+"/decrypt/"+c.UserTransitKey,
+		c.TransitBackend + "/decrypt/" + key,
 		map[string]interface{}{
 			"ciphertext": cipher,
 		})

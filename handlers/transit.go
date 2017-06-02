@@ -56,7 +56,7 @@ func EncryptString() echo.HandlerFunc {
 		}
 
 		// fetch results
-		cipher, err := auth.EncryptTransit(plaintext)
+		cipher, err := auth.EncryptTransit(c.FormValue("key"), plaintext)
 		if err != nil {
 			return parseError(c, err)
 		}
@@ -90,7 +90,7 @@ func DecryptString() echo.HandlerFunc {
 		}
 
 		// fetch results
-		plaintext, err := auth.DecryptTransit(cipher)
+		plaintext, err := auth.DecryptTransit(c.FormValue("key"), cipher)
 		if err != nil {
 			return parseError(c, err)
 		}
