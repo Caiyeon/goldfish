@@ -117,10 +117,10 @@ func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(wrappingToken)
+	client.SetToken(vaultToken)
 
 	// make a raw unwrap call. This will use the token as a header
-	resp, err := client.Logical().Unwrap("")
+	resp, err := client.Logical().Unwrap(wrappingToken)
 	if err != nil {
 		return nil, errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
 	}

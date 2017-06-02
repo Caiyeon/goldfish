@@ -218,6 +218,12 @@ func(addr, root, wrappingToken string) {
 	// this will be imitating the client token
 	rootAuth := &AuthInfo{ID: root, Type: "token"}
 
+	Convey("Server's vault client should not contain a token", func() {
+		client, err := NewVaultClient()
+		So(err, ShouldBeNil)
+		So(client.Token(), ShouldEqual, "")
+	})
+
 	// run-time config
 	Convey("Config should be loaded", func() {
 		c := GetConfig()
@@ -272,6 +278,21 @@ func(addr, root, wrappingToken string) {
 			So(err, ShouldBeNil)
 			So(len(secrets), ShouldEqual, 1)
 			So(secrets[0], ShouldEqual, "testbulletin")
+		})
+
+		Convey("Wrapping arbitrary data", func() {
+			wrapToken, err := rootAuth.WrapData("300s", map[string]interface{}{
+				"abc": "def",
+				"ghi": "jkl",
+			})
+			So(err, ShouldBeNil)
+			So(wrapToken, ShouldNotBeBlank)
+
+			data, err := rootAuth.UnwrapData(wrapToken)
+			So(err, ShouldBeNil)
+			So(data, ShouldContainKey, "abc")
+			So(data["abc"].(string), ShouldEqual, "def")
+			So(data["ghi"].(string), ShouldEqual, "jkl")
 		})
 	})
 

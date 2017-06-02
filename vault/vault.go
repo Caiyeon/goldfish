@@ -44,6 +44,7 @@ func NewVaultClient() (*api.Client, error) {
 		return nil, err
 	}
 	client.SetAddress(VaultAddress)
+	client.SetToken("")
 	return client, nil
 }
 
