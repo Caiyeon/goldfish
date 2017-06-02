@@ -18,8 +18,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * Which policies, users, and tokens can access this particular secret path?
 * The unseal admins are working from home, but we need a policy changed.
 	* How do we generate a root token only for this change, and make sure it's revoked after?
-	* Optionally send the changeID to a slack channel, so admins can pull up the details and approve/reject
-* I store my policies on a Github repo. Can I deploy this all in one go? [See more](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
+* I store my policies on a Github repo. Can I deploy all my policies in one go? [See more](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
 * *Coming soon* If I remove this secret/policy, will anybody's workflow break?
 
 
@@ -59,7 +58,11 @@ See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production
 	- Change dozens of policies in one go!
 * [ ] Resource dependency chain
 	- E.g. Will removing a particular policy affect current users?
-* [ ] SAML to LDAP integration
+	- Will removing a mount or secret path affect current users?
+* [ ] Certificate management panel
+	- If vault is a certificate authority, there should be a user-friendly panel of details and statistics
+* [ ] Moving root tokens away from the human eye
+	- More root operations like mount tuning should also be done via request & approval basis, like policy changes
 * [ ] Secret backend specific tools (e.g. AWS backend)
 
 
@@ -162,7 +165,7 @@ vagrant up --provision
 <!--
 -->
 ## Development
-Goldfish is being actively maintained (with new features every 1-2 weeks).
+Goldfish is being actively maintained (with new features every single week).
 
 Contributions are welcomed. Feel free to pick up an issue and make a pull request, or open a new issue for a feature enhancement.
 
