@@ -32,14 +32,16 @@
                   <p class="control">
                     <span class="select">
                       <select v-model="search.regex">
-                      <option v-bind:value="false">Substring</option>
+                      <option v-bind:value="false">Smart Search</option>
                       <option v-bind:value="true">Regex</option>
                       </select>
                     </span>
                   </p>
                   <p class="control">
                     <input class="input" type="text"
-                    placeholder="Filter by policy details"
+                    :placeholder ="search.regex ?
+                      'Filter by policy details' :
+                      'foo/bar matches foo/*'"
                     v-model="search.str"
                     @keyup.enter="filterByDetails()">
                   </p>
@@ -198,14 +200,9 @@ export default {
       for (var i = 0; i < this.policies.length; i++) {
         let policyName = this.policies[i]
         this.$http.get('/api/policy?policy=' + policyName).then((response) => {
-          if (this.search.regex) {
-            if (response.data.result.match(this.search.str) || policyName.match(this.search.str)) {
-              this.search.found.push(policyName)
-            }
-          } else {
-            if (response.data.result.includes(this.search.str) || policyName.includes(this.search.str)) {
-              this.search.found.push(policyName)
-            }
+          var searchString = this.search.regex ? this.search.str : this.makeRegex(this.search.str)
+          if (response.data.result.match(searchString)) {
+            this.search.found.push(policyName)
           }
           this.search.searched++
           this.loading = this.loading - 1 || false
