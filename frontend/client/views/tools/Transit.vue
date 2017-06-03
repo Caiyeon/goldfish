@@ -42,13 +42,16 @@
 
                 <div class="field is-pulled-right">
                   <p class="control">
-                    <a @click="encryptText" class="button is-primary is-outlined">
+                    <a @click="encryptText"
+                    class="button is-primary is-outlined"
+                    :disabled="editing">
                       <span>Encrypt</span>
                       <span class="icon">
                         <i class="fa fa-check"></i>
                       </span>
                     </a>
-                    <a @click="clearPlaintext" class="button is-danger is-outlined">
+                    <a @click="clearPlaintext"
+                    class="button is-danger is-outlined">
                       <span>Clear</span>
                       <span class="icon">
                         <i class="fa fa-times"></i>
@@ -72,7 +75,9 @@
 
                 <div class="field is-pulled-right">
                   <p class="control">
-                    <a @click="decryptText" class="button is-primary is-outlined">
+                    <a @click="decryptText"
+                    class="button is-primary is-outlined"
+                    :disabled="editing">
                       <span>Decrypt</span>
                       <span class="icon">
                         <i class="fa fa-check"></i>
@@ -128,6 +133,10 @@ export default {
 
   methods: {
     encryptText: function () {
+      if (this.editing) {
+        return
+      }
+
       this.$http.post('/api/transit/encrypt', querystring.stringify({
         plaintext: this.plaintext,
         key: this.userTransitKey
@@ -151,6 +160,10 @@ export default {
     },
 
     decryptText: function () {
+      if (this.editing) {
+        return
+      }
+
       this.$http.post('/api/transit/decrypt', querystring.stringify({
         cipher: this.cipher,
         key: this.userTransitKey
