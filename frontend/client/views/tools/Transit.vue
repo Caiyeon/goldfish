@@ -10,13 +10,16 @@
               <nav class="level-left">
                 <div class="level-item">
                   <p class="subtitle is-5">
-                    <strong>Goldfish is configured to use 'userTransit'</strong>
-                    <a class="is-danger">
-                    <span class="icon" @click="changeKey()">
+                    <strong>Goldfish is using transit key {{editing ? '' : userTransitKey}}</strong>
+                      <p v-if="editing" class="control">
+                        <input class="input is-small"
+                        type="text" placeholder="Enter transit key"
+                        v-model="userTransitKey"
+                        @keyup.enter="editing = false">
+                      </p>
+                    <a v-if="!editing"><span class="icon" @click="changeKey()">
                       <i class="fa fa-pencil-square-o"></i>
-                    </span>
-                    </a>
-                    <strong>key by default</strong>
+                    </span></a>
                   </p>
                 </div>
               </nav>
@@ -108,7 +111,8 @@ export default {
       csrf: '',
       plaintext: '',
       cipher: '',
-      userTransitKey: ''
+      userTransitKey: '',
+      editing: false
     }
   },
 
@@ -125,7 +129,8 @@ export default {
   methods: {
     encryptText: function () {
       this.$http.post('/api/transit/encrypt', querystring.stringify({
-        plaintext: this.plaintext
+        plaintext: this.plaintext,
+        key: this.userTransitKey
       }), {
         headers: {'X-CSRF-Token': this.csrf}
       })
@@ -147,7 +152,8 @@ export default {
 
     decryptText: function () {
       this.$http.post('/api/transit/decrypt', querystring.stringify({
-        cipher: this.cipher
+        cipher: this.cipher,
+        key: this.userTransitKey
       }), {
         headers: {'X-CSRF-Token': this.csrf}
       })
@@ -175,11 +181,7 @@ export default {
     },
 
     changeKey: function () {
-      this.$notify({
-        title: 'Under Construction',
-        message: 'Changeable transit key will come soon',
-        type: 'warning'
-      })
+      this.editing = true
     }
   }
 }
