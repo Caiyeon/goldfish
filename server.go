@@ -133,6 +133,10 @@ func main() {
 
 	e.GET("/api/bulletins", handlers.GetBulletins())
 
+	e.GET("/api/wrapping", handlers.FetchCSRF())
+	e.POST("/api/wrapping/wrap", handlers.WrapHandler())
+	e.POST("/api/wrapping/unwrap", handlers.UnwrapHandler())
+
 	if (devMode) {
 		// start the server in HTTP. DO NOT USE THIS IN PRODUCTION!!
 		e.Logger.Fatal(e.Start("127.0.0.1:8000"))
