@@ -164,12 +164,11 @@ vagrant up --provision
 <!--
 -->
 ## Development
-Goldfish is being actively maintained (with new features every single week).
+Goldfish is in very active development:
 
-Contributions are welcomed. Feel free to pick up an issue and make a pull request, or open a new issue for a feature enhancement.
+![](screenshots/Pulse.png)
 
-The Vagrant setup should provide a consistent dev environment.
-
+Pull requests and feature requests are welcome. Feel free to suggest new workflows by opening issues.
 
 
 <!--
