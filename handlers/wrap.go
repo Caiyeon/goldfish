@@ -29,10 +29,10 @@ func WrapHandler() echo.HandlerFunc {
 			})
 		}
 
-		body := c.FormValue("body")
+		data := c.FormValue("data")
 
 		// fetch results
-		wrappingToken, err := auth.WrapData(wrapttl, body)
+		wrappingToken, err := auth.WrapData(wrapttl, data)
 		if err != nil {
 			return parseError(c, err)
 		}
