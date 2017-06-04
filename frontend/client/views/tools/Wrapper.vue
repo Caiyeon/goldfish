@@ -42,8 +42,10 @@
                     <!-- Editable key field -->
                     <td v-if="entry.isClicked">
                       <p class="control">
-                        <input class="input is-small" type="text" placeholder="" v-model="entry.key"
-                               @keyup.enter="doneEdit(index)">
+                        <input class="input is-small"
+                               type="text" placeholder="" v-model="entry.key"
+                               @keyup.enter="doneEdit(index)"
+                        >
                       </p>
                     </td>
 
@@ -87,7 +89,7 @@
                         v-model="newKey"
                         v-bind:class="[
                         newKey === '' ? '' : 'is-success',
-                        newKeyExists ? 'is-danger' : '']"
+                        newKeyExists() ? 'is-danger' : '']"
                         >
                       </p>
                     </td>
@@ -121,15 +123,14 @@
               <div class="level-right">
                 <p class="control">
                   <a class="button is-primary"
-                     @click="WrapToken()"
+                     @click="wrapData()"
                      :disabled="tableData.length === 0">
-                  <span> Wrap </span>
+                  <span>Wrap</span>
                   </a>
                 </p>
               </div>
             </nav>
           </article>
-
         </article>
       </div>
     </div>
@@ -144,9 +145,7 @@ export default {
       tableData: [],
       currToken: '',
       newKey: '',
-      newValue: '',
-      currKey: '',
-      currVal: ''
+      newValue: ''
     }
   },
 
@@ -159,8 +158,12 @@ export default {
   },
 
   methods: {
-    wrapData: function (argument) {
-      // body...
+    wrapData: function () {
+      // if insertion row (last row of table) is not empty, add to data
+      if (this.newKey !== '' || this.newValue !== '') {
+        // helper function will take care of edge cases
+        this.addKeyValue()
+      }
     },
 
     unWrapToken: function (argument) {
@@ -175,12 +178,30 @@ export default {
       this.tableData[index].isClicked = true
     },
 
+    // Returns true if the new key already exists in the current table
+    newKeyExists: function () {
+      for (var i = 0; i < this.tableData.length; i++) {
+        if (this.tableData[i].key === this.newKey) {
+          return true
+        }
+      }
+      return false
+    },
+
     addKeyValue: function () {
-      // only allow insertion if key and value are valid
-      if (this.newKey === '' || this.newValue === '') {
+      // check if key is not empty
+      if (this.newKey === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'Key and Value must be non-empty',
+          message: 'key cannot be empty',
+          type: 'warning'
+        })
+        return
+      }
+      if (this.newKeyExists()) {
+        this.$notify({
+          title: 'Invalid',
+          message: 'key already exists',
           type: 'warning'
         })
         return
@@ -199,15 +220,32 @@ export default {
 
     doneEdit: function (index) {
       // check key and value again
-      if (this.tableData[index].key === '' || this.tableData[index].value === '') {
+      if (this.tableData[index].key === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'Edits can\'t cause non-empty Key or Value ',
+          message: 'Edits can\'t cause key to be empty',
+          type: 'warning'
+        })
+        return
+      }
+      if (this.changesConflict(index)) {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Edits can\'t cause key to duplicate',
           type: 'warning'
         })
         return
       }
       this.tableData[index].isClicked = false
+    },
+
+    changesConflict: function (index) {
+      for (var i = 0; i < this.tableData.length; i++) {
+        if (i !== index && this.tableData[i].key === this.tableData[index].key) {
+          return true
+        }
+      }
+      return false
     }
   }
 }
