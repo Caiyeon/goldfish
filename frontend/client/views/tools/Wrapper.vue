@@ -30,31 +30,44 @@
                 <!-- header -->
 
                 <thead>
-                  <tr is-expandedß>
+                  <tr>
                     <th>Key</th>
                     <th>Value</th>
-                    <th></th>
+                    <th width="1"></th>
                   </tr>
                 </thead>
                 <!-- body -->
                 <tbody>
-                  <tr>
+                  <tr v-for="(entry, index) in tableData">
                     <!-- Editable key field -->
-                    <td>
+                    <td v-if="entry.isClicked">
                       <p class="control">
-                        <input class="input is-small" type="text" placeholder="">
+                        <input class="input is-small" type="text" placeholder="" v-model="entry.key"
+                               @keyup.enter="doneEdit(index)">
                       </p>
+                    </td>
+
+                    <!-- View-only -->
+                    <td v-else @click="clicked(index)">
+                      {{ entry.key }}
                     </td>
 
                     <!-- Editable value field -->
-                    <td>
+                    <td v-if="entry.isClicked">
                       <p class="control">
-                        <input class="input is-small" type="text" placeholder="">
+                        <input class="input is-small" type="text" placeholder="" v-model="entry.value"
+                               @keyup.enter="doneEdit(index)">
                       </p>
                     </td>
 
+                    <!-- View-only -->
+                    <td v-else @click="clicked(index)">
+                      {{ entry.value }}
+                    </td>
+
+
                     <td width="30">
-                      <a @click="deleteItem(index)">
+                      <a v-if="entry.isClicked" @click="deleteItem(index)">
                         <span class="icon">
                           <i class="fa fa-times-circle"></i>
                         </span>
@@ -64,7 +77,7 @@
                   </tr>
 
                   <!-- new key value pair insertion row -->
-                  <tr>
+                  <tr @keyup.enter="addKeyValue()">
                     <td>
                       <p class="control">
                         <input
@@ -92,19 +105,31 @@
                     </td>
                   </tr>
                 </tbody>
-                <tfoot>
 
+                <!-- footer only shows beyond a certain amount of data -->
+                <tfoot v-show="tableData.length > 10">
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th></th>
+                  </tr>
                 </tfoot>
               </table>
             </div>
-            <p class="control">
-              <a class="button is-primary"
-              @click="wrapData()"
-              :disabled="tableData === ''">
-              <span>Wrap</span>
-            </a>
-          </p>
+            <nav class="level">
+              <div class="level-left"></div>
+              <div class="level-right">
+                <p class="control">
+                  <a class="button is-primary"
+                     @click="WrapToken()"
+                     :disabled="tableData.length === 0">
+                  <span> Wrap </span>
+                  </a>
+                </p>
+              </div>
+            </nav>
           </article>
+
         </article>
       </div>
     </div>
@@ -117,7 +142,11 @@ export default {
     return {
       csrf: '',
       tableData: [],
-      currToken: ''
+      currToken: '',
+      newKey: '',
+      newValue: '',
+      currKey: '',
+      currVal: ''
     }
   },
 
@@ -140,6 +169,45 @@ export default {
 
     deleteItem: function (index) {
       this.tableData.splice(index, 1)
+    },
+
+    clicked: function (index) {
+      this.tableData[index].isClicked = true
+    },
+
+    addKeyValue: function () {
+      // only allow insertion if key and value are valid
+      if (this.newKey === '' || this.newValue === '') {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Key and Value must be non-empty',
+          type: 'warning'
+        })
+        return
+      }
+
+      // insert new key value pair to table data
+      this.tableData.push({
+        key: this.newKey,
+        value: this.newValue,
+        isClicked: false
+      })
+      // reset so that a new pair can be inserted
+      this.newKey = ''
+      this.newValue = ''
+    },
+
+    doneEdit: function (index) {
+      // check key and value again
+      if (this.tableData[index].key === '' || this.tableData[index].value === '') {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Edits can\'t cause non-empty Key or Value ',
+          type: 'warning'
+        })
+        return
+      }
+      this.tableData[index].isClicked = false
     }
   }
 }
