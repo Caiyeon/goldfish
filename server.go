@@ -84,6 +84,16 @@ func main() {
 			csrf.Secure(!devMode),
 		)))
 
+	// add security headers if devMode is false
+	if (!devMode) {
+		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+			XSSProtection:         "1; mode=block",
+			ContentTypeNosniff:    "nosniff",
+			XFrameOptions:         "SAMEORIGIN",
+			ContentSecurityPolicy: "default-src 'self'",
+		}))
+	}
+
 	// if cert and key are not provided, try using let's encrypt
 	if !devMode && certFile == "" && keyFile == "" {
 		// thanks mozilla
