@@ -1,19 +1,19 @@
 dependencies:
   override:
-    - go get -t -d -v ./...
+    - go get -t -d -v github.com/caiyeon/goldfish
 
 test:
   override:
     - ? |
         # compile server binary and run acceptance tests
         if [ "$CIRCLE_NODE_INDEX" -eq "0" ]; then
-          go build -v -a
-          go test ./... -v
+          go build -v -a github.com/caiyeon/goldfish
+          go test -v github.com/caiyeon/goldfish
 
         # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
-          nvm install v7.10.0
           cd frontend
+          nvm install v7.10.0
           sudo -E env "PATH=$PATH" npm install -g cross-env
           npm link webpack
           npm install
