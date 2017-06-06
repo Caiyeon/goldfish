@@ -139,7 +139,7 @@
             </div>
           </div>
         </nav>
-          </article>
+        </article>
         </article>
       </div>
     </div>
@@ -147,7 +147,7 @@
 </template>
 
 <script>
-// const querystring = require('querystring')
+const querystring = require('querystring')
 export default {
   data () {
     return {
@@ -168,16 +168,26 @@ export default {
     })
 
     // fetch csrf token upon mounting
-    // this.$http.get('/api/users/csrf')
-    // .then((response) => {
-    //   this.csrf = response.headers['x-csrf-token']
-    // })
-    // .catch((error) => {
-    //   this.$onError(error)
-    // })
+    this.$http.get('/api/users/csrf')
+    .then((response) => {
+      this.csrf = response.headers['x-csrf-token']
+    })
+    .catch((error) => {
+      this.$onError(error)
+    })
   },
 
   methods: {
+
+    // takes out "isClicked" field in tableData so content can be sent off
+    packData: function () {
+      var data = {}
+      for (var i = 0; i < this.tableData.length; i++) {
+        data[this.tableData[i].key] = this.tableData[i].value
+      }
+      return data
+    },
+
     wrapData: function () {
       // if insertion row (last row of table) is not empty, add to tableData before calling API to wrap
       if (this.newKey !== '' || this.newValue !== '') {
@@ -185,29 +195,46 @@ export default {
         this.addKeyValue()
       }
 
-    //   this.$http.post('/api/wrapping/wrap', querystring.stringify({
+      this.$http.post('/api/wrapping/wrap', querystring.stringify({
 
-    //   // wrapttl takes value of user's input
-    //     wrapttl: this.wrap_ttl,
-    //     data: {
-    //       key: "value",
-    //       anotherkey: "anothervalue"
-    //       }
-    //     }),
-    //     {
-    //     headers: {'X-CSRF-Token': this.csrf}
-    //   })
-    //   .then((response) => {
-    //   // wrapping token:
-    //   console.log(response.data.result)
-    // })
-    //   .catch((error) => {
-    //     this.$onError(error)
-    //   })
+        // wrapttl takes value of user's input
+        wrapttl: this.wrap_ttl,
+        data: this.packData
+      }), {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        // wrapping token:
+        this.$message({
+          message: 'Your token is: ' + response.data.result,
+          type: 'success',
+          duration: 0,
+          showCloseButton: true
+        })
+        console.log(response.data.result)
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
     },
 
     unWrapToken: function () {
-      // body...
+      this.$http.post('/api/wrapping/unwrap', querystring.stringify({
+        wrappingToken: this.wrappingToken
+      }), {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+      // unwrapped data:
+        console.log(response.data.result)
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    unpackData: function (rawTable) {
+      // TODO
     },
 
     deleteItem: function (index) {
@@ -253,6 +280,7 @@ export default {
         value: this.newValue,
         isClicked: false
       })
+
       // reset so that a new pair can be inserted
       this.newKey = ''
       this.newValue = ''
