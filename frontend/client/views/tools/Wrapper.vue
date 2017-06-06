@@ -118,18 +118,27 @@
                 </tfoot>
               </table>
             </div>
+
             <nav class="level">
               <div class="level-left"></div>
               <div class="level-right">
+               <div class="field has-addons is-pulled-right">
+                 <p class="control">
+                  <input class="input" type="text"
+                  placeholder="Wrap-ttl e.g. '5m'"
+                  v-model=wrap_ttl
+                  >
+                </p>
                 <p class="control">
                   <a class="button is-primary"
-                     @click="wrapData()"
-                     :disabled="tableData.length === 0">
+                  @click="wrapData()"
+                  :disabled="tableData.length === 0">
                   <span>Wrap</span>
-                  </a>
-                </p>
-              </div>
-            </nav>
+                </a>
+              </p>
+            </div>
+          </div>
+        </nav>
           </article>
         </article>
       </div>
@@ -138,6 +147,7 @@
 </template>
 
 <script>
+// const querystring = require('querystring')
 export default {
   data () {
     return {
@@ -145,7 +155,8 @@ export default {
       tableData: [],
       currToken: '',
       newKey: '',
-      newValue: ''
+      newValue: '',
+      wrap_ttl: ''
     }
   },
 
@@ -155,18 +166,47 @@ export default {
       message: 'This page doesn\'t work.',
       type: 'warning'
     })
+
+    // fetch csrf token upon mounting
+    // this.$http.get('/api/users/csrf')
+    // .then((response) => {
+    //   this.csrf = response.headers['x-csrf-token']
+    // })
+    // .catch((error) => {
+    //   this.$onError(error)
+    // })
   },
 
   methods: {
     wrapData: function () {
-      // if insertion row (last row of table) is not empty, add to data
+      // if insertion row (last row of table) is not empty, add to tableData before calling API to wrap
       if (this.newKey !== '' || this.newValue !== '') {
         // helper function will take care of edge cases
         this.addKeyValue()
       }
+
+    //   this.$http.post('/api/wrapping/wrap', querystring.stringify({
+
+    //   // wrapttl takes value of user's input
+    //     wrapttl: this.wrap_ttl,
+    //     data: {
+    //       key: "value",
+    //       anotherkey: "anothervalue"
+    //       }
+    //     }),
+    //     {
+    //     headers: {'X-CSRF-Token': this.csrf}
+    //   })
+    //   .then((response) => {
+    //   // wrapping token:
+    //   console.log(response.data.result)
+    // })
+    //   .catch((error) => {
+    //     this.$onError(error)
+    //   })
     },
 
-    unWrapToken: function (argument) {
+    unWrapToken: function () {
       // body...
     },
 
