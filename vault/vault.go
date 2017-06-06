@@ -49,6 +49,10 @@ func NewVaultClient() (*api.Client, error) {
 }
 
 func StartGoldfishWrapper(wrappingToken, roleID, rolePath string) error {
+	if wrappingToken == "" {
+		return errors.New("vault_token cannot be empty")
+	}
+
 	client, err := NewVaultClient()
 	if err != nil {
 		return err
@@ -59,13 +63,13 @@ func StartGoldfishWrapper(wrappingToken, roleID, rolePath string) error {
 	vaultClient.SetToken(wrappingToken)
 	resp, err := vaultClient.Logical().Unwrap("")
 	if err != nil {
-		errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
 	}
 
 	// verify that a secret_id was wrapped
 	secretID, ok := resp.Data["secret_id"].(string)
 	if !ok {
-		errors.New("Failed to unwrap provided token, revoke it if possible")
+		return errors.New("Failed to unwrap provided token, revoke it if possible")
 	}
 
 	// fetch vault token with secret_id

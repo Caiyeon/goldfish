@@ -281,10 +281,9 @@ func(addr, root, wrappingToken string) {
 		})
 
 		Convey("Wrapping arbitrary data", func() {
-			wrapToken, err := rootAuth.WrapData("300s", map[string]interface{}{
-				"abc": "def",
-				"ghi": "jkl",
-			})
+			wrapToken, err := rootAuth.WrapData("300s",
+				"{ \"abc\": \"def\", \"ghi\": \"jkl\" }",
+			)
 			So(err, ShouldBeNil)
 			So(wrapToken, ShouldNotBeBlank)
 

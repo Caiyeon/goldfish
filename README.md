@@ -4,7 +4,7 @@
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
-<h3>Show support for development by starring this repo!</a></h3>
+<h3>Share with your colleagues and star this repo!</h3>
 
 </div>
 
@@ -24,10 +24,9 @@ Goldfish answers many auditing and administration questions that Vault API can't
 
 <!--
 -->
-## Running goldfish in production
+## [Deploy goldfish in production in minutes!](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment)
 
-See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment)
-
+Seriously, the instructions fit on one screen!
 
 
 <!--
@@ -43,7 +42,7 @@ See: [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production
 * [x] **Policies** Searching/Listing
 * [x] Encrypting and decrypting arbitrary strings using transit backend
 
-#### Planned major features: Soon<sup>TM</sup>
+#### Major features: [See wiki for more](https://github.com/Caiyeon/goldfish/wiki/Features)
 * [x] **DONE!** Searching tokens by policy [walkthrough](https://github.com/Caiyeon/goldfish/wiki/Features#searching-tokens)
 	- E.g. Display all tokens that have the policy 'admins'
 * [x] **DONE!** Searching policy by rule [walkthrough](https://github.com/Caiyeon/goldfish/wiki/Features#searching-policies)
@@ -165,12 +164,11 @@ vagrant up --provision
 <!--
 -->
 ## Development
-Goldfish is being actively maintained (with new features every single week).
+Goldfish is in very active development:
 
-Contributions are welcomed. Feel free to pick up an issue and make a pull request, or open a new issue for a feature enhancement.
+![](screenshots/Pulse.png)
 
-The Vagrant setup should provide a consistent dev environment.
-
+Pull requests and feature requests are welcome. Feel free to suggest new workflows by opening issues.
 
 
 <!--

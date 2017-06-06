@@ -1,16 +1,24 @@
 package vault
 
 import (
+	"encoding/json"
 	"errors"
 )
 
-func (auth *AuthInfo) WrapData(wrapttl string, data map[string]interface{}) (string, error) {
+func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return "", err
 	}
 	client.SetToken(vaultToken)
 
+	// unmarshal raw string into a map
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		return "", err
+	}
+
+	// setup wrapping function
 	client.SetWrappingLookupFunc(func(operation, path string) string {
 		return wrapttl
 	})
