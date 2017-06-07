@@ -167,16 +167,34 @@
           </div>
 
           <!-- Metadata -->
-          <!-- <div class="field is-horizontal">
+          <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Metadata</label>
+              <label class="label">
+                Metadata?
+              </label>
             </div>
             <div class="field-body">
               <div class="field">
-                <p>Feature is coming soon<sup>TM</sup></p>
+                <div class="control">
+                  <vb-switch type="info" :checked="bMetadata" v-model="bMetadata"></vb-switch>
+                </div>
               </div>
             </div>
-          </div> -->
+          </div>
+          <div v-if="bMetadata" class="field">
+            <p class="control">
+              <brace style="height: 500px"
+                :fontsize="'16px'"
+                :theme="'github'"
+                :mode="'json'"
+                :codefolding="'markbegin'"
+                :softwrap="'free'"
+                :selectionstyle="'text'"
+                :highlightline="true"
+                @code-change="oncodeChange">
+              </brace>
+            </p>
+          </div>
 
           <!-- Policies -->
           <div class="field">
@@ -226,12 +244,23 @@
           <!-- Confirm button -->
           <div class="field">
             <div class="control">
-              <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="createToken()">
+              <button
+              v-if="selectedPolicies.indexOf('root') > -1"
+              class="button is-danger"
+              @click="createToken()"
+              :disabled="this.payloadJSON.metadata === 'INVALID JSON'">
                 Create Root Token
               </button>
-              <button v-else class="button is-primary" @click="createToken()" :disabled="selectedPolicies.length === 0">
+
+              <button
+              v-else
+              class="button is-primary"
+              @click="createToken()"
+              :disabled="selectedPolicies.length === 0 ||
+              this.payloadJSON.metadata === 'INVALID JSON'">
                 Create Token
               </button>
+
               <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
               <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
             </div>
@@ -296,10 +325,12 @@
 </template>
 
 <script>
+import Brace from 'vue-bulma-brace'
 import VbSwitch from 'vue-bulma-switch'
 
 export default {
   components: {
+    Brace,
     VbSwitch
   },
 
@@ -311,6 +342,7 @@ export default {
       bPeriodic: false,
       bRole: false,
       bWrapped: false,
+      bMetadata: false,
       ID: '',
       displayName: '',
       ttl: '',
@@ -352,6 +384,16 @@ export default {
       }
     },
 
+    // returns valid JSON if metadata is set. Otherwise return null
+    metadataJSON: function () {
+      try {
+        var json = JSON.parse(this.metadata)
+        return (typeof json === 'object' && json != null) ? json : null
+      } catch (e) {
+        return null
+      }
+    },
+
     // constructs the JSON payload that needs to be sent to the server
     payloadJSON: function () {
       var payload = {
@@ -364,6 +406,9 @@ export default {
         'period': this.bPeriodic ? this.period_ttl : '',
         'no_default_policy': this.selectedPolicies.indexOf('default') === -1,
         'policies': this.selectedPolicies
+      }
+      if (this.bMetadata) {
+        payload['metadata'] = this.metadataJSON || 'INVALID JSON'
       }
       return payload
     },
@@ -481,6 +526,11 @@ export default {
     },
 
     createToken: function () {
+      // short circuit to failure if metadata is invalid
+      if (this.payloadJSON.metadata === 'INVALID JSON') {
+        return
+      }
+
       this.createdToken = null
       this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
         headers: {'X-CSRF-Token': this.csrf}
