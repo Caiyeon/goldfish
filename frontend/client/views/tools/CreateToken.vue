@@ -9,8 +9,8 @@
         <!-- Left column (Form) -->
         <div class="column is-6">
 
-          <!-- Role -->
-          <div v-if="availableRoles.length > 0" class="field">
+          <!-- Role (if user can list them) -->
+          <div v-if="availableRoles && availableRoles.length > 0" class="field">
             <label class="label">Load preset from role</label>
             <div class="control">
               <span class="select">
@@ -243,6 +243,15 @@
         <!-- Right column -->
         <div class="column">
 
+          <!-- If user does not have capability to list roles -->
+          <div v-if="availableRoles === null" class="field">
+            <article class="message is-warning">
+              <div class="message-body">
+                <strong>Warning: Logged in user is not authorized to list roles</strong>
+              </div>
+            </article>
+          </div>
+
           <!-- Role warning -->
           <div v-if="selectedRole" class="field">
             <article class="message is-warning">
@@ -399,8 +408,15 @@ export default {
         this.availableRoles = response.data.result
       }
     })
-    .catch(() => {
-      // user likely does not have permission. Simply don't make roles available.
+    .catch((error) => {
+      // if user simply doesn't have list capability on roles
+      var msg = error.response.data.error || ''
+      if (msg === 'User lacks capability to list roles') {
+        this.availableRoles = null
+      } else {
+        // handle other errors the generic way
+        this.$onError(error)
+      }
     })
 
     // if root policy, fetch all available policies from server

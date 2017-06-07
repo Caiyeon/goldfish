@@ -183,13 +183,30 @@ func ListRoles() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 
-		result, err := auth.ListRoles()
+		// check if user has access to roles
+		capabilities, err := auth.CapabilitiesSelf("/auth/token/roles/")
 		if err != nil {
 			return parseError(c, err)
 		}
 
-		return c.JSON(http.StatusOK, H{
-			"result": result,
+		for _, capability := range capabilities {
+			// if user can list or is root, return list of roles
+			if capability == "list" || capability == "root" {
+				result, err := auth.ListRoles()
+				if err != nil {
+					return parseError(c, err)
+				}
+
+				return c.JSON(http.StatusOK, H{
+					"result": result,
+				})
+			}
+		}
+
+		// if we got here, it means user is authenticated against vault,
+		// but has no list capability on roles
+		return c.JSON(http.StatusForbidden, H{
+			"error": "User lacks capability to list roles",
 		})
 	}
 }
