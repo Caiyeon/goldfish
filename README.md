@@ -35,7 +35,7 @@ Seriously, the instructions fit on one screen!
 
 * [x] Hot-loadable server settings from a provided vault endpoint
 * [x] Displaying a vault endpoint as a 'bulletin board' in homepage
-* [x] **Logging in** with token, userpass, or github
+* [x] **Logging in** with token, userpass, github, or LDAP
 * [x] **Secret** Reading/editing/creating/listing
 * [x] **Auth** Searching/creating/listing/deleting
 * [x] **Mounts** Listing
