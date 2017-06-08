@@ -94,7 +94,7 @@ Seriously, the instructions fit on one screen!
 ## Developing or testing goldfish
 
 #### Running locally
-You'll need go (v1.8), npm (>=3), and nodejs (>=5).
+You'll need go (v1.8), npm (>=3), and nodejs (>=7).
 
 ```bash
 # hashicorp vault ui
