@@ -77,7 +77,7 @@
                   <div class="message-header">
                     Current policy rules
                   </div>
-                  <div class="message-body" style="white-space: pre;">{{request.Current}}</div>
+                  <pre v-highlightjs="request.Current"><code class="javascript"></code></pre>
                 </article>
               </div>
 
@@ -86,7 +86,7 @@
                   <div class="message-header">
                   Proposed policy rules
                   </div>
-                  <div class="message-body" style="white-space: pre;">{{request.New}}</div>
+                  <pre v-highlightjs="request.New"><code class="javascript"></code></pre>
                 </article>
               </div>
             </div>
@@ -146,7 +146,7 @@
                     <div class="message-header">
                       Current policy rules
                     </div>
-                    <div class="message-body" style="white-space: pre;">{{policy.Current}}</div>
+                    <pre v-highlightjs="policy.Current"><code class="javascript"></code></pre>
                   </article>
                 </div>
 
@@ -155,7 +155,7 @@
                     <div class="message-header">
                     Proposed policy rules
                     </div>
-                    <div class="message-body" style="white-space: pre;">{{policy.New}}</div>
+                    <pre v-highlightjs="policy.New"><code class="javascript"></code></pre>
                   </article>
                 </div>
               </div>

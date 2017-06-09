@@ -1,6 +1,6 @@
 {
   "name": "goldfish",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Vault Admin Panel",
   "repository": "caiyeon/goldfish",
   "homepage": "",
@@ -39,6 +39,7 @@
     "bulma": "^0.4.2",
     "font-awesome": "4.7.0",
     "github-buttons": "https://github.com/ntkme/github-buttons.git",
+    "highlight.js": "^9.12.0",
     "mdi": "^1.8.36",
     "vue": "^2.2.1",
     "vue-bulma-breadcrumb": "^1.0.1",

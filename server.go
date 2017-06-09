@@ -15,51 +15,54 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+const versionString = "Goldfish version: v0.3.2"
+
 var (
 	devMode         bool
 	goldfishAddress string
 	certFile        string
 	keyFile         string
+	wrappingToken   string
+	rolePath        string
+	roleID          string
+	printVersion    bool
 )
 
 func init() {
-	var version bool
-	flag.BoolVar(&version, "version", false, "Display goldfish's version and exit")
-
+	// dev mode flag. This will disable a lot of HTTPS defaults
 	flag.BoolVar(&devMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
+
+	// web server config
 	flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
 	flag.StringVar(&certFile, "cert_file", "", "Goldfish server's certificate")
 	flag.StringVar(&keyFile, "key_file", "", "Goldfish certificate's private key file")
 
-	// vars needed for vault package setup
+	// vault wrapper package config
 	flag.BoolVar(&vault.VaultSkipTLS, "tls_skip_verify", false, "Set to true to not verify vault's certificate (e.g. if it was self-signed")
 	flag.StringVar(&vault.VaultAddress, "vault_addr", "http://127.0.0.1:8200", "Vault address")
 	flag.StringVar(&vault.ConfigPath, "config_path", "", "A generic backend endpoint to store run-time settings. E.g. 'secret/goldfish'")
 
-	var wrappingToken, rolePath, roleID string
+	// vault wrapper login info
 	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
 	flag.StringVar(&roleID, "role_id", "goldfish", "The approle role_id")
 	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
 
+	// if true, print version and exit
+	flag.BoolVar(&printVersion, "version", false, "Display goldfish's version and exit")
+}
+
+func main() {
+	// parse cmd args
 	flag.Parse()
 
-	if version {
-		log.Println("Goldfish version: v0.3.0")
+	// if --version, print and exit success
+	if (printVersion) {
+		log.Println(versionString)
 		os.Exit(0)
 	}
 
-	// if API wrapper can't start, panic is justified
-	if err := vault.StartGoldfishWrapper(wrappingToken, roleID, rolePath); err != nil {
-		panic(err)
-	}
-
-	// load config from vault, and start goroutines for token renewal & config hot reload
+	// non-fatal wrapper errors should be sent here and logged
 	errorChannel := make(chan error)
-	if err := vault.LoadConfig(devMode, errorChannel); err != nil {
-		panic(err)
-	}
-
-	// any errors sent by go routines should be logged
 	go func() {
 		for err := range errorChannel {
 			if err != nil {
@@ -67,12 +70,20 @@ func init() {
 			}
 		}
 	}()
-}
 
-func main() {
+	// if API wrapper can't start, panic is justified
+	if err := vault.StartGoldfishWrapper(wrappingToken, roleID, rolePath); err != nil {
+		panic(err)
+	}
+	// load config from vault, and start goroutines for token renewal & config hot reload
+	if err := vault.LoadConfig(devMode, errorChannel); err != nil {
+		panic(err)
+	}
+
+	// instantiate echo web server
 	e := echo.New()
 
-	// middleware
+	// setup middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(echo.WrapMiddleware(
@@ -84,9 +95,18 @@ func main() {
 			csrf.Secure(!devMode),
 		)))
 
+	// add security headers if deployment is production
+	if (!devMode) {
+		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+			XSSProtection:         "1; mode=block",
+			ContentTypeNosniff:    "nosniff",
+			XFrameOptions:         "SAMEORIGIN",
+			ContentSecurityPolicy: "default-src 'self'",
+		}))
+	}
+
 	// if cert and key are not provided, try using let's encrypt
 	if !devMode && certFile == "" && keyFile == "" {
-		// thanks mozilla
 		e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(goldfishAddress)
 		e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
@@ -94,10 +114,10 @@ func main() {
 		}))
 	}
 
-	// file routing
+	// static routing of webpack'd folder
 	e.Static("/", "public")
 
-	// API routing - wrapper around vault API
+	// API routing
 	e.GET("/api/health", handlers.VaultHealth())
 
 	e.GET("/api/login/csrf", handlers.FetchCSRF())
@@ -137,11 +157,12 @@ func main() {
 	e.POST("/api/wrapping/wrap", handlers.WrapHandler())
 	e.POST("/api/wrapping/unwrap", handlers.UnwrapHandler())
 
+	// serving both static folder and API
 	if (devMode) {
 		// start the server in HTTP. DO NOT USE THIS IN PRODUCTION!!
 		e.Logger.Fatal(e.Start("127.0.0.1:8000"))
 	} else if certFile == "" && keyFile == "" {
-		// thanks mozilla
+		// if cert and key file arent provided, try let's encrypt
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
 	} else {
 		e.Logger.Fatal(e.StartTLS(goldfishAddress, certFile, keyFile))

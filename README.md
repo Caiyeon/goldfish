@@ -35,7 +35,7 @@ Seriously, the instructions fit on one screen!
 
 * [x] Hot-loadable server settings from a provided vault endpoint
 * [x] Displaying a vault endpoint as a 'bulletin board' in homepage
-* [x] **Logging in** with token, userpass, or github
+* [x] **Logging in** with token, userpass, github, or LDAP
 * [x] **Secret** Reading/editing/creating/listing
 * [x] **Auth** Searching/creating/listing/deleting
 * [x] **Mounts** Listing
@@ -94,7 +94,7 @@ Seriously, the instructions fit on one screen!
 ## Developing or testing goldfish
 
 #### Running locally
-You'll need go (v1.8), npm (>=3), and nodejs (>=5).
+You'll need go (v1.8), npm (>=3), and nodejs (>=7).
 
 ```bash
 # hashicorp vault ui
@@ -122,14 +122,21 @@ vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token
 token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
 vault write auth/approle/role/goldfish/role-id role_id=goldfish
 
+# goldfish reads run-time config from a vault secret
+vault write secret/goldfish DefaultSecretPath="secret/" TransitBackend="transit" \
+UserTransitKey="usertransit" ServerTransitKey="goldfish" BulletinPath="secret/bulletins/"
+
+# jq is a very useful tool for parsing json on the fly
+sudo apt-get install jq
+
 # build the backend server
-go install
+go install github.com/caiyeon/goldfish
 
 # run backend server with secret_id generated from approle
 # -dev arg skips reading settings from vault and uses a default set
 goldfish -dev -vault_token $(vault write -f -wrap-ttl=20m \
 -format=json auth/approle/role/goldfish/secret-id \
-| jq -r .wrap_info.token)
+| jq -r .wrap_info.token) -config_path=secret/goldfish
 
 # run frontend in dev mode (with hot reload)
 cd frontend

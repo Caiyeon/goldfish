@@ -9,8 +9,8 @@
         <!-- Left column (Form) -->
         <div class="column is-6">
 
-          <!-- Role -->
-          <div v-if="availableRoles.length > 0" class="field">
+          <!-- Role (if user can list them) -->
+          <div v-if="availableRoles && availableRoles.length > 0" class="field">
             <label class="label">Load preset from role</label>
             <div class="control">
               <span class="select">
@@ -167,16 +167,27 @@
           </div>
 
           <!-- Metadata -->
-          <!-- <div class="field is-horizontal">
+          <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Metadata</label>
+              <label class="label">
+                Metadata?
+              </label>
             </div>
             <div class="field-body">
               <div class="field">
-                <p>Feature is coming soon<sup>TM</sup></p>
+                <div class="control">
+                  <vb-switch type="info" :checked="bMetadata" v-model="bMetadata"></vb-switch>
+                </div>
               </div>
             </div>
-          </div> -->
+          </div>
+          <div v-if="bMetadata" class="field">
+            <p class="control">
+              <textarea class="textarea"
+              placeholder="Paste valid JSON here"
+              v-model="metadata"></textarea>
+            </p>
+          </div>
 
           <!-- Policies -->
           <div class="field">
@@ -226,12 +237,23 @@
           <!-- Confirm button -->
           <div class="field">
             <div class="control">
-              <button v-if="selectedPolicies.indexOf('root') > -1" class="button is-danger" @click="createToken()">
+              <button
+              v-if="selectedPolicies.indexOf('root') > -1"
+              class="button is-danger"
+              @click="createToken()"
+              :disabled="this.payloadJSON.metadata === 'INVALID JSON'">
                 Create Root Token
               </button>
-              <button v-else class="button is-primary" @click="createToken()" :disabled="selectedPolicies.length === 0">
+
+              <button
+              v-else
+              class="button is-primary"
+              @click="createToken()"
+              :disabled="selectedPolicies.length === 0 ||
+              this.payloadJSON.metadata === 'INVALID JSON'">
                 Create Token
               </button>
+
               <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
               <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
             </div>
@@ -241,7 +263,16 @@
         </div>
 
         <!-- Right column -->
-        <div class="column">
+        <div class="column is-6">
+
+          <!-- If user does not have capability to list roles -->
+          <div v-if="availableRoles === null" class="field">
+            <article class="message is-warning">
+              <div class="message-body">
+                <strong>Warning: Logged in user is not authorized to list roles</strong>
+              </div>
+            </article>
+          </div>
 
           <!-- Role warning -->
           <div v-if="selectedRole" class="field">
@@ -264,7 +295,7 @@
           <div v-if="createdToken" class="field">
             <label class="label">Created token:</label>
             <article class="message is-success">
-              <div class="message-body" style="white-space: pre;">{{JSON.stringify(createdToken, null, '\t')}}</div>
+              <pre v-highlightjs="JSON.stringify(createdToken, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
@@ -272,7 +303,7 @@
           <div class="field">
             <label class="label">Payload preview:</label>
             <article class="message is-primary">
-              <div class="message-body" style="white-space: pre;">{{JSON.stringify(payloadJSON, null, '\t')}}</div>
+              <pre v-highlightjs="JSON.stringify(payloadJSON, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
@@ -302,6 +333,7 @@ export default {
       bPeriodic: false,
       bRole: false,
       bWrapped: false,
+      bMetadata: false,
       ID: '',
       displayName: '',
       ttl: '',
@@ -343,6 +375,16 @@ export default {
       }
     },
 
+    // returns valid JSON if metadata is set. Otherwise return null
+    metadataJSON: function () {
+      try {
+        var json = JSON.parse(this.metadata)
+        return (typeof json === 'object' && json != null) ? json : null
+      } catch (e) {
+        return null
+      }
+    },
+
     // constructs the JSON payload that needs to be sent to the server
     payloadJSON: function () {
       var payload = {
@@ -355,6 +397,9 @@ export default {
         'period': this.bPeriodic ? this.period_ttl : '',
         'no_default_policy': this.selectedPolicies.indexOf('default') === -1,
         'policies': this.selectedPolicies
+      }
+      if (this.bMetadata) {
+        payload['meta'] = this.metadataJSON || 'INVALID JSON'
       }
       return payload
     },
@@ -399,8 +444,15 @@ export default {
         this.availableRoles = response.data.result
       }
     })
-    .catch(() => {
-      // user likely does not have permission. Simply don't make roles available.
+    .catch((error) => {
+      // if user simply doesn't have list capability on roles
+      var msg = error.response.data.error || ''
+      if (msg === 'User lacks capability to list roles') {
+        this.availableRoles = null
+      } else {
+        // handle other errors the generic way
+        this.$onError(error)
+      }
     })
 
     // if root policy, fetch all available policies from server
@@ -424,10 +476,6 @@ export default {
   },
 
   methods: {
-    oncodeChange (code) {
-      this.metadata = code
-    },
-
     stringToSeconds: function (str) {
       if (str.includes('-')) {
         return -1
@@ -465,6 +513,11 @@ export default {
     },
 
     createToken: function () {
+      // short circuit to failure if metadata is invalid
+      if (this.payloadJSON.metadata === 'INVALID JSON') {
+        return
+      }
+
       this.createdToken = null
       this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
         headers: {'X-CSRF-Token': this.csrf}

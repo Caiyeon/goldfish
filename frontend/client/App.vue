@@ -65,6 +65,12 @@ export default {
 $fa-font-path: '~font-awesome/fonts/';
 @import '~font-awesome/scss/font-awesome';
 
+@import '~highlight.js/styles/github.css';
+
+pre > code {
+  font-size: 16px;
+}
+
 html {
   background-color: whitesmoke;
 }
