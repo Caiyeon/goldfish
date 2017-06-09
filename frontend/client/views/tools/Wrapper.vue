@@ -226,6 +226,8 @@ export default {
       })
       .then((response) => {
       // unwrapped data:
+        this.tableData = []
+        this.unpackData(response.data.result)
         console.log(response.data.result)
       })
       .catch((error) => {
@@ -234,7 +236,11 @@ export default {
     },
 
     unpackData: function (rawTable) {
-      // TODO
+      Object.keys(rawTable).map((index) => this.tableData.push({
+        key: 'index',
+        value: rawTable[index],
+        isClicked: false
+      }))
     },
 
     deleteItem: function (index) {
