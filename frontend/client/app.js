@@ -9,6 +9,7 @@ import * as filters from './filters'
 import { TOGGLE_SIDEBAR } from 'vuex-store/mutation-types'
 import Notification from 'vue-bulma-notification'
 import Message from 'vue-bulma-message'
+import hljs from 'highlight.js'
 
 Vue.prototype.$http = axios
 Vue.axios = axios
@@ -115,5 +116,31 @@ const openMessage = (propsData = {
   })
 }
 Vue.prototype.$message = openMessage
+
+Vue.directive('highlightjs', {
+  deep: true,
+  bind: function (el, binding) {
+    // on first bind, highlight all targets
+    let targets = el.querySelectorAll('code')
+    targets.forEach((target) => {
+      // if a value is directly assigned to the directive, use this
+      // instead of the element content.
+      if (binding.value) {
+        target.textContent = binding.value
+      }
+      hljs.highlightBlock(target)
+    })
+  },
+  componentUpdated: function (el, binding) {
+    // after an update, re-fill the content and then highlight
+    let targets = el.querySelectorAll('code')
+    targets.forEach((target) => {
+      if (binding.value) {
+        target.textContent = binding.value
+        hljs.highlightBlock(target)
+      }
+    })
+  }
+})
 
 export { app, router, store }

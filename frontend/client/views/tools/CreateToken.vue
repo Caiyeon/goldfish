@@ -263,7 +263,7 @@
         </div>
 
         <!-- Right column -->
-        <div class="column">
+        <div class="column is-6">
 
           <!-- If user does not have capability to list roles -->
           <div v-if="availableRoles === null" class="field">
@@ -295,7 +295,7 @@
           <div v-if="createdToken" class="field">
             <label class="label">Created token:</label>
             <article class="message is-success">
-              <div class="message-body" style="white-space: pre;">{{JSON.stringify(createdToken, null, '\t')}}</div>
+              <pre v-highlightjs="JSON.stringify(createdToken, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
@@ -303,7 +303,7 @@
           <div class="field">
             <label class="label">Payload preview:</label>
             <article class="message is-primary">
-              <div class="message-body" style="white-space: pre;">{{JSON.stringify(payloadJSON, null, '\t')}}</div>
+              <pre v-highlightjs="JSON.stringify(payloadJSON, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
