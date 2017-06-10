@@ -44,7 +44,7 @@
                       <p class="control">
                         <input class="input is-small"
                                type="text" placeholder="" v-model="entry.key"
-                               @keyup.enter="doneEdit(index)"
+                               @keyup.enter="doneEdit(entry.key,index)"
                         >
                       </p>
                     </td>
@@ -58,7 +58,7 @@
                     <td v-if="entry.isClicked">
                       <p class="control">
                         <input class="input is-small" type="text" placeholder="" v-model="entry.value"
-                               @keyup.enter="doneEdit(index)">
+                               @keyup.enter="doneEdit(entry.key,index)">
                       </p>
                     </td>
 
@@ -89,7 +89,7 @@
                         v-model="newKey"
                         v-bind:class="[
                         newKey === '' ? '' : 'is-success',
-                        newKeyExists() ? 'is-danger' : '']"
+                        keyExists(newKey) ? 'is-danger' : '']"
                         >
                       </p>
                     </td>
@@ -167,12 +167,6 @@ export default {
   },
 
   mounted: function () {
-    this.$notify({
-      title: 'Under Construction',
-      message: 'This page doesn\'t work.',
-      type: 'warning'
-    })
-
     // fetch csrf token upon mounting
     this.$http.get('/api/wrapping')
     .then((response) => {
@@ -201,22 +195,18 @@ export default {
       }
 
       this.$http.post('/api/wrapping/wrap', querystring.stringify({
-
-        // wrapttl takes value of user's input, default at 300s
         wrapttl: this.wrap_ttl,
         data: JSON.stringify(this.packData())
       }), {
         headers: {'X-CSRF-Token': this.csrf}
       })
       .then((response) => {
-        // wrapping token:
         this.$message({
-          message: 'Your token is: ' + response.data.result,
+          message: 'Wrapping token: ' + response.data.result,
           type: 'success',
           duration: 0,
           showCloseButton: true
         })
-        console.log(response.data.result)
       })
       .catch((error) => {
         this.$onError(error)
@@ -234,16 +224,15 @@ export default {
         headers: {'X-CSRF-Token': this.csrf}
       })
       .then((response) => {
-      // unwrapped data:
         this.tableData = []
         this.unpackData(response.data.result)
-        console.log(response.data.result)
       })
       .catch((error) => {
         this.$onError(error)
       })
     },
 
+    // Extracts the received data (a map) into tableData format with isClicked field
     unpackData: function (rawTable) {
       Object.keys(rawTable).map((index) => this.tableData.push({
         key: index,
@@ -261,9 +250,9 @@ export default {
     },
 
     // Returns true if the new key already exists in the current table
-    newKeyExists: function () {
+    keyExists: function (key) {
       for (var i = 0; i < this.tableData.length; i++) {
-        if (this.tableData[i].key === this.newKey) {
+        if (this.tableData[i].key === key) {
           return true
         }
       }
@@ -275,15 +264,15 @@ export default {
       if (this.newKey === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'key cannot be empty',
+          message: 'Key cannot be empty',
           type: 'warning'
         })
         return
       }
-      if (this.newKeyExists()) {
+      if (this.keyExists(this.newKey)) {
         this.$notify({
           title: 'Invalid',
-          message: 'key already exists',
+          message: 'Key already exists',
           type: 'warning'
         })
         return
@@ -301,34 +290,25 @@ export default {
       this.newValue = ''
     },
 
-    doneEdit: function (index) {
+    doneEdit: function (key, index) {
       // check key and value again
       if (this.tableData[index].key === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'Edits can\'t cause key to be empty',
+          message: 'Key already exists',
           type: 'warning'
         })
         return
       }
-      if (this.changesConflict(index)) {
+      if (this.keyExists(key)) {
         this.$notify({
           title: 'Invalid',
-          message: 'Edits can\'t cause key to duplicate',
+          message: 'Key already exists',
           type: 'warning'
         })
         return
       }
       this.tableData[index].isClicked = false
-    },
-
-    changesConflict: function (index) {
-      for (var i = 0; i < this.tableData.length; i++) {
-        if (i !== index && this.tableData[i].key === this.tableData[index].key) {
-          return true
-        }
-      }
-      return false
     },
 
     stringToSeconds: function (str) {
