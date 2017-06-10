@@ -123,19 +123,25 @@
               <div class="level-left"></div>
               <div class="level-right">
                <div class="field has-addons is-pulled-right">
-                 <p class="control">
+                 <div class="control">
                   <input class="input" type="text"
                   placeholder="Wrap-ttl e.g. '5m'"
-                  v-model=wrap_ttl
-                  >
+                  v-model="wrap_ttl"
+                  :class="stringToSeconds(this.wrap_ttl) < 0 ? 'is-danger' : ''">
+                   <p v-if="stringToSeconds(this.wrap_ttl) < 0" class="help is-danger">
+                  TTL cannot be negative
                 </p>
+                <p v-if="stringToSeconds(this.wrap_ttl) > 0" class="help is-info">
+                  {{ stringToSeconds(this.wrap_ttl) }} seconds
+                </p>
+                </div>
                 <p class="control">
                   <a class="button is-primary"
                   @click="wrapData()"
                   :disabled="tableData.length === 0">
                   <span>Wrap</span>
-                </a>
-              </p>
+                  </a>
+                </p>
             </div>
           </div>
         </nav>
@@ -156,7 +162,7 @@ export default {
       currToken: '',
       newKey: '',
       newValue: '',
-      wrap_ttl: ''
+      wrap_ttl: '300'
     }
   },
 
@@ -168,7 +174,7 @@ export default {
     })
 
     // fetch csrf token upon mounting
-    this.$http.get('/api/users/csrf')
+    this.$http.get('/api/wrapping')
     .then((response) => {
       this.csrf = response.headers['x-csrf-token']
     })
@@ -189,17 +195,16 @@ export default {
     },
 
     wrapData: function () {
-      // if insertion row (last row of table) is not empty, add to tableData before calling API to wrap
-      if (this.newKey !== '' || this.newValue !== '') {
-        // helper function will take care of edge cases
-        this.addKeyValue()
+      // do nothing if the table is empty
+      if (this.tableData.length === 0) {
+        return
       }
 
       this.$http.post('/api/wrapping/wrap', querystring.stringify({
 
-        // wrapttl takes value of user's input
+        // wrapttl takes value of user's input, default at 300s
         wrapttl: this.wrap_ttl,
-        data: this.packData
+        data: JSON.stringify(this.packData())
       }), {
         headers: {'X-CSRF-Token': this.csrf}
       })
@@ -219,8 +224,12 @@ export default {
     },
 
     unWrapToken: function () {
+      // do nothing if there is no input token string
+      if (this.currToken === '') {
+        return
+      }
       this.$http.post('/api/wrapping/unwrap', querystring.stringify({
-        wrappingToken: this.wrappingToken
+        wrappingToken: this.currToken
       }), {
         headers: {'X-CSRF-Token': this.csrf}
       })
@@ -237,7 +246,7 @@ export default {
 
     unpackData: function (rawTable) {
       Object.keys(rawTable).map((index) => this.tableData.push({
-        key: 'index',
+        key: index,
         value: rawTable[index],
         isClicked: false
       }))
@@ -320,7 +329,24 @@ export default {
         }
       }
       return false
+    },
+
+    stringToSeconds: function (str) {
+      if (str.includes('-')) {
+        return -1
+      }
+      var totalSeconds = 0
+      var days = str.match(/(\d+)\s*d/)
+      var hours = str.match(/(\d+)\s*h/)
+      var minutes = str.match(/(\d+)\s*m/)
+      var seconds = str.match(/(\d+)$/) || str.match(/(\d+)\s*s/)
+      if (days) { totalSeconds += parseInt(days[1]) * 86400 }
+      if (hours) { totalSeconds += parseInt(hours[1]) * 3600 }
+      if (minutes) { totalSeconds += parseInt(minutes[1]) * 60 }
+      if (seconds) { totalSeconds += parseInt(seconds[1]) }
+      return totalSeconds
     }
+
   }
 }
 </script>
