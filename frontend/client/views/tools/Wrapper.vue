@@ -8,12 +8,13 @@
             <p class="control is-expanded">
               <input class="input" type="text"
                      placeholder="Paste token here to unwrap"
-                     v-model=currToken
+                     v-model="currToken"
+                     @keyup.enter="unwrapToken()"
               >
             </p>
-            <p class="control is-pulled-right">
+            <p class="control">
             <a class="button is-primary"
-            @click="unWrapToken()"
+            @click="unwrapToken()"
             :disabled="currToken === ''">
             <span>Unwrap</span>
             </a>
@@ -213,7 +214,7 @@ export default {
       })
     },
 
-    unWrapToken: function () {
+    unwrapToken: function () {
       // do nothing if there is no input token string
       if (this.currToken === '') {
         return
