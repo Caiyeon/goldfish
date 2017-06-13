@@ -1,0 +1,12 @@
+#!/bin/bash -xe
+
+exec 2>&1
+
+source "{{pkg.svc_config_path}}/goldfish.sh"
+
+cd "{{pkg.svc_static_path}}"
+goldfish {{~#if cfg.dev_mode}} -dev {{~/if}} \
+    -goldfish_addr="$GOLDFISH_ADDR" {{~#if cfg.cert_file}} -cert_file="{{pkg.svc_data_path}}/$CERT_FILE" {{~/if}} {{~#if cfg.key_file}} -key_file="{{pkg.svc_data_path}}/$KEY_FILE" {{~/if}} \
+    -vault_addr="$VAULT_ADDR" -vault_token="$VAULT_TOKEN" \
+    -approle_path=auth/approle/login -role_id=goldfish \
+    -config_path=secret/goldfish

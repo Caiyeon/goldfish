@@ -1,0 +1,6 @@
+addr = "https://127.0.0.1:8200"
+token = "goldfish"
+dev_mode = "true"
+goldfish_addr = "http://0.0.0.0:8000"
+cert_file = "certificate.crt"
+key_file = "privatekey.pem"

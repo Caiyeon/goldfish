@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ln -sf "{{pkg.path}}"/public "{{pkg.svc_static_path}}"/
