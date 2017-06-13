@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-const versionString = "Goldfish version: v0.3.2"
+const versionString = "Goldfish version: v0.3.3"
 
 var (
 	devMode         bool
