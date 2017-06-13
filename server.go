@@ -26,6 +26,7 @@ var (
 	rolePath        string
 	roleID          string
 	printVersion    bool
+	tlsDisable      bool
 )
 
 func init() {
@@ -36,6 +37,7 @@ func init() {
 	flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
 	flag.StringVar(&certFile, "cert_file", "", "Goldfish server's certificate")
 	flag.StringVar(&keyFile, "key_file", "", "Goldfish certificate's private key file")
+	flag.BoolVar(&tlsDisable, "tls_disable", false, "Disables HTTPS. Be careful when turning this option on!")
 
 	// vault wrapper package config
 	flag.BoolVar(&vault.VaultSkipTLS, "tls_skip_verify", false, "Set to true to not verify vault's certificate (e.g. if it was self-signed")
@@ -92,11 +94,11 @@ func main() {
 			// invalidating previous goldfish instance's cookies is purposeful
 			[]byte(securecookie.GenerateRandomKey(32)),
 			// when devMode is false, cookie will only be sent through https
-			csrf.Secure(!devMode),
+			csrf.Secure(!devMode || tlsDisable),
 		)))
 
 	// add security headers if deployment is production
-	if (!devMode) {
+	if (!devMode || tlsDisable) {
 		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
@@ -161,6 +163,9 @@ func main() {
 	if (devMode) {
 		// start the server in HTTP. DO NOT USE THIS IN PRODUCTION!!
 		e.Logger.Fatal(e.Start("127.0.0.1:8000"))
+	} else if (tlsDisable) {
+		// if https is disabled, listen at given address
+		e.Logger.Fatal(e.Start(goldfishAddress))
 	} else if certFile == "" && keyFile == "" {
 		// if cert and key file arent provided, try let's encrypt
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
