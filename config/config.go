@@ -6,11 +6,11 @@
 package main
 
 import (
-	"log"
 	"io/ioutil"
 	"fmt"
 	"errors"
 	"strings"
+	"net"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -34,14 +34,54 @@ type Vault struct {
 	Config map[string]string
 }
 
-
-
 func LoadConfigFile(path string) (*Config, error) {
 	d, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	return ParseConfig(string(d))
+}
+
+func LoadConfigDev() (*Config, net.Listener, error) {
+	// start a vault core with random localhost port listener
+	ln, addr, rootToken, unsealTokens, err := initLocalVault()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// setup local vault instance with required mounts
+	err = SetupVaultDev(addr, rootToken)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// setup goldfish internal config
+	var result Config
+	result.Listener = &Listener{
+		Type:   "tcp",
+		Config: map[string]string{
+			"address":     "127.0.0.1:8000",
+			"tls_disable": "1",
+		},
+	}
+	result.Vault = &Vault{
+		Type:   "vault",
+		Config: map[string]string{
+			"address":        addr,
+			"runtime_config": "secret/goldfish",
+			"approle_login":  "auth/approle/login",
+			"approle_id":     "goldfish",
+		},
+	}
+
+
+
+	// inform user of unseal tokens
+	for i, _ := range unsealTokens {
+		fmt.Println(unsealTokens[i])
+	}
+
+	return &result, ln, nil
 }
 
 func ParseConfig(d string) (*Config, error) {
@@ -90,21 +130,7 @@ func ParseConfig(d string) (*Config, error) {
 		}
 	}
 
-	log.Println(result.Listener)
-	log.Println(result.Vault)
-	return nil, nil
-}
-
-func main() {
-	go func () {
-		for err := range ch {
-			if err != nil {
-				log.Println("[ERROR]: ", err.Error())
-			}
-		}
-	}()
-
-	log.Println(LoadConfigFile("config.hcl"))
+	return &result, nil
 }
 
 func checkHCLKeys(node ast.Node, valid []string) error {

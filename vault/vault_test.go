@@ -75,7 +75,7 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			ClientToken: result.RootToken,
 			Ui:          ui,
 		}
-
+		fmt.Println(addr)
 		var code int
 
 		// REQUIRED -----------------------------------------------
