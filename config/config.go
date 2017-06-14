@@ -3,7 +3,7 @@
 
 // this file is purposefully built to follow suit of vault's config parsing
 
-package main
+package config
 
 import (
 	"io/ioutil"
@@ -42,17 +42,17 @@ func LoadConfigFile(path string) (*Config, error) {
 	return ParseConfig(string(d))
 }
 
-func LoadConfigDev() (*Config, net.Listener, error) {
+func LoadConfigDev() (*Config, net.Listener, string, []string, error) {
 	// start a vault core with random localhost port listener
-	ln, addr, rootToken, unsealTokens, err := initLocalVault()
+	listener, addr, rootToken, unsealTokens, err := initLocalVault()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", []string{}, err
 	}
 
 	// setup local vault instance with required mounts
 	err = SetupVaultDev(addr, rootToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", []string{}, err
 	}
 
 	// setup goldfish internal config
@@ -74,14 +74,13 @@ func LoadConfigDev() (*Config, net.Listener, error) {
 		},
 	}
 
-
-
-	// inform user of unseal tokens
-	for i, _ := range unsealTokens {
-		fmt.Println(unsealTokens[i])
+	// generate an approle secret ID
+	secretID, err := generateWrappedSecretID(*result.Vault, rootToken)
+	if err != nil {
+		return nil, nil, "", []string{}, err
 	}
 
-	return &result, ln, nil
+	return &result, listener, secretID, unsealTokens, nil
 }
 
 func ParseConfig(d string) (*Config, error) {

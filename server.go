@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"time"
 	"os"
 
+	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
@@ -60,6 +63,24 @@ func main() {
 	// if --version, print and exit success
 	if (printVersion) {
 		log.Println(versionString)
+		os.Exit(0)
+	}
+
+	if (devMode) {
+		_, listener, _, unsealTokens, err := config.LoadConfigDev()
+		if err != nil {
+			panic(err)
+		}
+		defer listener.Close()
+
+		fmt.Printf(initString)
+		fmt.Printf("Your local vault is listening at: %s\n", listener.Addr())
+		fmt.Printf("Your local vault unseal shards are: \n")
+
+		// inform user of unseal tokens
+		for _, t := range unsealTokens {
+			fmt.Println("\t\t" + t)
+		}
 		os.Exit(0)
 	}
 
@@ -173,3 +194,10 @@ func main() {
 		e.Logger.Fatal(e.StartTLS(goldfishAddress, certFile, keyFile))
 	}
 }
+
+const initString = `
+
+
+---------------------------------------------------
+Starting local vault dev instance...
+`

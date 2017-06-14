@@ -1,11 +1,9 @@
-package main
+package config
 
 import (
 	"encoding/base64"
 	"errors"
-	// "fmt"
 	"net"
-	"log"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -22,10 +20,7 @@ import (
 
 	"github.com/hashicorp/vault/http"
 	"github.com/hashicorp/vault/audit"
-	// "github.com/hashicorp/vault/command"
 	"github.com/hashicorp/vault/logical"
-	// "github.com/hashicorp/vault/meta"
-
 	"github.com/hashicorp/vault/physical"
 
 	"github.com/hashicorp/vault/helper/logformat"
@@ -116,23 +111,6 @@ func SetupVaultDev(addr, rootToken string) error {
 	return nil
 }
 
-func main() {
-	go func () {
-		for err := range ch {
-			if err != nil {
-				log.Println("[ERROR]: ", err.Error())
-			}
-		}
-	}()
-	result, listener, err := LoadConfigDev()
-	if err != nil {
-		panic(err)
-	}
-	defer listener.Close()
-
-	log.Println(result)
-}
-
 func initLocalVault() (net.Listener, string, string, []string, error) {
 	// core config
 	logger := logformat.NewVaultLogger(logv1.LevelTrace)
@@ -195,6 +173,33 @@ func initLocalVault() (net.Listener, string, string, []string, error) {
 	// setup http listener for core
 	ln, addr := http.TestServer(nil, core)
 	return ln, addr, result.RootToken, unsealTokens, nil
+}
+
+func generateWrappedSecretID(v Vault, token string) (string, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if address, ok := v.Config["address"]; ok {
+		if err := client.SetAddress(address); err != nil {
+			return "", err
+		}
+	} else {
+		return "", errors.New("Failed to setup vault client")
+	}
+	client.SetToken(token)
+
+	client.SetWrappingLookupFunc(func(operation, path string) string {
+		return "5m"
+	})
+
+	resp, err := client.Logical().Write("auth/approle/role/goldfish/secret-id", map[string]interface{}{})
+	if err != nil {
+		return "", err
+	}
+
+	if resp == nil || resp.WrapInfo == nil || resp.WrapInfo.Token == "" {
+		return "", errors.New("Failed to setup vault client")
+	}
+
+	return resp.WrapInfo.Token, nil
 }
 
 const goldfishPolicyRules = `
