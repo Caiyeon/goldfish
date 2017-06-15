@@ -93,12 +93,12 @@ func main() {
 			// Generate a new encryption key for cookies each launch
 			// invalidating previous goldfish instance's cookies is purposeful
 			[]byte(securecookie.GenerateRandomKey(32)),
-			// when devMode is false or tlsDisable is false, cookie will only be sent through https
-			csrf.Secure(!devMode || !tlsDisable),
+			// when not in devMode and tls is enabled, cookie will only be sent through https
+			csrf.Secure(!devMode && !tlsDisable),
 		)))
 
 	// add security headers if deployment is production
-	if (!devMode || !tlsDisable) {
+	if (!devMode && !tlsDisable) {
 		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
