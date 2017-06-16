@@ -108,7 +108,7 @@ func main() {
 	}
 
 	// if cert and key are not provided, try using let's encrypt
-	if !devMode && certFile == "" && keyFile == "" {
+	if !devMode && !tlsDisable && certFile == "" && keyFile == "" {
 		e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(goldfishAddress)
 		e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
