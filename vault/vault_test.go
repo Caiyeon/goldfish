@@ -193,9 +193,9 @@ func(addr, root, wrappingToken string) {
 	fmt.Println("Started vault core with root token:", root)
 
 	// setup cmd line args
-	VaultSkipTLS = false
+	vaultSkipTLS = false
 	VaultAddress = addr
-	ConfigPath   = "secret/goldfish"
+	configPath   = "secret/goldfish"
 
 	// function will output the token accessor
 	err := StartGoldfishWrapper(

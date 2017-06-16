@@ -19,9 +19,13 @@ var (
 	// for authenticating this web server with vault
 	VaultAddress  = ""
 	vaultToken    = ""
+
 	vaultClient   *api.Client
-	VaultSkipTLS  = false
-	ConfigPath    = ""
+	vaultSkipTLS  = false
+
+	configPath    = ""
+	approleID     = ""
+	approleLogin  = ""
 )
 
 func init() {
@@ -33,7 +37,7 @@ func NewVaultClient() (*api.Client, error) {
 	config := api.DefaultConfig()
 	err := config.ConfigureTLS(
 		&api.TLSConfig{
-			Insecure: VaultSkipTLS,
+			Insecure: vaultSkipTLS,
 		},
 	)
 	if err != nil {
@@ -48,7 +52,7 @@ func NewVaultClient() (*api.Client, error) {
 	return client, nil
 }
 
-func StartGoldfishWrapper(wrappingToken, roleID, rolePath string) error {
+func StartGoldfishWrapper(wrappingToken string) error {
 	if wrappingToken == "" {
 		return errors.New("vault_token cannot be empty")
 	}
@@ -73,9 +77,9 @@ func StartGoldfishWrapper(wrappingToken, roleID, rolePath string) error {
 	}
 
 	// fetch vault token with secret_id
-	resp, err = vaultClient.Logical().Write(rolePath,
+	resp, err = vaultClient.Logical().Write(approleLogin,
 		map[string]interface{}{
-			"role_id":   roleID,
+			"role_id":   approleID,
 			"secret_id": secretID,
 		})
 	if err != nil {
@@ -93,13 +97,46 @@ func StartGoldfishWrapper(wrappingToken, roleID, rolePath string) error {
 	return nil
 }
 
-func LoadConfig(devMode bool, errorChannel chan error) error {
-	if devMode && ConfigPath == "" {
+func ParseDeploymentConfig(cfg map[string]string) error {
+	skip, ok := cfg["tls_skip_verify"]
+	if ok && skip != "0" {
+		if skip == "1" {
+			vaultSkipTLS = true
+		} else {
+			return errors.New("Config: vault.tls_skip_verify can be '1' or '0'")
+		}
+	}
+
+	VaultAddress, ok = cfg["address"]
+	if !ok {
+		return errors.New("Config: vault.address must be set")
+	}
+
+	configPath, ok = cfg["runtime_config"]
+	if !ok {
+		return errors.New("Config: vault.runtime_config must be set")
+	}
+
+	approleID, ok = cfg["approle_id"]
+	if !ok {
+		return errors.New("Config: vault.approle_id must be set")
+	}
+
+	approleLogin, ok = cfg["approle_login"]
+	if !ok {
+		return errors.New("Config: vault.approle_login must be set")
+	}
+
+	return nil
+}
+
+func LoadRuntimeConfig(devMode bool, errorChannel chan error) error {
+	if devMode && configPath == "" {
 		// if devMode is active, unless configPath is set, load a set of simple configs
 		loadDevModeConfig()
 	} else {
 		// load config once to ensure validity
-		if err := loadConfigFromVault(ConfigPath); err != nil {
+		if err := loadConfigFromVault(configPath); err != nil {
 			return err
 		}
 		go loadConfigEvery(time.Minute, errorChannel)
@@ -111,7 +148,7 @@ func LoadConfig(devMode bool, errorChannel chan error) error {
 func loadConfigEvery(interval time.Duration, ch chan error) {
 	for {
 		time.Sleep(interval)
-		ch <- loadConfigFromVault(ConfigPath)
+		ch <- loadConfigFromVault(configPath)
 	}
 }
 

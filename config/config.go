@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"errors"
 	"strings"
-	"net"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -42,17 +41,14 @@ func LoadConfigFile(path string) (*Config, error) {
 	return ParseConfig(string(d))
 }
 
-func LoadConfigDev() (*Config, net.Listener, string, []string, error) {
-	// start a vault core with random localhost port listener
-	listener, addr, rootToken, unsealTokens, err := initLocalVault()
-	if err != nil {
-		return nil, nil, "", []string{}, err
-	}
+func LoadConfigDev() (*Config, chan struct{}, string, error) {
+	// start a vault dev instance
+	shutdownCh := initDevVaultCore()
 
 	// setup local vault instance with required mounts
-	err = SetupVaultDev(addr, rootToken)
+	err := SetupVault("http://127.0.0.1:8200", "goldfish")
 	if err != nil {
-		return nil, nil, "", []string{}, err
+		return nil, nil, "", err
 	}
 
 	// setup goldfish internal config
@@ -67,7 +63,7 @@ func LoadConfigDev() (*Config, net.Listener, string, []string, error) {
 	result.Vault = &Vault{
 		Type:   "vault",
 		Config: map[string]string{
-			"address":        addr,
+			"address":        "http://127.0.0.1:8200",
 			"runtime_config": "secret/goldfish",
 			"approle_login":  "auth/approle/login",
 			"approle_id":     "goldfish",
@@ -75,12 +71,12 @@ func LoadConfigDev() (*Config, net.Listener, string, []string, error) {
 	}
 
 	// generate an approle secret ID
-	secretID, err := generateWrappedSecretID(*result.Vault, rootToken)
+	secretID, err := generateWrappedSecretID(*result.Vault, "goldfish")
 	if err != nil {
-		return nil, nil, "", []string{}, err
+		return nil, nil, "", err
 	}
 
-	return &result, listener, secretID, unsealTokens, nil
+	return &result, shutdownCh, secretID, nil
 }
 
 func ParseConfig(d string) (*Config, error) {

@@ -6,6 +6,8 @@ import (
 	"log"
 	"time"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
@@ -21,39 +23,20 @@ import (
 const versionString = "Goldfish version: v0.3.3"
 
 var (
-	devMode         bool
-	goldfishAddress string
-	certFile        string
-	keyFile         string
-	wrappingToken   string
-	rolePath        string
-	roleID          string
-	printVersion    bool
-	tlsDisable      bool
+	devMode       bool
+	wrappingToken string
+	cfgPath       string
+	cfg           *config.Config
+	devVaultCh    chan struct{}
+	err           error
+	printVersion  bool
 )
 
 func init() {
-	// dev mode flag. This will disable a lot of HTTPS defaults
 	flag.BoolVar(&devMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
-
-	// web server config
-	flag.StringVar(&goldfishAddress, "goldfish_addr", "http://127.0.0.1:8000", "Goldfish server's listening address")
-	flag.StringVar(&certFile, "cert_file", "", "Goldfish server's certificate")
-	flag.StringVar(&keyFile, "key_file", "", "Goldfish certificate's private key file")
-	flag.BoolVar(&tlsDisable, "tls_disable", false, "Disables HTTPS. Be careful when turning this option on!")
-
-	// vault wrapper package config
-	flag.BoolVar(&vault.VaultSkipTLS, "tls_skip_verify", false, "Set to true to not verify vault's certificate (e.g. if it was self-signed")
-	flag.StringVar(&vault.VaultAddress, "vault_addr", "http://127.0.0.1:8200", "Vault address")
-	flag.StringVar(&vault.ConfigPath, "config_path", "", "A generic backend endpoint to store run-time settings. E.g. 'secret/goldfish'")
-
-	// vault wrapper login info
-	flag.StringVar(&rolePath, "approle_path", "auth/approle/login", "The approle mount's login path")
-	flag.StringVar(&roleID, "role_id", "goldfish", "The approle role_id")
-	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
-
-	// if true, print version and exit
 	flag.BoolVar(&printVersion, "version", false, "Display goldfish's version and exit")
+	flag.StringVar(&wrappingToken, "vault_token", "", "The approle secret_id (must be in the form of a wrapping token)")
+	flag.StringVar(&cfgPath, "config", "", "The path of the deployment config HCL file")
 }
 
 func main() {
@@ -61,26 +44,8 @@ func main() {
 	flag.Parse()
 
 	// if --version, print and exit success
-	if (printVersion) {
+	if printVersion {
 		log.Println(versionString)
-		os.Exit(0)
-	}
-
-	if (devMode) {
-		_, listener, _, unsealTokens, err := config.LoadConfigDev()
-		if err != nil {
-			panic(err)
-		}
-		defer listener.Close()
-
-		fmt.Printf(initString)
-		fmt.Printf("Your local vault is listening at: %s\n", listener.Addr())
-		fmt.Printf("Your local vault unseal shards are: \n")
-
-		// inform user of unseal tokens
-		for _, t := range unsealTokens {
-			fmt.Println("\t\t" + t)
-		}
 		os.Exit(0)
 	}
 
@@ -94,13 +59,36 @@ func main() {
 		}
 	}()
 
-	// if API wrapper can't start, panic is justified
-	if err := vault.StartGoldfishWrapper(wrappingToken, roleID, rolePath); err != nil {
+	// if dev mode, run a localhost dev vault instance
+	if devMode {
+		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
+	} else {
+		cfg, err = config.LoadConfigFile(cfgPath)
+	}
+	if err != nil {
 		panic(err)
 	}
-	// load config from vault, and start goroutines for token renewal & config hot reload
-	if err := vault.LoadConfig(devMode, errorChannel); err != nil {
+	fmt.Printf(initString)
+
+	// if API wrapper can't start, panic is justified
+	if err := vault.ParseDeploymentConfig(cfg.Vault.Config); err != nil {
 		panic(err)
+	}
+	if err := vault.StartGoldfishWrapper(wrappingToken); err != nil {
+		panic(err)
+	}
+	if err := vault.LoadRuntimeConfig(devMode, errorChannel); err != nil {
+		panic(err)
+	}
+
+	// if dev or tls_disable, set https to false
+	https := !devMode
+	if tlsDisable, ok := cfg.Listener.Config["tls_disable"]; ok && tlsDisable != "0" {
+		if tlsDisable == "1" {
+			https = false
+		} else {
+			panic("Config: listener.tls_disable can be either '0' or '1'")
+		}
 	}
 
 	// instantiate echo web server
@@ -115,11 +103,11 @@ func main() {
 			// invalidating previous goldfish instance's cookies is purposeful
 			[]byte(securecookie.GenerateRandomKey(32)),
 			// when devMode is false, cookie will only be sent through https
-			csrf.Secure(!devMode || tlsDisable),
+			csrf.Secure(https),
 		)))
 
-	// add security headers if deployment is production
-	if (!devMode || tlsDisable) {
+	// add security headers if deployment is in https mode
+	if https {
 		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
@@ -128,8 +116,25 @@ func main() {
 		}))
 	}
 
+	goldfishAddress, ok := cfg.Listener.Config["address"]
+	if !ok {
+		if devMode {
+			goldfishAddress = "http://127.0.0.1:8000"
+		} else {
+			panic("Config: listener.Address cannot be empty")
+		}
+	}
+	certFile, ok := cfg.Listener.Config["tls_cert_file"]
+	if !ok {
+		certFile = ""
+	}
+	keyFile, ok := cfg.Listener.Config["tls_key_file"]
+	if !ok {
+		keyFile = ""
+	}
+
 	// if cert and key are not provided, try using let's encrypt
-	if !devMode && certFile == "" && keyFile == "" {
+	if https && certFile == "" && keyFile == "" {
 		e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(goldfishAddress)
 		e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
@@ -180,18 +185,34 @@ func main() {
 	e.POST("/api/wrapping/wrap", handlers.WrapHandler())
 	e.POST("/api/wrapping/unwrap", handlers.UnwrapHandler())
 
+	// upon sigint, give vault dev core time to shut down
+	if (devMode) {
+		shutdownCh := make(chan os.Signal, 4)
+		signal.Notify(shutdownCh, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<- shutdownCh
+			close(devVaultCh)
+			time.Sleep(time.Second)
+			os.Exit(0)
+		}()
+	}
+
 	// serving both static folder and API
 	if (devMode) {
 		// start the server in HTTP. DO NOT USE THIS IN PRODUCTION!!
 		e.Logger.Fatal(e.Start("127.0.0.1:8000"))
-	} else if (tlsDisable) {
+	} else if (!https) {
 		// if https is disabled, listen at given address
 		e.Logger.Fatal(e.Start(goldfishAddress))
 	} else if certFile == "" && keyFile == "" {
 		// if cert and key file arent provided, try let's encrypt
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
 	} else {
-		e.Logger.Fatal(e.StartTLS(goldfishAddress, certFile, keyFile))
+		e.Logger.Fatal(e.StartTLS(
+			goldfishAddress,
+			certFile,
+			keyFile,
+		))
 	}
 }
 
@@ -200,4 +221,6 @@ const initString = `
 
 ---------------------------------------------------
 Starting local vault dev instance...
+Your unseal token and root token can be found above
+
 `
