@@ -1,0 +1,16 @@
+version: '2'
+services:
+  goldfish:
+    image: goldfish
+    environment:
+      - GOLDFISH_TOKEN
+      - VAULT_ADDR
+    command: /usr/local/bin/goldfish -vault_addr=$VAULT_ADDR -vault_token=$GOLDFISH_TOKEN -goldfish_addr=:8000 -config_path secret/goldfish -tls_disable
+  web:
+    image: goldfish:nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - goldfish
+    links:
+      - goldfish

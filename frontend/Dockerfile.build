@@ -1,0 +1,15 @@
+FROM node:8
+MAINTAINER devops@demandbase.com
+
+WORKDIR /app
+
+# fetch goldfish
+COPY . /app
+
+RUN npm install -g cross-env && \
+    npm install
+
+RUN mkdir -p /app/assets
+
+ENTRYPOINT ["npm"]
+CMD ["run"]
