@@ -91,67 +91,33 @@ Seriously, the instructions fit on one screen!
 
 <!--
 -->
-## Developing or testing goldfish
+## Developing Goldfish
 
 #### Running locally
-You'll need go (v1.8), npm (>=3), and nodejs (>=7).
+You'll need go (v1.8), npm (v3), nodejs (v7), and jq (`sudo apt-get install jq`)
 
 ```bash
 # hashicorp vault ui
 
-# download goldfish first
+# clone goldfish
 go get github.com/caiyeon/goldfish
 cd $GOPATH/src/github.com/caiyeon/goldfish
 
-# you'll need a vault instance. Force a root token for consistency
-vault server -dev -dev-root-token-id=goldfish &
-export VAULT_ADDR=http://127.0.0.1:8200
-export VAULT_TOKEN=goldfish
+# running goldfish server in -dev will spin up a local vault instance for you
+go run server.go -dev &
 
-# this transit key is needed to encrypt/decrypt user credentials
-vault mount transit
-vault write -f transit/keys/goldfish
-
-# see vagrant/policies/goldfish.hcl for the required policy.
-# transit key is not changable, but the secret path containing run-time settings can be changed
-vault policy-write goldfish vagrant/policies/goldfish.hcl
-
-# goldfish launches strictly from approle, because passing a token that humans can see would be silly
-vault auth-enable approle
-vault write auth/approle/role/goldfish role_name=goldfish secret_id_ttl=5m token_ttl=480h \
-token_max_ttl=720h secret_id_num_uses=1 policies=default,goldfish
-vault write auth/approle/role/goldfish/role-id role_id=goldfish
-
-# goldfish reads run-time config from a vault secret
-vault write secret/goldfish DefaultSecretPath="secret/" TransitBackend="transit" \
-UserTransitKey="usertransit" ServerTransitKey="goldfish" BulletinPath="secret/bulletins/"
-
-# jq is a very useful tool for parsing json on the fly
-sudo apt-get install jq
-
-# build the backend server
-go install github.com/caiyeon/goldfish
-
-# run backend server with secret_id generated from approle
-# -dev arg skips reading settings from vault and uses a default set
-goldfish -dev -vault_token $(vault write -f -wrap-ttl=20m \
--format=json auth/approle/role/goldfish/secret-id \
-| jq -r .wrap_info.token) -config_path=secret/goldfish
-
-# run frontend in dev mode (with hot reload)
+# running frontend in dev mode will allow for hot-reload of frontend files
 cd frontend
 sudo npm install -g cross-env
 npm install
 npm run dev
 
 # a browser window/tab should open, pointing directly to goldfish
-
-# "-dev" disables many security standards. DO NOT USE -dev IN PRODUCTION!
 ```
 
 
 #### Using a VM
-While go and npm works decently on Windows, there is a one-line solution to spinning up a VM which will contain a dev vault instance and goldfish with hot-reload.
+A vagrantfile is available as well
 
 You'll need [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/). On Windows, a restart after installation is needed.
 
