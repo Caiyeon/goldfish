@@ -5,3 +5,5 @@ public
 public.*
 **/.DS_STORE
 **/.vagrant
+goldfish-linux-amd64
+goldfish-windows-amd64.exe
