@@ -18,14 +18,11 @@ type AuthInfo struct {
 var (
 	// for authenticating this web server with vault
 	VaultAddress  = ""
+	VaultSkipTLS  = false
+
 	vaultToken    = ""
-
 	vaultClient   *api.Client
-	vaultSkipTLS  = false
-
-	configPath    = ""
-	approleID     = ""
-	approleLogin  = ""
+	errorChannel  chan error
 )
 
 func init() {
@@ -37,7 +34,7 @@ func NewVaultClient() (*api.Client, error) {
 	config := api.DefaultConfig()
 	err := config.ConfigureTLS(
 		&api.TLSConfig{
-			Insecure: vaultSkipTLS,
+			Insecure: VaultSkipTLS,
 		},
 	)
 	if err != nil {
@@ -52,9 +49,9 @@ func NewVaultClient() (*api.Client, error) {
 	return client, nil
 }
 
-func StartGoldfishWrapper(wrappingToken string) error {
+func StartGoldfishWrapper(wrappingToken, login, id string) error {
 	if wrappingToken == "" {
-		return errors.New("vault_token cannot be empty")
+		return errors.New("Token must be provided in non-dev mode")
 	}
 
 	client, err := NewVaultClient()
@@ -69,6 +66,9 @@ func StartGoldfishWrapper(wrappingToken string) error {
 	if err != nil {
 		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
 	}
+	if resp == nil {
+		return errors.New("Failed to unwrap provided token, revoke it if possible")
+	}
 
 	// verify that a secret_id was wrapped
 	secretID, ok := resp.Data["secret_id"].(string)
@@ -77,9 +77,9 @@ func StartGoldfishWrapper(wrappingToken string) error {
 	}
 
 	// fetch vault token with secret_id
-	resp, err = vaultClient.Logical().Write(approleLogin,
+	resp, err = vaultClient.Logical().Write(login,
 		map[string]interface{}{
-			"role_id":   approleID,
+			"role_id":   id,
 			"secret_id": secretID,
 		})
 	if err != nil {
@@ -89,72 +89,43 @@ func StartGoldfishWrapper(wrappingToken string) error {
 	// verify that the secret_id is valid
 	vaultToken = resp.Auth.ClientToken
 	vaultClient.SetToken(resp.Auth.ClientToken)
-	if _, err = vaultClient.Auth().Token().LookupSelf(); err != nil {
+	if _, err := vaultClient.Auth().Token().LookupSelf(); err != nil {
 		return err
 	}
+
+	// errors that are not catastrophic can be logged here
+	go func() {
+		for err := range errorChannel {
+			if err != nil {
+				log.Println("[ERROR]: ", err.Error())
+			}
+		}
+	}()
 
 	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
 	return nil
 }
 
-func ParseDeploymentConfig(cfg map[string]string) error {
-	skip, ok := cfg["tls_skip_verify"]
-	if ok && skip != "0" {
-		if skip == "1" {
-			vaultSkipTLS = true
-		} else {
-			return errors.New("Config: vault.tls_skip_verify can be '1' or '0'")
-		}
+func LoadRuntimeConfig(configPath string) error {
+	// load config once to ensure validity
+	if err := loadConfigFromVault(configPath); err != nil {
+		return err
 	}
-
-	VaultAddress, ok = cfg["address"]
-	if !ok {
-		return errors.New("Config: vault.address must be set")
-	}
-
-	configPath, ok = cfg["runtime_config"]
-	if !ok {
-		return errors.New("Config: vault.runtime_config must be set")
-	}
-
-	approleID, ok = cfg["approle_id"]
-	if !ok {
-		return errors.New("Config: vault.approle_id must be set")
-	}
-
-	approleLogin, ok = cfg["approle_login"]
-	if !ok {
-		return errors.New("Config: vault.approle_login must be set")
-	}
-
+	go loadConfigEvery(time.Minute, configPath)
+	go renewServerTokenEvery(time.Hour)
 	return nil
 }
 
-func LoadRuntimeConfig(devMode bool, errorChannel chan error) error {
-	if devMode && configPath == "" {
-		// if devMode is active, unless configPath is set, load a set of simple configs
-		loadDevModeConfig()
-	} else {
-		// load config once to ensure validity
-		if err := loadConfigFromVault(configPath); err != nil {
-			return err
-		}
-		go loadConfigEvery(time.Minute, errorChannel)
-	}
-	go renewServerTokenEvery(time.Hour, errorChannel)
-	return nil
-}
-
-func loadConfigEvery(interval time.Duration, ch chan error) {
+func loadConfigEvery(interval time.Duration, configPath string) {
 	for {
 		time.Sleep(interval)
-		ch <- loadConfigFromVault(configPath)
+		errorChannel <- loadConfigFromVault(configPath)
 	}
 }
 
-func renewServerTokenEvery(interval time.Duration, ch chan error) {
+func renewServerTokenEvery(interval time.Duration) {
 	for {
 		time.Sleep(interval)
-		ch <- renewServerToken()
+		errorChannel <- renewServerToken()
 	}
 }

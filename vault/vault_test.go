@@ -193,21 +193,20 @@ func(addr, root, wrappingToken string) {
 	fmt.Println("Started vault core with root token:", root)
 
 	// setup cmd line args
-	vaultSkipTLS = false
 	VaultAddress = addr
-	configPath   = "secret/goldfish"
+	VaultSkipTLS = false
 
 	// function will output the token accessor
 	err := StartGoldfishWrapper(
 		wrappingToken,
-		"goldfish",
 		"auth/approle/login",
+		"goldfish",
 	)
 	So(err, ShouldBeNil)
 
 	// test loading config from secret path
 	errorChannel := make(chan error)
-	err = LoadConfig(true, errorChannel)
+	err = LoadRuntimeConfig("secret/goldfish")
 	So(err, ShouldBeNil)
 	go func() {
 		for err := range errorChannel {

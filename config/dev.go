@@ -177,17 +177,12 @@ func initDevVaultCore() chan struct{} {
 	return shutdownCh
 }
 
-func generateWrappedSecretID(v Vault, token string) (string, error) {
+func generateWrappedSecretID(v VaultConfig, token string) (string, error) {
 	client, err := api.NewClient(api.DefaultConfig())
-	if address, ok := v.Config["address"]; ok {
-		if err := client.SetAddress(address); err != nil {
-			return "", err
-		}
-	} else {
-		return "", errors.New("Failed to setup vault client")
+	if err := client.SetAddress(v.Address); err != nil {
+		return "", err
 	}
 	client.SetToken(token)
-
 	client.SetWrappingLookupFunc(func(operation, path string) string {
 		return "5m"
 	})

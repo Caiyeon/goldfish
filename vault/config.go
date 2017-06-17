@@ -100,13 +100,3 @@ func loadConfigFromVault(path string) error {
 	log.Println("Goldfish config reloaded")
 	return nil
 }
-
-func loadDevModeConfig() {
-	config = Config {
-		ServerTransitKey  : "goldfish",
-		UserTransitKey    : "usertransit",
-		TransitBackend    : "transit",
-		DefaultSecretPath : "secret/",
-		BulletinPath      : "secret/bulletins/",
-	}
-}

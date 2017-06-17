@@ -17,10 +17,7 @@ RUN npm run build
 
 EXPOSE 8000
 
-ENV VAULT_ADDR http://127.0.0.1:8200
-ENV VAULT_TOKEN goldfish
-
 WORKDIR $GOPATH/src/github.com/caiyeon/goldfish
 RUN mv server /usr/local/goldfish
 
-CMD "/usr/local/goldfish" "-dev" "-vault_addr=${VAULT_ADDR}" "-vault_token=${VAULT_TOKEN}"
+CMD "/usr/local/goldfish" "-dev"

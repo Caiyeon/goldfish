@@ -1,8 +1,3 @@
-// credits mainly go to contributors of
-// github.com/hashicorp/vault/command/server/config.go
-
-// this file is purposefully built to follow suit of vault's config parsing
-
 package config
 
 import (
@@ -17,20 +12,26 @@ import (
 
 var ch = make(chan error)
 
-// Config is the configuration for the goldfish server
 type Config struct {
-	Listener *Listener `hcl:"-"`
-	Vault    *Vault    `hcl:"-"`
+	Listener *ListenerConfig `hcl:"-"`
+	Vault    *VaultConfig    `hcl:"-"`
 }
 
-type Listener struct {
-	Type   string
-	Config map[string]string
+type ListenerConfig struct {
+	Type          string
+	Address       string
+	Tls_disable   bool
+	Tls_cert_file string
+	Tls_key_file  string
 }
 
-type Vault struct {
-	Type   string
-	Config map[string]string
+type VaultConfig struct {
+	Type            string
+	Address         string
+	Tls_skip_verify bool
+	Runtime_config  string
+	Approle_login   string
+	Approle_id      string
 }
 
 func LoadConfigFile(path string) (*Config, error) {
@@ -52,21 +53,18 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 	}
 
 	// setup goldfish internal config
-	var result Config
-	result.Listener = &Listener{
-		Type:   "tcp",
-		Config: map[string]string{
-			"address":     "127.0.0.1:8000",
-			"tls_disable": "1",
+	result := Config{
+		Listener: &ListenerConfig{
+			Type:        "tcp",
+			Address:     "127.0.0.1:8000",
+			Tls_disable: true,
 		},
-	}
-	result.Vault = &Vault{
-		Type:   "vault",
-		Config: map[string]string{
-			"address":        "http://127.0.0.1:8200",
-			"runtime_config": "secret/goldfish",
-			"approle_login":  "auth/approle/login",
-			"approle_id":     "goldfish",
+		Vault: &VaultConfig{
+			Type:           "vault",
+			Address:        "http://127.0.0.1:8200",
+			Runtime_config: "secret/goldfish",
+			Approle_login:  "auth/approle/login",
+			Approle_id:     "goldfish",
 		},
 	}
 
@@ -86,7 +84,10 @@ func ParseConfig(d string) (*Config, error) {
 		return nil, err
 	}
 
-	var result Config
+	result := Config{
+		Listener: &ListenerConfig{},
+		Vault:    &VaultConfig{},
+	}
 	if err := hcl.DecodeObject(&result, obj); err != nil {
 		return nil, err
 	}
@@ -168,18 +169,38 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		"tls_key_file",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
-		return fmt.Errorf("listeners.%s: %s", key, err.Error())
+		return fmt.Errorf("listener.%s: %s", key, err.Error())
 	}
 
 	var m map[string]string
 	if err := hcl.DecodeObject(&m, listener.Val); err != nil {
-		return fmt.Errorf("listeners.%s: %s", key, err.Error())
+		return fmt.Errorf("listener.%s: %s", key, err.Error())
 	}
 
-	result.Listener = &Listener{
-		Type:   strings.ToLower(key),
-		Config: m,
+	// check and enforce field values
+	result.Listener.Type = strings.ToLower(key)
+
+	if address, ok := m["address"]; !ok || address == "" {
+		return fmt.Errorf("listener.%s: address is required", key)
+	} else {
+		result.Listener.Address = address
 	}
+
+	if certFile, ok := m["tls_cert_file"]; ok {
+		result.Listener.Tls_cert_file = certFile
+	}
+	if keyFile, ok := m["tls_key_file"]; ok {
+		result.Listener.Tls_key_file = keyFile
+	}
+
+	if tlsDisable, ok := m["tls_disable"]; ok {
+		if tlsDisable == "1" {
+			result.Listener.Tls_disable = true
+		} else if tlsDisable != "0" {
+			return fmt.Errorf("listener.%s: tls_disable can be 0 or 1", key)
+		}
+	}
+
 	return nil
 }
 
@@ -205,9 +226,40 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		return fmt.Errorf("vault.%s: %s", key, err.Error())
 	}
 
-	result.Vault = &Vault{
-		Type:   strings.ToLower(key),
-		Config: m,
+	// check and enforce field values, possibly writing default values
+	result.Vault.Type = strings.ToLower(key)
+
+	if address, ok := m["address"]; !ok || address == "" {
+		return fmt.Errorf("vault.%s: address is required", key)
+	} else {
+		result.Vault.Address = address
 	}
+
+	if tlsSkip, ok := m["tls_skip_verify"]; ok {
+		if tlsSkip == "1" {
+			result.Vault.Tls_skip_verify = true
+		} else if tlsSkip != "0" {
+			return fmt.Errorf("listener.%s: tls_disable can be 0 or 1", key)
+		}
+	}
+
+	if runtimeConfig, ok := m["runtime_config"]; ok {
+		result.Vault.Runtime_config = runtimeConfig
+	} else {
+		result.Vault.Runtime_config = "secret/goldfish"
+	}
+
+	if login, ok := m["approle_login"]; ok {
+		result.Vault.Approle_login = login
+	} else {
+		result.Vault.Approle_login = "auth/approle/login"
+	}
+
+	if id, ok := m["approle_id"]; ok {
+		result.Vault.Approle_id = id
+	} else {
+		result.Vault.Approle_id = "goldfish"
+	}
+
 	return nil
 }
