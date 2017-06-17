@@ -35,6 +35,9 @@ type VaultConfig struct {
 }
 
 func LoadConfigFile(path string) (*Config, error) {
+	if path == "" {
+		return nil, errors.New("[ERROR]: Config file not specified")
+	}
 	d, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
