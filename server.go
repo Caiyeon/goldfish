@@ -160,6 +160,7 @@ func main() {
 
 	e.GET("/api/secrets", handlers.GetSecrets())
 	e.POST("/api/secrets", handlers.PostSecrets())
+	e.DELETE("/api/secrets", handlers.DeleteSecrets())
 
 	e.GET("/api/bulletins", handlers.GetBulletins())
 

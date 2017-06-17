@@ -57,3 +57,11 @@ func (auth AuthInfo) WriteSecret(path string, raw string) (interface{}, error) {
 
 	return client.Logical().Write(path, data)
 }
+
+func (auth AuthInfo) DeleteSecret(path string) (interface{}, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	return client.Logical().Delete(path)
+}

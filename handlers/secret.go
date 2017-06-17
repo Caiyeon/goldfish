@@ -95,3 +95,29 @@ func PostSecrets() echo.HandlerFunc {
 		})
 	}
 }
+
+func DeleteSecrets() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var auth = &vault.AuthInfo{}
+		defer auth.Clear()
+
+		// fetch auth from cookie
+		if err := getSession(c, auth); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Please login first",
+			})
+		}
+		if err := auth.DecryptAuth(); err != nil {
+			return parseError(c, err)
+		}
+
+		_, err := auth.DeleteSecret(c.QueryParam("path"))
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": "success",
+		})
+	}
+}
