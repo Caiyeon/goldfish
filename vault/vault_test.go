@@ -279,6 +279,17 @@ func(addr, root, wrappingToken string) {
 			So(secrets[0], ShouldEqual, "testbulletin")
 		})
 
+		Convey("Deleting secrets should work", func() {
+			_, err := rootAuth.DeleteSecret("secret/bulletins/testbulletin")
+			So(err, ShouldBeNil)
+
+			Convey("Deleted secrets should not be readable anymore", func() {
+				resp, err := rootAuth.ReadSecret("secret/bulletins/testbulletin")
+				So(err, ShouldNotBeNil)
+				So(resp, ShouldBeNil)
+			})
+		})
+
 		Convey("Wrapping arbitrary data", func() {
 			wrapToken, err := rootAuth.WrapData("300s",
 				"{ \"abc\": \"def\", \"ghi\": \"jkl\" }",
