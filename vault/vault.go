@@ -71,9 +71,17 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 	}
 
 	// verify that a secret_id was wrapped
-	secretID, ok := resp.Data["secret_id"].(string)
-	if !ok {
-		return errors.New("Failed to unwrap provided token, revoke it if possible")
+	var secretID string
+	err = errors.New("Failed to unwrap provided token, revoke it if possible")
+	if resp != nil {
+		if sid, ok := resp.Data["secret_id"]; ok {
+			if secretID, ok = sid.(string); ok {
+				err = nil
+			}
+		}
+	}
+	if err != nil {
+		return err
 	}
 
 	// fetch vault token with secret_id
