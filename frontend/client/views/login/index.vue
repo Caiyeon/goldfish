@@ -204,8 +204,6 @@ export default {
     this.fetchCSRF()
     // fetch vault cluster details
     this.getHealth()
-
-
     // check if user is logged on
     var raw = window.localStorage.getItem('session')
     if (raw) {
