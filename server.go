@@ -90,6 +90,7 @@ func main() {
 
 	// instantiate echo web server
 	e := echo.New()
+	e.HideBanner = true
 
 	// setup middleware
 	e.Use(middleware.Logger())
