@@ -1,3 +1,4 @@
 docker/* linguist-documentation
 vagrant/* linguist-documentation
 frontend/index.html linguist-documentation
+vendor/* linguist-vendored

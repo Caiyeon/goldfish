@@ -1,14 +1,23 @@
 dependencies:
   override:
-    - go get -t -d -v ./...
+    # force clean cache
+    - rm -rf /home/ubuntu/.go_workspace/src
+    # make parent folder (since it shouldn't exist now)
+    - mkdir -p /home/ubuntu/.go_workspace/src/github.com/caiyeon/goldfish
+    # copy cloned folder into $GOPATH so vendor folder will work
+    - cd .. && mv -f goldfish /home/ubuntu/.go_workspace/src/github.com/caiyeon
 
 test:
   override:
     - ? |
+        cd /home/ubuntu/.go_workspace/src/github.com/caiyeon/goldfish
+
         # compile server binary and run acceptance tests
         if [ "$CIRCLE_NODE_INDEX" -eq "0" ]; then
           go build -v -a github.com/caiyeon/goldfish
-          go test -v ./...
+          ./goldfish --version
+          echo $PWD
+          go test -v $(go list ./... | grep -v /vendor/)
 
         # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
