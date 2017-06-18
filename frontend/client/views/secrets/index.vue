@@ -43,6 +43,12 @@
               Edit Secret
             </a>
 
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-danger is-small is-marginless"
+              v-on:click="deleteSecret(currentPath)">
+              Delete Secret
+            </a>
+
             <a v-if="editMode === true && currentPathType === 'Secret'"
               class="button is-success is-small is-marginless"
               v-on:click="saveEdit">
@@ -299,6 +305,7 @@ export default {
       this.newKey = ''
       this.newValue = ''
       this.editMode = false
+      this.confirmDelete = false
 
       this.$http.get('/api/secrets?path=' + path).then((response) => {
         this.tableData = []
@@ -455,7 +462,47 @@ export default {
         type: 'warning',
         duration: 10000
       })
+    },
+
+    deleteSecret: function () {
+      // check if current path is valid
+      if (!this.currentPath.includes('/')) {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Cannot delete a mount',
+          type: 'warning'
+        })
+        return
+      }
+
+      // recursive deletion may come later, but not now
+      if (this.currentPath.endsWith('/')) {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Cannot delete a path',
+          type: 'warning'
+        })
+        return
+      }
+
+      // request deletion of secret
+      this.$http.delete('/api/secrets?path=' + this.currentPath, {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
+        this.$notify({
+          title: 'Success!',
+          message: 'Secret deleted',
+          type: 'success'
+        })
+        this.editMode = false
+        this.tableData = []
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
     }
+
   }
 }
 </script>
