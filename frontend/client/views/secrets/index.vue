@@ -472,7 +472,6 @@ export default {
 
     deleteSecret: function (path) {
       // check if current path is valid
-
       if (!path.includes('/')) {
         this.$notify({
           title: 'Invalid',
@@ -499,17 +498,10 @@ export default {
       .then((response) => {
         this.$notify({
           title: 'Success!',
-          message: 'Secret deleted',
+          message: 'Secret deleted!',
           type: 'success'
         })
         this.editMode = false
-        if (path === this.currentPath || path === undefined) {
-          // return to parent view and refresh table data
-          this.changePath(this.currentPath.substring(0, this.currentPath.lastIndexOf('/') + 1))
-        } else {
-          // refresh table data if deleting from list
-          this.changePath(this.currentPath)
-        }
       })
       .catch((error) => {
         this.$onError(error)
