@@ -10,6 +10,7 @@ echo 'Building vault...'
 export GOROOT=/usr/local/go
 export GOPATH=/home/vagrant/go
 export PATH=$PATH:$GOPATH/bin:$GOROOT/bin
+go get github.com/hashicorp/vault
 cd /home/vagrant/go/src/github.com/hashicorp/vault
 make bootstrap
 make dev
