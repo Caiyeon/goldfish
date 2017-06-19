@@ -125,6 +125,12 @@
                       <i class="fa fa-times-circle"></i>
                     </span>
                     </a>
+
+                    <a v-if="currentPathType === 'Path' && entry.type === 'Secret'" @click="deleteSecret(currentPath + entry.path)">
+                    <span class="icon">
+                      <i class="fa fa-trash-o"></i>
+                    </span>
+                    </a>
                   </td>
                 </tr>
 
@@ -464,9 +470,10 @@ export default {
       })
     },
 
-    deleteSecret: function () {
+    deleteSecret: function (path) {
       // check if current path is valid
-      if (!this.currentPath.includes('/')) {
+
+      if (!path.includes('/')) {
         this.$notify({
           title: 'Invalid',
           message: 'Cannot delete a mount',
@@ -476,7 +483,7 @@ export default {
       }
 
       // recursive deletion may come later, but not now
-      if (this.currentPath.endsWith('/')) {
+      if (path.endsWith('/')) {
         this.$notify({
           title: 'Invalid',
           message: 'Cannot delete a path',
@@ -486,7 +493,7 @@ export default {
       }
 
       // request deletion of secret
-      this.$http.delete('/api/secrets?path=' + this.currentPath, {
+      this.$http.delete('/api/secrets?path=' + path, {
         headers: {'X-CSRF-Token': this.csrf}
       })
       .then((response) => {
@@ -496,7 +503,13 @@ export default {
           type: 'success'
         })
         this.editMode = false
-        this.tableData = []
+        if (path === this.currentPath || path === undefined) {
+          // return to parent view and refresh table data
+          this.changePath(this.currentPath.substring(0, this.currentPath.lastIndexOf('/') + 1))
+        } else {
+          // refresh table data if deleting from list
+          this.changePath(this.currentPath)
+        }
       })
       .catch((error) => {
         this.$onError(error)
@@ -514,6 +527,10 @@ export default {
 
   .control .button {
     margin: inherit;
+  }
+
+  .fa-trash-o {
+    color: red;
   }
 
   .fa-times-circle {
