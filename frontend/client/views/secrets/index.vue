@@ -502,6 +502,18 @@ export default {
           type: 'success'
         })
         this.editMode = false
+
+        if (this.currentPath === path) {
+          // if deleting current secret, wipe table data
+          this.tableData = []
+        } else {
+          // if deleting a row, find it and remove it
+          for (var i = 0; i < this.tableData.length; i++) {
+            if (this.currentPath + this.tableData[i].path === path) {
+              this.deleteItem(i)
+            }
+          }
+        }
       })
       .catch((error) => {
         this.$onError(error)
