@@ -25,6 +25,8 @@ test:
           nvm install v7.10.0
           sudo -E env "PATH=$PATH" npm install -g cross-env
           npm link webpack
+          rm -rf node_modules
+          npm cache clean
           npm install
           npm run build
         fi
