@@ -11,8 +11,8 @@ listener "tcp" {
 	tls_key_file  = ""
 
 	# [Optional] [Default: 0] [Allowed values: 0, 1]
-	# Set this to 1 to disable HTTPS for goldfish
-	# Don't set this unless you know what you're doing
+	# Set this to 1 to disable HTTPS for goldfish listener
+	# Leave this empty or equal to 0 unless you know exactly what you're doing
 	tls_disable   = 1
 }
 
