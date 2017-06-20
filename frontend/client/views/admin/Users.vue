@@ -101,7 +101,7 @@
                 <div class="level-right">
                   <div class="level-item">
                     <div class="field has-addons">
-                      <p class="control">
+                      <p class="control has-icons-right">
                         <span class="select">
                           <select v-model="search.regex">
                           <option v-bind:value="false">Substring</option>

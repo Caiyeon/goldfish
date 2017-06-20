@@ -7,7 +7,7 @@
           <div class="field">
           <!-- <label class="label">Search by change ID:</label> -->
             <div class="field has-addons">
-              <p v-if="request === null" class="control">
+              <p v-if="request === null" class="control has-icons-right">
                 <span class="select">
                   <select v-model="searchType">
                     <option v-bind:value="'changeid'">Change ID</option>

@@ -12,7 +12,7 @@
           <!-- Role (if user can list them) -->
           <div v-if="availableRoles && availableRoles.length > 0" class="field">
             <label class="label">Load preset from role</label>
-            <div class="control">
+            <div class="control has-icons-right">
               <span class="select">
                 <select v-model="selectedRole" @change="loadRoleDetails(selectedRole)">
                   <option v-for="role in availableRoles">
