@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"net/url"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -56,6 +57,8 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 	}
 
 	// setup goldfish internal config
+	u, _ := url.Parse("http://127.0.0.1:8200")
+
 	result := Config{
 		Listener: &ListenerConfig{
 			Type:        "tcp",
@@ -64,7 +67,7 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 		},
 		Vault: &VaultConfig{
 			Type:           "vault",
-			Address:        "http://127.0.0.1:8200",
+			Address:        u.String(),
 			Runtime_config: "secret/goldfish",
 			Approle_login:  "auth/approle/login",
 			Approle_id:     "goldfish",
@@ -235,7 +238,11 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 	if address, ok := m["address"]; !ok || address == "" {
 		return fmt.Errorf("vault.%s: address is required", key)
 	} else {
-		result.Vault.Address = address
+		if url, err := url.Parse(address); err != nil {
+			return fmt.Errorf("failed to set address: %v", err)
+		} else {
+			result.Vault.Address = url.String()
+		}
 	}
 
 	if tlsSkip, ok := m["tls_skip_verify"]; ok {
