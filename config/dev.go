@@ -121,6 +121,7 @@ func SetupVault(addr, rootToken string) error {
 	}
 
 	if _, err := client.Logical().Write("secret/bulletins/bulletinb", map[string]interface{}{
+
 		"message": "this is sample b",
 		"title":   "sampleBulletinB",
 		"type":    "is-success",
