@@ -1,8 +1,8 @@
-#Docker
+# Docker
 
-##Included Dockerfiles
+## Included Dockerfiles
 
-###Dockerfile
+### Dockerfile
 Quickly starts up a Vault and Goldfish in dev mode on the same machine.
 
 To launch:
@@ -16,7 +16,7 @@ docker run --name goldfish -p 8000:8000 goldfish
 # Open up http://localhost:8000 in a browser
 ```
 
-###Dockerfile.backend
+### Dockerfile.backend
 Builds a container to run the Goldfish backend, designed to run within a docker-compose stack.
 
 - Downloads versioned binary from [Goldfish Github releases](https://github.com/Caiyeon/goldfish/releases)
@@ -29,7 +29,7 @@ To build:
 docker build -F Dockerfile.backend -t goldfish:backend
 ```
 
-###Dockerfile.frontend
+### Dockerfile.frontend
 Builds a container to run the Goldfish frontend, designed to run within a docker-compose stack.
 
 - Uses [official nginx container](https://hub.docker.com/_/nginx/)
@@ -42,7 +42,7 @@ To build
 docker build -F Dockerfile.frontend -t goldfish:backend
 ```
 
-##Using docker-compose
+## Using docker-compose
 The `Dockerfile.backend` and `Dockerfile.frontend` containers are meant to be brought up in a [docker-compose](https://github.com/docker/compose) stack locally.
 
 Stack includes:
