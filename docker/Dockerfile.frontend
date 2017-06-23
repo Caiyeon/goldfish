@@ -1,0 +1,23 @@
+FROM nginx:1.13-alpine
+
+# Version of Goldfish
+ENV GOLDFISH_VERSION=v0.4.0
+
+# Default nginx directory to put assets in
+WORKDIR /usr/share/nginx/
+
+# Install packages, download assets zip and move to public nginx dir
+RUN apk --no-cache add \
+        --virtual build-dependencies \
+          unzip \
+          curl && \
+    apk --no-cache add \
+          ca-certificates && \
+          curl -L -o public.zip https://github.com/Caiyeon/goldfish/releases/download/$GOLDFISH_VERSION/public.zip && \
+          unzip public.zip && \
+          mv public/* html && \
+          rm -fr public.zip && \
+          apk del build-dependencies
+
+# Copy over nginx config
+COPY ./goldfish.conf /etc/nginx/conf.d/default.conf
