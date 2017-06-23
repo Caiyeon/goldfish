@@ -2,6 +2,7 @@
 listener "tcp" {
 	# [Required] [Format: "address", "address:port", or ":port"]
 	# The address and port at which goldfish will listen from
+	# For production, simply ":443" would be just fine (default https)
 	address       = "127.0.0.1:8000"
 
 	# [Required (unless tls_disable = 1)] the certificate file
@@ -14,6 +15,10 @@ listener "tcp" {
 	# Set this to 1 to disable HTTPS for goldfish listener
 	# Leave this empty or equal to 0 unless you know exactly what you're doing
 	tls_disable   = 1
+
+	# [Optional] [Default: 0] [Allowed values: 0, 1]
+	# If this is set to 1, goldfish will redirect port 80 to port 443
+	tls_autoredirect = 0
 }
 
 # [Required] vault defines how goldfish should bootstrap to vault

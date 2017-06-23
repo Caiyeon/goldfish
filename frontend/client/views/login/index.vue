@@ -114,12 +114,12 @@
                         {{ key }}
                       </td>
                       <td>
-                        {{ sessionData[key] }}
+                        {{ session[key] }}
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <p v-if="sessionData !== null" class="control">
+                <p v-if="session !== null" class="control">
                   <button class="button is-warning" @click="logout()">
                     Logout
                   </button>
@@ -194,8 +194,7 @@ export default {
       ID: '',
       Password: '',
       healthData: {},
-      healthLoading: false,
-      sessionData: null
+      healthLoading: false
     }
   },
 
@@ -204,32 +203,20 @@ export default {
     this.fetchCSRF()
     // fetch vault cluster details
     this.getHealth()
-    // check if user is logged on
-    var raw = window.localStorage.getItem('session')
-    if (raw) {
-      var session = JSON.parse(raw)
-      if (Date.now() > Date.parse(session['cookie_expiry'])) {
-        window.localStorage.removeItem('session')
-        this.$notify({
-          title: 'Session expired',
-          message: 'Please login again',
-          type: 'warning'
-        })
-      } else {
-        this.sessionData = session
-      }
-    }
   },
 
   computed: {
     healthKeys: function () {
       return Object.keys(this.healthData)
     },
-    sessionKeys: function () {
-      return (this.sessionData === null) || Object.keys(this.sessionData)
-    },
     renewable: function () {
-      return (this.sessionData && this.sessionData['renewable'])
+      return (this.session && this.session['renewable'])
+    },
+    session: function () {
+      return this.$store.getters.session
+    },
+    sessionKeys: function () {
+      return (this.session === null) || Object.keys(this.session)
     }
   },
 
@@ -266,7 +253,6 @@ export default {
       }, {
         headers: {'X-CSRF-Token': this.csrf}
       })
-
       .then((response) => {
         // notify user, and clear inputs
         this.$notify({
@@ -276,8 +262,8 @@ export default {
         })
         this.clearFormData()
 
-        // set user's session reactively, and store it browser's localStorage
-        this.sessionData = {
+        // construct session data
+        this.session = {
           'type': this.type,
           'display_name': response.data.data['display_name'],
           'meta': response.data.data['meta'],
@@ -286,7 +272,12 @@ export default {
           'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString(),
           'cookie_expiry': new Date(Date.now() + 28800000).toString() // 8 hours from now
         }
-        window.localStorage.setItem('session', JSON.stringify(this.sessionData))
+
+        // store session data in localstorage
+        window.localStorage.setItem('session', JSON.stringify(this.session))
+
+        // mutate state of vuex
+        this.$store.commit('setSession', this.session)
 
         // notify user of generated client-token
         if (this.type === 'Userpass' || this.type === 'LDAP') {
@@ -298,16 +289,18 @@ export default {
           })
         }
       })
-
       .catch((error) => {
         this.$onError(error)
       })
     },
 
     logout: function () {
+      // force cookie timeout
       document.cookie = 'auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-      this.sessionData = null
+      // purge session from localstorage
       window.localStorage.removeItem('session')
+      // mutate vuex state
+      this.$store.commit('clearSession')
     },
 
     clearFormData: function () {
@@ -325,10 +318,15 @@ export default {
           message: '',
           type: 'success'
         })
-        this.sessionData['meta'] = response.data.data['meta']
-        this.sessionData['policies'] = response.data.data['policies']
-        this.sessionData['token_expiry'] = response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString()
-        window.localStorage.setItem('session', JSON.stringify(this.sessionData))
+        this.session['meta'] = response.data.data['meta']
+        this.session['policies'] = response.data.data['policies']
+        this.session['token_expiry'] = response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString()
+
+        // store session data in localstorage
+        window.localStorage.setItem('session', JSON.stringify(this.session))
+
+        // mutate state of vuex
+        this.$store.commit('setSession', this.session)
       })
       .catch((error) => {
         this.$onError(error)

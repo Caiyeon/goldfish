@@ -18,11 +18,16 @@
           </a>
         </div>
         <div class="nav-right is-flex">
+          <a v-if="session" class="nav-item is-hidden-mobile">
+            Logged in as: {{session.display_name}}
+          </a>
           <a class="nav-item" href="https://github.com/Caiyeon/goldfish">
             <span class="icon">
               <i class="fa fa-github"></i>
             </span>
-            Source on GitHub
+            <span class="is-hidden-mobile">
+              Source on GitHub
+            </span>
           </a>
         </div>
       </nav>
@@ -44,14 +49,42 @@ export default {
     show: Boolean
   },
 
-  computed: mapGetters({
-    pkginfo: 'pkg',
-    sidebar: 'sidebar'
-  }),
+  mounted: function () {
+    // if session cookie is still valid, load session data
+    let raw = window.localStorage.getItem('session')
+    if (raw) {
+      var session = JSON.parse(raw)
+      if (Date.now() > Date.parse(session['cookie_expiry'])) {
+        window.localStorage.removeItem('session')
+        this.$notify({
+          title: 'Session expired',
+          message: 'Please login again',
+          type: 'warning'
+        })
+        this.$store.commit('clearSession')
+      } else {
+        this.$store.commit('setSession', session)
+      }
+    } else {
+      this.$store.commit('clearSession')
+    }
+    // uncomment this to see the details of the session everytime you refresh the page
+    // console.log(JSON.stringify(this.session))
+  },
 
-  methods: mapActions([
-    'toggleSidebar'
-  ])
+  computed: {
+    ...mapGetters({
+      session: 'session',
+      pkginfo: 'pkg',
+      sidebar: 'sidebar'
+    })
+  },
+
+  methods: {
+    ...mapActions([
+      'toggleSidebar'
+    ])
+  }
 }
 </script>
 

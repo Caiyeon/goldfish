@@ -73,7 +73,7 @@ Seriously, the instructions fit on one screen!
 ![](screenshots/Login.png)
 
 
-![](screenshots/Request.png)
+![](screenshots/Policy_request_approve.png)
 
 
 ![](screenshots/BulletinBoard.png)
@@ -104,9 +104,9 @@ go get github.com/caiyeon/goldfish
 cd $GOPATH/src/github.com/caiyeon/goldfish
 
 # running goldfish server in -dev will spin up a local vault instance for you
-go run server.go -dev &
+go run server.go -dev
 
-# running frontend in dev mode will allow for hot-reload of frontend files
+# running goldfish frontend in dev mode will allow for hot-reload of frontend files
 cd frontend
 sudo npm install -g cross-env
 npm install
