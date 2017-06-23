@@ -104,25 +104,32 @@ func main() {
 			csrf.Secure(!cfg.Listener.Tls_disable),
 		)))
 
-	// add security headers unless tls_disable
+	// unless explicitly disabled, some extra https configurations need to be set
 	if !cfg.Listener.Tls_disable {
+		// add extra security headers
 		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
 			XFrameOptions:         "SAMEORIGIN",
 			ContentSecurityPolicy: "default-src 'self'",
 		}))
-	}
 
-	// if cert and key are not provided, try using let's encrypt
-	if !cfg.Listener.Tls_disable &&
-	   cfg.Listener.Tls_cert_file == "" &&
-	   cfg.Listener.Tls_key_file == "" {
-		e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
-		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(cfg.Listener.Address)
-		e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
-			Code: 301,
-		}))
+		// if redirect is set, forward port 80 to port 443
+		if cfg.Listener.Tls_autoredirect {
+			e.Pre(middleware.HTTPSRedirect())
+			go func(c *echo.Echo){
+				e.Logger.Fatal(e.Start(":80"))
+			}(e)
+		}
+
+		// if cert file and key file are not provided, try using let's encrypt
+		if cfg.Listener.Tls_cert_file == "" && cfg.Listener.Tls_key_file == "" {
+			e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
+			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(cfg.Listener.Address)
+			e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
+				Code: 301,
+			}))
+		}
 	}
 
 	// static routing of webpack'd folder
