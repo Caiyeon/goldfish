@@ -119,7 +119,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("secret/bulletins/bulletinb", map[string]interface{}{
 		"message": "this is sample b",
 		"title":   "sampleBulletinB",
@@ -127,7 +126,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("secret/bulletins/bulletinc", map[string]interface{}{
 		"message": "this is sample c",
 		"title":   "sampleBulletinc",
@@ -136,17 +134,9 @@ func SetupVault(addr, rootToken string) error {
 		return err
 	}
 
-	// write sample users
+	// todo: write sample users
 
 	// todo: mount pki backend
-
-	// create 'goldfish' root token
-	if _, err := client.Auth().Token().Create(&api.TokenCreateRequest{
-		ID:       "goldfish",
-		Policies: []string{"root"},
-	}); err != nil {
-		return err
-	}
 
 	return nil
 }
