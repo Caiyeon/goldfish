@@ -263,7 +263,7 @@ export default {
         this.clearFormData()
 
         // construct session data
-        this.session = {
+        var newSession = {
           'type': this.type,
           'display_name': response.data.data['display_name'],
           'meta': response.data.data['meta'],
@@ -273,11 +273,9 @@ export default {
           'cookie_expiry': new Date(Date.now() + 28800000).toString() // 8 hours from now
         }
 
-        // store session data in localstorage
-        window.localStorage.setItem('session', JSON.stringify(this.session))
-
-        // mutate state of vuex
-        this.$store.commit('setSession', this.session)
+        // store session data in localstorage and mutate vuex state
+        window.localStorage.setItem('session', JSON.stringify(newSession))
+        this.$store.commit('setSession', newSession)
 
         // notify user of generated client-token
         if (this.type === 'Userpass' || this.type === 'LDAP') {
