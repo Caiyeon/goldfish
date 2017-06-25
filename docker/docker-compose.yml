@@ -27,6 +27,3 @@ services:
     - -dev
     links: 
     - vault
-    
- 
-    
