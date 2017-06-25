@@ -21,6 +21,11 @@ export default {
       name: 'Wrapper',
       path: '/wrapper',
       component: lazyLoading('tools/Wrapper')
+    },
+    {
+      name: 'Dependencies',
+      path: '/dependencies',
+      component: lazyLoading('tools/Dependencies')
     }
   ]
 }
