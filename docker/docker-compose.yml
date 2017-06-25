@@ -1,0 +1,29 @@
+version: '2'
+services:
+  vault:
+    cap_add:
+    - IPC_LOCK
+    image: vault:0.7.3
+    container_name: vault
+    entrypoint:
+    - vault
+    - server
+    - -config=/vault/config/
+    network_mode: bridge
+    volumes:
+    - /srv/vault/logs:/vault/logs:rw
+    - /srv/vault/file:/vault/file:rw
+    - /srv/vault/config:/vault/config:rw
+    ports:
+    - 8200/tcp
+  goldfish:
+    image: goldfish-image (i.e. caiyeon/goldfish:0.1)
+    container_name: goldfish
+    network_mode: bridge
+    ports:
+    - 8000/tcp
+    entrypoint:
+    - /usr/local/goldfish 
+    - -dev
+    links: 
+    - vault
