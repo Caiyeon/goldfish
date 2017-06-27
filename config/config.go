@@ -254,6 +254,9 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		if url, err := url.Parse(address); err != nil {
 			return fmt.Errorf("failed to set address: %v", err)
 		} else {
+			if !(url.Scheme == "http" || url.Scheme == "https") {
+				return fmt.Errorf("vault.%s: address must be prefixed with scheme i.e. http:// or https://")
+			}
 			result.Vault.Address = url.String()
 		}
 	}
