@@ -39,6 +39,7 @@
             <p v-if="policies.length === 0" class="control" :disabled="loading">
               <input class="input" type="text"
               placeholder="Or enter a policy name..."
+              @keyup.enter="confirmed = true"
               :disabled="confirmed"
               v-model="selectedPolicy">
             </p>
@@ -146,11 +147,6 @@ export default {
   },
 
   mounted: function () {
-    this.$notify({
-      title: 'Under construction',
-      message: 'This page is not fully function yet!',
-      type: 'warning'
-    })
   },
 
   filters: {
