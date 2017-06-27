@@ -184,12 +184,16 @@ func ListRoles() echo.HandlerFunc {
 		}
 
 		// check if user has access to roles
-		capabilities, err := auth.CapabilitiesSelf("/auth/token/roles/")
+		capabilities, err := auth.CapabilitiesSelf("auth/token/roles")
+		if err != nil {
+			return parseError(c, err)
+		}
+		capabilities2, err := auth.CapabilitiesSelf("auth/token/roles/")
 		if err != nil {
 			return parseError(c, err)
 		}
 
-		for _, capability := range capabilities {
+		for _, capability := range append(capabilities, capabilities2...) {
 			// if user can list or is root, return list of roles
 			if capability == "list" || capability == "root" {
 				result, err := auth.ListRoles()
