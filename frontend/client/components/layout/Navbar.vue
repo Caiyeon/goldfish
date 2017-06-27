@@ -114,7 +114,7 @@ export default {
     let raw = window.localStorage.getItem('session')
     if (raw) {
       var session = JSON.parse(raw)
-      if (moment().isAfter(moment(session['token_expiry'], 'ddd, h:mm:ss A'))) {
+      if (moment().isAfter(moment(session['token_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))) {
         window.localStorage.removeItem('session')
         this.$store.commit('clearSession')
       } else {
@@ -139,14 +139,14 @@ export default {
       if (this.session['token_expiry'] === 'never') {
         return ''
       }
-      return this.now.to(moment(this.session['token_expiry'], 'ddd, h:mm:ss A'))
+      return this.now.to(moment(this.session['token_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))
     },
 
     cookieExpiresIn: function () {
       if (this.session === null) {
         return ''
       }
-      return this.now.to(moment(this.session['cookie_expiry'], 'ddd, h:mm:ss A'))
+      return this.now.to(moment(this.session['cookie_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))
     }
   },
 
