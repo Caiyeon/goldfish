@@ -324,10 +324,11 @@ export default {
           // otherwise, for each role, fetch allowed policies and filter
           result.Loading = response.data.result.length
           for (var i = 0; i < response.data.result.length; i++) {
-            this.$http.get('/api/users/role?rolename=' + response.data.result[i])
+            let rolename = response.data.result[i]
+            this.$http.get('/api/users/role?rolename=' + rolename)
             .then((response) => {
               if (response.data.result && response.data.result['allowed_policies'].includes(policy)) {
-                result.Dependents.push(response.data.result[i])
+                result.Dependents.push(rolename)
               }
               result.Loading = result.Loading - 1 || false
             })
