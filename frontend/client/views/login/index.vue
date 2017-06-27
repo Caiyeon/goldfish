@@ -187,6 +187,7 @@
 
 <script>
 import moment from 'moment'
+
 export default {
   data () {
     return {
@@ -204,6 +205,16 @@ export default {
     this.fetchCSRF()
     // fetch vault cluster details
     this.getHealth()
+    // if stored session is out of date, notify user
+    if (this.session && moment().isAfter(moment(this.session['token_expiry'], 'ddd, h:mm:ss A'))) {
+      window.localStorage.removeItem('session')
+      this.$notify({
+        title: 'Session expired',
+        message: 'Please login again',
+        type: 'warning'
+      })
+      this.$store.commit('clearSession')
+    }
   },
 
   computed: {
