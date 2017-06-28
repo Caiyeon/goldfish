@@ -2,6 +2,9 @@ package config
 
 import (
 	"testing"
+
+	"github.com/hashicorp/vault/api"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -42,6 +45,7 @@ func TestConfigParser(t *testing.T) {
 		defer close(shutdownCh)
 		So(secretID, ShouldNotBeNil)
 		So(err, ShouldBeNil)
+		validateVaultHealth(cfg)
 	})
 
 	Convey("Loading custom config", t, func() {
@@ -70,6 +74,22 @@ func validateConfig(cfg *Config) {
 	So(cfgVault.Runtime_config, ShouldEqual, "secret/goldfish")
 	So(cfgVault.Approle_login, ShouldEqual, "auth/approle/login")
 	So(cfgVault.Approle_id, ShouldEqual, "goldfish")
+}
+
+func validateVaultHealth(cfg *Config) {
+	client, err := api.NewClient(api.DefaultConfig())
+	So(client, ShouldNotBeNil)
+	So(err, ShouldBeNil)
+	client.SetAddress(cfg.Vault.Address)
+
+	sys := client.Sys()
+	So(sys, ShouldNotBeNil)
+	resp, err := sys.Health()
+	So(resp, ShouldNotBeNil)
+	So(err, ShouldBeNil)
+	So(resp.Initialized, ShouldBeTrue)
+	So(resp.Sealed, ShouldBeFalse)
+	So(resp.Standby, ShouldBeFalse)
 }
 
 const configString = `
