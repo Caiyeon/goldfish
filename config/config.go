@@ -52,7 +52,7 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 	shutdownCh := initDevVaultCore()
 
 	// setup local vault instance with required mounts
-	err := SetupVault("http://127.0.0.1:8200", "goldfish")
+	err := setupVault("http://127.0.0.1:8200", "goldfish")
 	if err != nil {
 		return nil, nil, "", err
 	}

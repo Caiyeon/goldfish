@@ -40,7 +40,7 @@ import (
 	"github.com/mitchellh/cli"
 )
 
-func SetupVault(addr, rootToken string) error {
+func setupVault(addr, rootToken string) error {
 	// initialize vault with required setup details
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
