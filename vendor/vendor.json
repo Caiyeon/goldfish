@@ -444,6 +444,12 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
+			"checksumSHA1": "JgSAxSOoZD3VYaXfBJVly2Vcuy8=",
+			"path": "github.com/caiyeon/goldfish/vault",
+			"revision": "ee7604109426fd829ba5846d8b8febdd4b5649d9",
+			"revisionTime": "2017-06-28T05:53:47Z"
+		},
+		{
 			"checksumSHA1": "u03K0h5yA/TIBEoeAw8iwqVp6us=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/circonus-labs/circonus-gometrics",
 			"path": "github.com/circonus-labs/circonus-gometrics",
@@ -922,10 +928,10 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
-			"checksumSHA1": "QHuUJtX9TiA32UXIhsQSe6x4qVA=",
+			"checksumSHA1": "s+zW+jrMxK1e8OxXKjN0FgwxCPk=",
 			"path": "github.com/hashicorp/vault/api",
-			"revision": "d8e2db65a326b529477cc40295d5902906645e6b",
-			"revisionTime": "2017-06-05T02:18:34Z"
+			"revision": "49f508b46923d19eac573e0563ee5074478b2a17",
+			"revisionTime": "2017-06-27T23:31:37Z"
 		},
 		{
 			"checksumSHA1": "WlSbfcFNLcFEHneJ6aqzfjfkWUk=",
