@@ -134,9 +134,44 @@ func SetupVault(addr, rootToken string) error {
 		return err
 	}
 
-	// todo: write sample users
+	// setup pki backend
+	if err := client.Sys().Mount("pki", &api.MountInput{
+		Type: "pki",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/root/generate/internal", map[string]interface{}{
+		"common_name": "myvault.com",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/config/urls", map[string]interface{}{
+		"issuing_certificates":    "http://127.0.0.1:8200/v1/pki/ca",
+		"crl_distribution_points": "http://127.0.0.1:8200/v1/pki/crl",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/roles/example-dot-com", map[string]interface{}{
+		"allowed_domains":  "example.com",
+		"allow_subdomains": "true",
+		"max_ttl":          "72h",
+	}); err != nil {
+		return err
+	}
 
-	// todo: mount pki backend
+	// generate a couple of certificates
+	if _, err := client.Logical().Write("pki/issue/example-dot-com", map[string]interface{}{
+		"common_name": "blah.example.com",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/issue/example-dot-com", map[string]interface{}{
+		"common_name": "blah2.example.com",
+	}); err != nil {
+		return err
+	}
+
+	// todo: mount userpass and write sample users
 
 	return nil
 }
