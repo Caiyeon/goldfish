@@ -138,7 +138,11 @@ func SetupVault(addr, rootToken string) error {
 
 	// write sample users
 
-	// todo: mount pki backend
+	if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
+		"password": "golden",
+	}); err != nil {
+		return err
+	}
 
 	// create 'goldfish' root token
 	if _, err := client.Auth().Token().Create(&api.TokenCreateRequest{
