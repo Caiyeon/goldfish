@@ -27,6 +27,22 @@ func TestConfigParser(t *testing.T) {
 		So(err, ShouldNotBeNil)
 	})
 
+    Convey("Parser should reject invalid strings - multiple listener configs", t, func() {
+        cfg, err := ParseConfig(`
+            listener "tcp" {
+                address          = "127.0.0.1:8000"
+            }
+            listener "tcp" {
+                address          = "127.0.0.1:8001"
+            }
+            vault {
+                address         = "http://127.0.0.1:8200"
+            }
+            `)
+        So(cfg, ShouldBeNil)
+        So(err, ShouldNotBeNil)
+	})
+
 	Convey("Parser should reject invalid strings - no vault config", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
@@ -37,6 +53,22 @@ func TestConfigParser(t *testing.T) {
 		So(cfg, ShouldBeNil)
 		So(err, ShouldNotBeNil)
 	})
+
+    Convey("Parser should reject invalid strings - multiple vault configs", t, func() {
+        cfg, err := ParseConfig(`
+            listener "tcp" {
+                address          = "127.0.0.1:8000"
+            }
+            vault {
+                address         = "http://127.0.0.1:8200"
+            }
+            vault {
+                address         = "http://127.0.0.1:8200"
+            }
+            `)
+        So(cfg, ShouldBeNil)
+        So(err, ShouldNotBeNil)
+    })
 
 	Convey("Starting up a dev vault", t, func() {
 		cfg, shutdownCh, secretID, err := LoadConfigDev()
@@ -67,6 +99,18 @@ func TestConfigParser(t *testing.T) {
 		So(cfg, ShouldResemble, parsedConfig)
 		So(err, ShouldBeNil)
 	})
+
+    Convey("Loading invalid custom config - no file specified", t, func() {
+        cfg, err := LoadConfigFile("")
+        So(cfg, ShouldBeNil)
+        So(err, ShouldNotBeNil)
+    })
+
+    Convey("Loading invalid custom config - non-existant file specified", t, func() {
+        cfg, err := LoadConfigFile("fake_sample.hcl")
+        So(cfg, ShouldBeNil)
+        So(err, ShouldNotBeNil)
+    })
 }
 
 const configString = `
