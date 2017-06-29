@@ -57,7 +57,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write(
 		"transit/keys/goldfish",
 		map[string]interface{}{},
@@ -76,7 +75,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("auth/approle/role/goldfish", map[string]interface{}{
 		"role_name":          "goldfish",
 		"secret_id_ttl":      "5m",
@@ -86,7 +84,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("auth/approle/role/goldfish/role-id", map[string]interface{}{
 		"role_id": "goldfish",
 	}); err != nil {
@@ -104,9 +101,14 @@ func SetupVault(addr, rootToken string) error {
 		return err
 	}
 
-	// mount userpass
+	// mount userpass and write a test user
 	if err := client.Sys().EnableAuthWithOptions("userpass", &api.EnableAuthOptions{
 		Type: "userpass",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
+		"password": "golden",
 	}); err != nil {
 		return err
 	}
@@ -170,8 +172,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
-	// todo: mount userpass and write sample users
 
 	return nil
 }
