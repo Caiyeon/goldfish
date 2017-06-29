@@ -17,6 +17,13 @@ func TransitInfo() echo.HandlerFunc {
 		}
 		defer auth.Clear()
 
+		// ensure token can lookup self before exposing transit key name
+		if _, err := auth.Client(); err != nil {
+			return c.JSON(http.StatusForbidden, H{
+				"error": "Invalid vault token",
+			})
+		}
+
 		conf := vault.GetConfig()
 		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 		c.Response().Writer.Header().Set("UserTransitKey", conf.UserTransitKey)
