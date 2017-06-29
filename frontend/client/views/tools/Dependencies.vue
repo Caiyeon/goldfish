@@ -16,7 +16,7 @@
               <span class="select">
                 <select v-model="resourceType" required
                 :disabled="loading || resourceType !== ''">
-                  <option value="" selected hidden>
+                  <option value="" disabled selected hidden>
                     Select a resource type...</option>
                   <option v-for="res in supportedResourceTypes">
                     {{res}}</option>
@@ -97,6 +97,57 @@
             @click="searchDependencies('Policy', 'Approles')"
             :class="(resultNames.includes('Approles') && findResult('Approles').Loading) ? 'is-loading' : ''">
               Check all approles
+            </a>
+          </article>
+        </div>
+
+        <!-- resourceType: policy -->
+        <div v-if="resourceType === 'Mount'">
+          <label class="label">Select mount</label>
+          <div class="field has-addons">
+            <p v-if="mounts.length === 0 && !confirmed" class="control">
+              <a class="button is-primary" @click="listMounts()" :disabled="loading">
+                List mounts
+              </a>
+            </p>
+
+            <p v-if="mounts.length === 0" class="control" :disabled="loading">
+              <input class="input" type="text"
+              placeholder="Or enter a mount name..."
+              @keyup.enter="confirmed = true"
+              :disabled="confirmed"
+              v-model="selectedMount">
+            </p>
+
+            <p v-if="mounts.length > 0"
+            class="control has-icons-right"
+            :disabled="loading">
+              <span class="select">
+                <select v-model="selectedMount" required
+                :disabled="loading || confirmed">
+                  <option value="" disabled selected hidden>
+                    Select a mount...</option>
+                  <option v-for="mount in mounts">
+                    {{mount}}
+                  </option>
+                </select>
+              </span>
+            </p>
+
+            <p class="control">
+              <a class="button is-info"
+              @click="confirmed = true"
+              :disabled="loading || selectedMount === '' || confirmed">
+                Confirm
+              </a>
+            </p>
+          </div>
+
+          <article v-if="confirmed">
+            <a class="button is-primary is-outlined"
+            @click="searchDependencies('Mount', 'Policies')"
+            :class="(resultNames.includes('Policies') && findResult('Policies').Loading) ? 'is-loading' : ''">
+              Check all current policies
             </a>
           </article>
         </div>
@@ -235,10 +286,29 @@ export default {
       this.loading = true
       this.selectedPolicy = ''
 
-      // fetch list of policies and set csrf
+      // fetch list of policies
       this.$http.get('/api/policy').then((response) => {
         this.policies = response.data.result
-        this.csrf = response.headers['x-csrf-token']
+        this.loading = false
+      })
+      .catch((error) => {
+        this.$onError(error)
+        this.loading = false
+      })
+    },
+
+    listMounts: function () {
+      // if page is loading, this is disabled
+      if (this.loading === true) {
+        return
+      }
+      this.loading = true
+      this.mounts = []
+      this.selectedMount = ''
+
+      // fetch list of mounts
+      this.$http.get('/api/mounts').then((response) => {
+        this.mounts = Object.keys(response.data.result)
         this.loading = false
       })
       .catch((error) => {
@@ -391,16 +461,15 @@ export default {
 
       // fetch all policies
       this.$http.get('/api/policy').then((response) => {
-        let policies = response.data.result
-        result.Loading = policies.length
-
+        result.Loading = response.data.result.length
         // for each policy, check rules for mount
-        for (var i = 0; i < policies.length; i++) {
-          this.$http.get('/api/policy?policy=' + policies[i]).then((response) => {
+        for (var i = 0; i < response.data.result.length; i++) {
+          let policyname = response.data.result[i]
+          this.$http.get('/api/policy?policy=' + policyname).then((response) => {
             // prefix with quote marks to ensure it's the mount that is matched
-            if (response.data.result.include('"' + this.selectedMount) ||
-              response.data.result.include('\'' + this.selectedMount)) {
-              result.Dependents.push(policies[i])
+            if (response.data.result.includes('"' + this.selectedMount) ||
+              response.data.result.includes('\'' + this.selectedMount)) {
+              result.Dependents.push(policyname)
             }
             result.Loading = result.Loading - 1 || false
           })
