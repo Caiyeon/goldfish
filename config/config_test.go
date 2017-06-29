@@ -85,7 +85,6 @@ func TestConfigParser(t *testing.T) {
 		client.SetAddress(cfg.Vault.Address)
 
 		sys := client.Sys()
-		So(sys, ShouldNotBeNil)
 		resp, err := sys.Health()
 		So(err, ShouldBeNil)
 		So(resp, ShouldNotBeNil)
