@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/csrf"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
@@ -11,18 +10,12 @@ import (
 
 func GetMounts() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		mounts, err := auth.ListMounts()
 		if err != nil {
@@ -39,18 +32,12 @@ func GetMounts() echo.HandlerFunc {
 
 func GetMount() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		// fetch results
 		result, err := auth.GetMount(c.Param("mountname"))
@@ -66,18 +53,12 @@ func GetMount() echo.HandlerFunc {
 
 func ConfigMount() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		var config *vaultapi.MountConfigInput
 		if err := c.Bind(&config); err != nil {
