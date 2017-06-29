@@ -11,8 +11,8 @@ import (
 func TestConfigParser(t *testing.T) {
 	Convey("Parser should accept valid string", t, func() {
 		cfg, err := ParseConfig(configString)
-		So(cfg, ShouldNotBeNil)
 		So(err, ShouldBeNil)
+		So(cfg, ShouldNotBeNil)
 		So(cfg, ShouldResemble, parsedConfig)
 	})
 
@@ -23,8 +23,8 @@ func TestConfigParser(t *testing.T) {
 				address       = "http://127.0.0.8200"
 			}
 			`)
-		So(cfg, ShouldBeNil)
 		So(err, ShouldNotBeNil)
+		So(cfg, ShouldBeNil)
 	})
 
     Convey("Parser should reject invalid strings - multiple listener configs", t, func() {
@@ -39,8 +39,8 @@ func TestConfigParser(t *testing.T) {
                 address         = "http://127.0.0.1:8200"
             }
             `)
-        So(cfg, ShouldBeNil)
         So(err, ShouldNotBeNil)
+        So(cfg, ShouldBeNil)
 	})
 
 	Convey("Parser should reject invalid strings - no vault config", t, func() {
@@ -50,8 +50,8 @@ func TestConfigParser(t *testing.T) {
 			}
 			# no vault config
 			`)
-		So(cfg, ShouldBeNil)
 		So(err, ShouldNotBeNil)
+		So(cfg, ShouldBeNil)
 	})
 
     Convey("Parser should reject invalid strings - multiple vault configs", t, func() {
@@ -66,22 +66,22 @@ func TestConfigParser(t *testing.T) {
                 address         = "http://127.0.0.1:8200"
             }
             `)
-        So(cfg, ShouldBeNil)
         So(err, ShouldNotBeNil)
+        So(cfg, ShouldBeNil)
     })
 
 	Convey("Starting up a dev vault", t, func() {
 		cfg, shutdownCh, secretID, err := LoadConfigDev()
 		So(err, ShouldBeNil)
-		So(cfg, ShouldResemble, parsedConfig)
 		So(shutdownCh, ShouldNotBeNil)
 		defer close(shutdownCh)
+		So(cfg, ShouldResemble, parsedConfig)
 		So(secretID, ShouldNotBeNil)
 
 		// validate health of vault
 		client, err := api.NewClient(api.DefaultConfig())
-		So(client, ShouldNotBeNil)
 		So(err, ShouldBeNil)
+		So(client, ShouldNotBeNil)
 		client.SetAddress(cfg.Vault.Address)
 
 		sys := client.Sys()
@@ -96,20 +96,20 @@ func TestConfigParser(t *testing.T) {
 
 	Convey("Loading valid custom config", t, func() {
 		cfg, err := LoadConfigFile("sample.hcl")
-		So(cfg, ShouldResemble, parsedConfig)
 		So(err, ShouldBeNil)
+		So(cfg, ShouldResemble, parsedConfig)
 	})
 
     Convey("Loading invalid custom config - no file specified", t, func() {
         cfg, err := LoadConfigFile("")
-        So(cfg, ShouldBeNil)
         So(err, ShouldNotBeNil)
+        So(cfg, ShouldBeNil)
     })
 
     Convey("Loading invalid custom config - non-existant file specified", t, func() {
         cfg, err := LoadConfigFile("fake_sample.hcl")
-        So(cfg, ShouldBeNil)
         So(err, ShouldNotBeNil)
+        So(cfg, ShouldBeNil)
     })
 }
 
