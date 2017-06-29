@@ -95,6 +95,7 @@ func main() {
 	// setup middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.BodyLimit("32M"))
 	e.Use(echo.WrapMiddleware(
 		csrf.Protect(
 			// Generate a new encryption key for cookies each launch
