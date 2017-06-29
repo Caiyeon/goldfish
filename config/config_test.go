@@ -40,9 +40,9 @@ func TestConfigParser(t *testing.T) {
 
 	Convey("Starting up a dev vault", t, func() {
 		cfg, shutdownCh, secretID, err := LoadConfigDev()
-		So(err, ShouldNotBeNil)
+		So(err, ShouldBeNil)
 		defer close(shutdownCh)
-		So(cfg, ShouldBeNil)
+		So(cfg, ShouldNotBeNil)
 		validateConfig(cfg)
 		So(shutdownCh, ShouldNotBeNil)
 		So(secretID, ShouldNotBeNil)
