@@ -32,14 +32,6 @@ func init() {
 	}
 }
 
-// deprecated. Will be removed soon
-func logError(c echo.Context, logstring string, responsestring string) error {
-	log.Println("[ERROR]:", logstring)
-	return c.JSON(http.StatusInternalServerError, H{
-		"error": responsestring,
-	})
-}
-
 // returns the http status code found in the error message
 func parseError(c echo.Context, err error) error {
 	errCode := strings.Split(err.Error(), "Code:")
