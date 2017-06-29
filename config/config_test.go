@@ -13,7 +13,7 @@ func TestConfigParser(t *testing.T) {
 		cfg, err := ParseConfig(configString)
 		So(cfg, ShouldNotBeNil)
 		So(err, ShouldBeNil)
-		validateConfig(cfg)
+		So(cfg, ShouldResemble, parsedConfig)
 	})
 
 	Convey("Parser should reject invalid strings - no listener config", t, func() {
@@ -41,56 +41,32 @@ func TestConfigParser(t *testing.T) {
 	Convey("Starting up a dev vault", t, func() {
 		cfg, shutdownCh, secretID, err := LoadConfigDev()
 		So(err, ShouldBeNil)
-		defer close(shutdownCh)
-		So(cfg, ShouldNotBeNil)
-		validateConfig(cfg)
+		So(cfg, ShouldResemble, parsedConfig)
 		So(shutdownCh, ShouldNotBeNil)
+		defer close(shutdownCh)
 		So(secretID, ShouldNotBeNil)
-		validateVaultHealth(cfg)
+
+		// validate health of vault
+		client, err := api.NewClient(api.DefaultConfig())
+		So(client, ShouldNotBeNil)
+		So(err, ShouldBeNil)
+		client.SetAddress(cfg.Vault.Address)
+
+		sys := client.Sys()
+		So(sys, ShouldNotBeNil)
+		resp, err := sys.Health()
+		So(err, ShouldBeNil)
+		So(resp, ShouldNotBeNil)
+		So(resp.Initialized, ShouldBeTrue)
+		So(resp.Sealed, ShouldBeFalse)
+		So(resp.Standby, ShouldBeFalse)
 	})
 
-	Convey("Loading custom config", t, func() {
+	Convey("Loading valid custom config", t, func() {
 		cfg, err := LoadConfigFile("sample.hcl")
-		validateConfig(cfg)
+		So(cfg, ShouldResemble, parsedConfig)
 		So(err, ShouldBeNil)
 	})
-}
-
-func validateConfig(cfg *Config) {
-	So(cfg, ShouldNotBeNil)
-	cfgListener := cfg.Listener
-	So(cfgListener, ShouldNotBeNil)
-	So(cfgListener.Type, ShouldEqual, "tcp")
-	So(cfgListener.Address, ShouldEqual, "127.0.0.1:8000")
-	So(cfgListener.Tls_disable, ShouldBeTrue)
-	So(cfgListener.Tls_cert_file, ShouldBeEmpty)
-	So(cfgListener.Tls_key_file, ShouldBeEmpty)
-	So(cfgListener.Tls_autoredirect, ShouldBeFalse)
-
-	cfgVault := cfg.Vault
-	So(cfgVault, ShouldNotBeNil)
-	So(cfgVault.Type, ShouldEqual, "vault")
-	So(cfgVault.Address, ShouldEqual, "http://127.0.0.1:8200")
-	So(cfgVault.Tls_skip_verify, ShouldBeFalse)
-	So(cfgVault.Runtime_config, ShouldEqual, "secret/goldfish")
-	So(cfgVault.Approle_login, ShouldEqual, "auth/approle/login")
-	So(cfgVault.Approle_id, ShouldEqual, "goldfish")
-}
-
-func validateVaultHealth(cfg *Config) {
-	client, err := api.NewClient(api.DefaultConfig())
-	So(client, ShouldNotBeNil)
-	So(err, ShouldBeNil)
-	client.SetAddress(cfg.Vault.Address)
-
-	sys := client.Sys()
-	So(sys, ShouldNotBeNil)
-	resp, err := sys.Health()
-	So(resp, ShouldNotBeNil)
-	So(err, ShouldBeNil)
-	So(resp.Initialized, ShouldBeTrue)
-	So(resp.Sealed, ShouldBeFalse)
-	So(resp.Standby, ShouldBeFalse)
 }
 
 const configString = `
@@ -109,3 +85,18 @@ vault {
 	approle_id      = "goldfish"
 }
 `
+
+var parsedConfig = &Config {
+	Listener: &ListenerConfig {
+		Type:        "tcp",
+		Address:     "127.0.0.1:8000",
+		Tls_disable: true,
+	},
+	Vault: &VaultConfig {
+		Type:           "vault",
+		Address:        "http://127.0.0.1:8200",
+		Runtime_config: "secret/goldfish",
+		Approle_login:  "auth/approle/login",
+		Approle_id:     "goldfish",
+	},
+}
