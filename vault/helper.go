@@ -62,7 +62,7 @@ func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, er
 		return nil, err
 	}
 	client.SetToken(vaultToken)
-	return vaultClient.Logical().Write("cubbyhole/" + name, data)
+	return vaultClient.Logical().Write("cubbyhole/"+name, data)
 }
 
 func ReadFromCubbyhole(name string) (*api.Secret, error) {

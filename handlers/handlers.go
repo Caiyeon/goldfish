@@ -32,14 +32,6 @@ func init() {
 	}
 }
 
-// deprecated. Will be removed soon
-func logError(c echo.Context, logstring string, responsestring string) error {
-	log.Println("[ERROR]:", logstring)
-	return c.JSON(http.StatusInternalServerError, H{
-		"error": responsestring,
-	})
-}
-
 // returns the http status code found in the error message
 func parseError(c echo.Context, err error) error {
 	errCode := strings.Split(err.Error(), "Code:")
@@ -142,18 +134,12 @@ func Login() echo.HandlerFunc {
 
 func RenewSelf() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		// verify auth details and create client access token
 		resp, err := auth.RenewSelf()
@@ -171,11 +157,37 @@ func RenewSelf() echo.HandlerFunc {
 	}
 }
 
-func getSession(c echo.Context, auth *vault.AuthInfo) error {
+// if session is valid (prefer headers over cookie), returns true
+// otherwise, writes errors to response, and returns false
+func getSession(c echo.Context) (*vault.AuthInfo) {
+	var auth = &vault.AuthInfo{}
+
+	// check headers first
+	if token := c.Request().Header.Get("X-Vault-Token"); token != "" {
+		auth.Type = "token"
+		auth.ID = token
+		return auth
+	}
+
 	// fetch auth from cookie
 	cookie, err := c.Request().Cookie("auth")
 	if err != nil {
-		return err
+		c.JSON(http.StatusForbidden, H{
+			"error": "Please login first",
+		})
+		return nil
 	}
-	return scookie.Decode("auth", cookie.Value, &auth)
+	if err := scookie.Decode("auth", cookie.Value, &auth); err != nil {
+		c.JSON(http.StatusForbidden, H{
+			"error": "Please login first",
+		})
+		return nil
+	}
+
+	// if cookie is valid, decrypt it with transit key
+	if err := auth.DecryptAuth(); err != nil {
+		parseError(c, err)
+		return nil
+	}
+	return auth
 }

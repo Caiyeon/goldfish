@@ -186,6 +186,8 @@
 </template>
 
 <script>
+import moment from 'moment'
+
 export default {
   data () {
     return {
@@ -203,6 +205,16 @@ export default {
     this.fetchCSRF()
     // fetch vault cluster details
     this.getHealth()
+    // if stored session is out of date, notify user
+    if (this.session && moment().isAfter(moment(this.session['cookie_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))) {
+      window.localStorage.removeItem('session')
+      this.$notify({
+        title: 'Session expired',
+        message: 'Please login again',
+        type: 'warning'
+      })
+      this.$store.commit('clearSession')
+    }
   },
 
   computed: {
@@ -236,7 +248,7 @@ export default {
       this.$http.get('/api/health')
       .then((response) => {
         this.healthData = JSON.parse(response.data.result)
-        this.healthData['server_time_utc'] = new Date(this.healthData['server_time_utc'] * 1000).toUTCString()
+        this.healthData['server_time_utc'] = moment.utc(moment.unix(this.healthData['server_time_utc'])).format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
         this.healthLoading = false
       })
       .catch((error) => {
@@ -263,21 +275,19 @@ export default {
         this.clearFormData()
 
         // construct session data
-        this.session = {
+        var newSession = {
           'type': this.type,
           'display_name': response.data.data['display_name'],
           'meta': response.data.data['meta'],
           'policies': response.data.data['policies'],
           'renewable': response.data.data['renewable'],
-          'token_expiry': response.data.data['ttl'] === 0 ? 'never' : new Date(Date.now() + response.data.data['ttl'] * 1000).toString(),
-          'cookie_expiry': new Date(Date.now() + 28800000).toString() // 8 hours from now
+          'token_expiry': response.data.data['ttl'] === 0 ? 'never' : moment().add(response.data.data['ttl'], 'seconds').format('ddd, h:mm:ss A MMMM Do YYYY'),
+          'cookie_expiry': moment().add(8, 'hours').format('ddd, h:mm:ss A MMMM Do YYYY') // 8 hours from now
         }
 
-        // store session data in localstorage
-        window.localStorage.setItem('session', JSON.stringify(this.session))
-
-        // mutate state of vuex
-        this.$store.commit('setSession', this.session)
+        // store session data in localstorage and mutate vuex state
+        window.localStorage.setItem('session', JSON.stringify(newSession))
+        this.$store.commit('setSession', newSession)
 
         // notify user of generated client-token
         if (this.type === 'Userpass' || this.type === 'LDAP') {

@@ -12,18 +12,12 @@ import (
 
 func GetUsers() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		var offset int
 		var err error
@@ -54,18 +48,12 @@ func GetUsers() echo.HandlerFunc {
 
 func GetTokenCount() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		// fetch results
 		result, err := auth.GetTokenCount()
@@ -83,7 +71,11 @@ func GetTokenCount() echo.HandlerFunc {
 
 func DeleteUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
 
 		// verify form data
@@ -99,16 +91,6 @@ func DeleteUser() echo.HandlerFunc {
 			})
 		}
 
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
-
 		// delete user
 		if err := auth.DeleteUser(deleteTarget.Type, deleteTarget.ID); err != nil {
 			return parseError(c, err)
@@ -122,18 +104,12 @@ func DeleteUser() echo.HandlerFunc {
 
 func CreateUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		var resp *api.Secret
 		switch c.QueryParam("type") {
@@ -170,26 +146,24 @@ func CreateUser() echo.HandlerFunc {
 
 func ListRoles() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
 
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
+		// check if user has access to roles
+		capabilities, err := auth.CapabilitiesSelf("auth/token/roles")
+		if err != nil {
 			return parseError(c, err)
 		}
-
-		// check if user has access to roles
-		capabilities, err := auth.CapabilitiesSelf("/auth/token/roles/")
+		capabilities2, err := auth.CapabilitiesSelf("auth/token/roles/")
 		if err != nil {
 			return parseError(c, err)
 		}
 
-		for _, capability := range capabilities {
+		for _, capability := range append(capabilities, capabilities2...) {
 			// if user can list or is root, return list of roles
 			if capability == "list" || capability == "root" {
 				result, err := auth.ListRoles()
@@ -213,18 +187,12 @@ func ListRoles() echo.HandlerFunc {
 
 func GetRole() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		result, err := auth.GetRole(c.QueryParam("rolename"))
 		if err != nil {

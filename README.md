@@ -19,7 +19,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * The unseal admins are working from home, but we need a policy changed.
 	* How do we generate a root token only for this change, and make sure it's revoked after?
 * I store my policies on a Github repo. Can I deploy all my policies in one go? [See more](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
-* *Coming soon* If I remove this secret/policy, will anybody's workflow break?
+* If I remove this secret/policy, will anybody's workflow break?
 
 
 <!--
@@ -55,14 +55,15 @@ Seriously, the instructions fit on one screen!
 	- Fetch a folder of policies from a commit in github
 	- Admins can enter their unseal tokens for approval to set vault policies according to policies found
 	- Change dozens of policies in one go!
-* [ ] Resource dependency chain
+* [x] **DONE!** Resource dependency chain
 	- E.g. Will removing a particular policy affect current users?
 	- Will removing a mount or secret path affect current users?
 * [ ] Certificate management panel
 	- If vault is a certificate authority, there should be a user-friendly panel of details and statistics
 * [ ] Moving root tokens away from the human eye
 	- More root operations like mount tuning should also be done via request & approval basis, like policy changes
-* [ ] Secret backend specific tools (e.g. AWS backend)
+* [ ] Database management panel
+	- Vault 0.7.3 allows for multiple db connections per backend, but lacks a management system
 
 
 

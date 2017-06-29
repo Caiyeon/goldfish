@@ -119,7 +119,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("secret/bulletins/bulletinb", map[string]interface{}{
 		"message": "this is sample b",
 		"title":   "sampleBulletinB",
@@ -127,7 +126,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("secret/bulletins/bulletinc", map[string]interface{}{
 		"message": "this is sample c",
 		"title":   "sampleBulletinc",
@@ -136,18 +134,46 @@ func SetupVault(addr, rootToken string) error {
 		return err
 	}
 
-	// write sample users
-
-	if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
-		"password": "golden",
+	// setup pki backend
+	if err := client.Sys().Mount("pki", &api.MountInput{
+		Type: "pki",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/root/generate/internal", map[string]interface{}{
+		"common_name": "myvault.com",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/config/urls", map[string]interface{}{
+		"issuing_certificates":    "http://127.0.0.1:8200/v1/pki/ca",
+		"crl_distribution_points": "http://127.0.0.1:8200/v1/pki/crl",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/roles/example-dot-com", map[string]interface{}{
+		"allowed_domains":  "example.com",
+		"allow_subdomains": "true",
+		"max_ttl":          "72h",
 	}); err != nil {
 		return err
 	}
 
-	// create 'goldfish' root token
-	if _, err := client.Auth().Token().Create(&api.TokenCreateRequest{
-		ID:       "goldfish",
-		Policies: []string{"root"},
+	// generate a couple of certificates
+	if _, err := client.Logical().Write("pki/issue/example-dot-com", map[string]interface{}{
+		"common_name": "blah.example.com",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/issue/example-dot-com", map[string]interface{}{
+		"common_name": "blah2.example.com",
+	}); err != nil {
+		return err
+	}
+
+	//write sample users
+  if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
+		"password": "golden",
 	}); err != nil {
 		return err
 	}

@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
@@ -40,9 +40,11 @@ func init() {
 	shutdownCh := make(chan os.Signal, 4)
 	signal.Notify(shutdownCh, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<- shutdownCh
+		<-shutdownCh
 		log.Println("\n\n==> Goldfish shutdown triggered")
-		if devVaultCh != nil { close(devVaultCh) }
+		if devVaultCh != nil {
+			close(devVaultCh)
+		}
 		time.Sleep(time.Second)
 		os.Exit(0)
 	}()
@@ -95,6 +97,7 @@ func main() {
 	// setup middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.BodyLimit("32M"))
 	e.Use(echo.WrapMiddleware(
 		csrf.Protect(
 			// Generate a new encryption key for cookies each launch
@@ -117,7 +120,7 @@ func main() {
 		// if redirect is set, forward port 80 to port 443
 		if cfg.Listener.Tls_autoredirect {
 			e.Pre(middleware.HTTPSRedirect())
-			go func(c *echo.Echo){
+			go func(c *echo.Echo) {
 				e.Logger.Fatal(e.Start(":80"))
 			}(e)
 		}
@@ -177,7 +180,7 @@ func main() {
 	e.POST("/api/wrapping/unwrap", handlers.UnwrapHandler())
 
 	// serving both static folder and API
-	if (cfg.Listener.Tls_disable) {
+	if cfg.Listener.Tls_disable {
 		// launch http-only listener
 		e.Logger.Fatal(e.Start(cfg.Listener.Address))
 	} else if cfg.Listener.Tls_cert_file == "" && cfg.Listener.Tls_key_file == "" {
@@ -193,7 +196,7 @@ func main() {
 	}
 }
 
-const versionString = "Goldfish version: v0.4.0"
+const versionString = "Goldfish version: v0.4.1"
 
 const devInitString = `
 

@@ -30,7 +30,7 @@ func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) 
 		limit := 300
 		if offset > len(accessors) {
 			return nil, errors.New("Offset out of bound")
-		} else if offset + limit > len(accessors) {
+		} else if offset+limit > len(accessors) {
 			limit = len(accessors) - offset
 		}
 
@@ -39,7 +39,7 @@ func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) 
 		for i := 0; i < limit; i++ {
 			resp, err := logical.Write("auth/token/lookup-accessor",
 				map[string]interface{}{
-					"accessor": accessors[i + offset],
+					"accessor": accessors[i+offset],
 				})
 			// error may occur if accessor expired, simply ignore it
 			if err == nil {
