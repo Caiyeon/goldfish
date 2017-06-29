@@ -172,7 +172,7 @@ func SetupVault(addr, rootToken string) error {
 	}
 
 	//write sample users
-  if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
+  	if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
 		"password": "golden",
 	}); err != nil {
 		return err
