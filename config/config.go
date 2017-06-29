@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"net/url"
+	"time"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -50,7 +51,7 @@ func LoadConfigFile(path string) (*Config, error) {
 func LoadConfigDev() (*Config, chan struct{}, string, error) {
 	// start a vault dev instance
 	shutdownCh := initDevVaultCore()
-
+	time.Sleep(10 * time.Second)
 	// setup local vault instance with required mounts
 	err := setupVault("http://127.0.0.1:8200", "goldfish")
 	if err != nil {
