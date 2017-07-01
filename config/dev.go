@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"os"
+	"time"
+	"net/http"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -41,6 +43,26 @@ import (
 )
 
 func SetupVault(addr, rootToken string) error {
+	ticker := time.NewTicker(time.Millisecond * 200)
+
+	// allow 5 seconds for vault to launch
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker.Stop()
+	}()
+
+	// if vault is ready before 5 seconds countdown, proceed immediately
+	var err error
+	for range ticker.C {
+		_, err = http.Get(addr+"/v1/sys/health")
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	// initialize vault with required setup details
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
