@@ -6,7 +6,6 @@ import (
 	"errors"
 	"strings"
 	"net/url"
-	"time"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
