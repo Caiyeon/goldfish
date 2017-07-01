@@ -42,7 +42,7 @@ import (
 	"github.com/mitchellh/cli"
 )
 
-func SetupVault(addr, rootToken string) error {
+func setupVault(addr, rootToken string) error {
 	ticker := time.NewTicker(time.Millisecond * 200)
 
 	// allow 5 seconds for vault to launch
