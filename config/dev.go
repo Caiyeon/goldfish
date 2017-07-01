@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"os"
+	"time"
+	"net/http"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -41,6 +43,26 @@ import (
 )
 
 func setupVault(addr, rootToken string) error {
+	ticker := time.NewTicker(time.Millisecond * 200)
+
+	// allow 5 seconds for vault to launch
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker.Stop()
+	}()
+
+	// if vault is ready before 5 seconds countdown, proceed immediately
+	var err error
+	for range ticker.C {
+		_, err = http.Get(addr+"/v1/sys/health")
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	// initialize vault with required setup details
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
@@ -57,7 +79,6 @@ func setupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write(
 		"transit/keys/goldfish",
 		map[string]interface{}{},
@@ -76,7 +97,6 @@ func setupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("auth/approle/role/goldfish", map[string]interface{}{
 		"role_name":          "goldfish",
 		"secret_id_ttl":      "5m",
@@ -86,7 +106,6 @@ func setupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("auth/approle/role/goldfish/role-id", map[string]interface{}{
 		"role_id": "goldfish",
 	}); err != nil {
@@ -104,9 +123,14 @@ func setupVault(addr, rootToken string) error {
 		return err
 	}
 
-	// mount userpass
+	// mount userpass and write a test user
 	if err := client.Sys().EnableAuthWithOptions("userpass", &api.EnableAuthOptions{
 		Type: "userpass",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
+		"password": "golden",
 	}); err != nil {
 		return err
 	}
@@ -170,8 +194,6 @@ func setupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
-	// todo: mount userpass and write sample users
 
 	return nil
 }

@@ -12,17 +12,17 @@ var icon_url = "https://github.com/Caiyeon/goldfish/raw/master/frontend/client/a
 func PostMessageWebhook(channel, main_text, attachment_text, webhook string) (err error) {
 	payload, err := json.Marshal(
 		map[string]interface{}{
-			"channel":     channel,
-			"username":    "Goldfish Vault UI",
-			"icon_url":    icon_url,
-			"text":        main_text,
-			"attachments": []interface{} {
+			"channel":  channel,
+			"username": "Goldfish Vault UI",
+			"icon_url": icon_url,
+			"text":     main_text,
+			"attachments": []interface{}{
 				map[string]interface{}{
-					"mrkdwn_in": []string{"text"},
-					"text": attachment_text,
-		    		"footer": "<https://github.com/Caiyeon/goldfish|Goldfish Vault UI>",
-		            "footer_icon": icon_url,
-					"ts": time.Now().Unix(),
+					"mrkdwn_in":   []string{"text"},
+					"text":        attachment_text,
+					"footer":      "<https://github.com/Caiyeon/goldfish|Goldfish Vault UI>",
+					"footer_icon": icon_url,
+					"ts":          time.Now().Unix(),
 				},
 			},
 		},

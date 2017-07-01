@@ -13,20 +13,20 @@ import (
 )
 
 type Config struct {
-	ServerTransitKey    string
-	UserTransitKey      string
-	TransitBackend      string
-	DefaultSecretPath   string
-	BulletinPath        string
+	ServerTransitKey  string
+	UserTransitKey    string
+	TransitBackend    string
+	DefaultSecretPath string
+	BulletinPath      string
 
-	SlackWebhook        string
-	SlackChannel        string
+	SlackWebhook string
+	SlackChannel string
 
-	GithubAccessToken   string
-	GithubRepoOwner     string
-	GithubRepo          string
-	GithubPoliciesPath  string
-	GithubTargetBranch  string
+	GithubAccessToken  string
+	GithubRepoOwner    string
+	GithubRepo         string
+	GithubPoliciesPath string
+	GithubTargetBranch string
 
 	// fields that goldfish will write
 	LastUpdated         string `hash:"ignore"`
@@ -34,10 +34,10 @@ type Config struct {
 }
 
 var (
-	config              = Config{}
-	configLock          = new(sync.RWMutex)
-	configHash uint64   = 0
-	GithubCurrentCommit = ""
+	config                     = Config{}
+	configLock                 = new(sync.RWMutex)
+	configHash          uint64 = 0
+	GithubCurrentCommit        = ""
 )
 
 func GetConfig() Config {
@@ -94,8 +94,8 @@ func loadConfigFromVault(path string) error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
-	config             = temp
-	configHash         = newHash
+	config = temp
+	configHash = newHash
 
 	log.Println("Goldfish config reloaded")
 	return nil

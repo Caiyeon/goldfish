@@ -206,7 +206,7 @@ export default {
     // fetch vault cluster details
     this.getHealth()
     // if stored session is out of date, notify user
-    if (this.session && moment().isAfter(moment(this.session['token_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))) {
+    if (this.session && moment().isAfter(moment(this.session['cookie_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))) {
       window.localStorage.removeItem('session')
       this.$notify({
         title: 'Session expired',

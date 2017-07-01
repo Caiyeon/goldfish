@@ -35,7 +35,7 @@ type PolicyRequest struct {
 	Requester     string
 	RequesterHash string
 	Required      int
-	Progress      int    `hash:"ignore"`
+	Progress      int `hash:"ignore"`
 }
 
 type PolicyDiff struct {
@@ -46,18 +46,12 @@ type PolicyDiff struct {
 
 func GetPolicy() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		// if policy is empty string, all policies will be fetched
 		var result interface{}
@@ -82,18 +76,12 @@ func GetPolicy() echo.HandlerFunc {
 
 func DeletePolicy() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		// fetch results
 		if err := auth.DeletePolicy(c.QueryParam("policy")); err != nil {
@@ -110,18 +98,12 @@ func DeletePolicy() echo.HandlerFunc {
 // Requires requester to have read access to the policy's rule
 func AddPolicyRequest() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		policy := c.QueryParam("policy")
 
@@ -190,7 +172,7 @@ func AddPolicyRequest() echo.HandlerFunc {
 		hash := strconv.FormatUint(hash_uint64, 16)
 
 		// write to cubbyhole with details
-		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
+		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(request))
 		if err != nil {
 			return parseError(c, err)
 		}
@@ -202,14 +184,14 @@ func AddPolicyRequest() echo.HandlerFunc {
 			err = slack.PostMessageWebhook(
 				conf.SlackChannel,
 				"A new policy change request has been submitted",
-				"Change ID: \n*" + hash + "*",
+				"Change ID: \n*"+hash+"*",
 				conf.SlackWebhook,
 			)
 			// change request is fine, just let the frontend know it wasn't slack'd
 			if err != nil {
 				return c.JSON(http.StatusOK, H{
 					"result": hash,
-					"error": "Could not send to slack webhook",
+					"error":  "Could not send to slack webhook",
 				})
 			}
 		}
@@ -217,7 +199,7 @@ func AddPolicyRequest() echo.HandlerFunc {
 		// return hash
 		return c.JSON(http.StatusOK, H{
 			"result": hash,
-			"error": "",
+			"error":  "",
 		})
 	}
 }
@@ -226,20 +208,14 @@ func AddPolicyRequest() echo.HandlerFunc {
 // Requires requester to have read access to the policy's rule
 func GetPolicyRequest() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
 
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
-
-		switch (c.QueryParam("type")) {
+		switch c.QueryParam("type") {
 		case "changeid":
 			if c.QueryParam("id") == "" {
 				return c.JSON(http.StatusBadRequest, H{
@@ -313,7 +289,7 @@ func getPolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash strin
 	// return request
 	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
-		"result": request,
+		"result":   request,
 		"progress": request.Progress,
 		"required": request.Required,
 	})
@@ -347,7 +323,7 @@ func getPolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash str
 	// return request
 	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
-		"result": changes,
+		"result":   changes,
 		"progress": progress,
 		"required": status.Required,
 	})
@@ -379,7 +355,7 @@ func compareGithubVault(auth *vault.AuthInfo, hash string) ([]PolicyDiff, error)
 	changes := make([]PolicyDiff, 0)
 
 	// for each hcl file in github folder, add an entry
-	for name, future := range(newPolicies) {
+	for name, future := range newPolicies {
 		diff := PolicyDiff{Policy: name}
 
 		// verify current user has rights to see policy
@@ -397,7 +373,7 @@ func compareGithubVault(auth *vault.AuthInfo, hash string) ([]PolicyDiff, error)
 	}
 
 	// for each current policy that doesn't exist in github, mark it as would be deleted
-	for _, name := range(currentPolicies) {
+	for _, name := range currentPolicies {
 		if name == "root" || name == "default" {
 			continue
 		}
@@ -421,18 +397,12 @@ func compareGithubVault(auth *vault.AuthInfo, hash string) ([]PolicyDiff, error)
 // If enough tokens are reached, a root token generation and policy change is attempted
 func UpdatePolicyRequest() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		unsealKey := c.FormValue("unseal")
 		if unsealKey == "" {
@@ -441,7 +411,7 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 			})
 		}
 
-		switch (c.QueryParam("type")) {
+		switch c.QueryParam("type") {
 		case "changeid":
 			if c.QueryParam("id") == "" {
 				return c.JSON(http.StatusBadRequest, H{
@@ -536,7 +506,7 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 	// if there aren't enough unseals yet
 	if len(wrappingTokens) < request.Required {
 		// store the wrapping tokens back in cubbyhole
-		_, err = vault.WriteToCubbyhole("unseal_wrapping_tokens/" + hash,
+		_, err = vault.WriteToCubbyhole("unseal_wrapping_tokens/"+hash,
 			map[string]interface{}{
 				"wrapping_tokens": strings.Trim(strings.Join(strings.Fields(fmt.Sprint(wrappingTokens)), ";"), "[]"),
 			})
@@ -546,7 +516,7 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 
 		// store progress in request too
 		request.Progress = len(wrappingTokens)
-		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(request))
+		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(request))
 		if err != nil {
 			return parseError(c, err)
 		}
@@ -565,7 +535,7 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 
 	// unwrap all the unseal tokens
 	unseals := []string{}
-	for _, wrappingToken := range(wrappingTokens) {
+	for _, wrappingToken := range wrappingTokens {
 		data, err := vault.UnwrapData(wrappingToken)
 		if err != nil {
 			return parseError(c, err)
@@ -588,7 +558,7 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 
 	// feed unseal tokens
 	if status.EncodedRootToken == "" {
-		for _, s := range(unseals) {
+		for _, s := range unseals {
 			status, err = vault.GenerateRootUpdate(s, status.Nonce)
 			// an error likely means one of the unseals was not valid
 			if err != nil {
@@ -694,7 +664,7 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 		return parseError(c, err)
 	}
 	if len(wrappingTokens) < status.Required {
-		_, err = vault.WriteToCubbyhole("unseal_wrapping_tokens/" + hash,
+		_, err = vault.WriteToCubbyhole("unseal_wrapping_tokens/"+hash,
 			map[string]interface{}{
 				"wrapping_tokens": strings.Trim(strings.Join(strings.Fields(fmt.Sprint(wrappingTokens)), ";"), "[]"),
 			})
@@ -713,7 +683,7 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 
 	// unwrap all the unseal tokens
 	unseals := []string{}
-	for _, wrappingToken := range(wrappingTokens) {
+	for _, wrappingToken := range wrappingTokens {
 		data, err := vault.UnwrapData(wrappingToken)
 		if err != nil {
 			return parseError(c, err)
@@ -736,7 +706,7 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 
 	// feed unseal tokens
 	if status.EncodedRootToken == "" {
-		for _, s := range(unseals) {
+		for _, s := range unseals {
 			status, err = vault.GenerateRootUpdate(s, status.Nonce)
 			// an error likely means one of the unseals was not valid
 			if err != nil {
@@ -783,7 +753,7 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 	defer rootauth.RevokeSelf()
 
 	// make all requested changes
-	for _, policyDiff := range(changes) {
+	for _, policyDiff := range changes {
 		err = rootauth.PutPolicy(policyDiff.Policy, policyDiff.New)
 		if err != nil {
 			return parseError(c, err)
@@ -800,18 +770,12 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 // Anyone that is able to read the policy is able to delete change requests for that policy
 func DeletePolicyRequest() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		// fetch change from cubbyhole
 		hash := c.Param("id")
