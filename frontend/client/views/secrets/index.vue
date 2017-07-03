@@ -326,13 +326,24 @@ export default {
 
     changePathUp: function () {
       // cut the trailing slash off if it exists
-      var noTrailingSlash = this.currentPath
+      let noTrailingSlash = this.currentPath
       if (this.currentPath.slice(-1) === '/') {
         noTrailingSlash = this.currentPath.substring(0, this.currentPath.length - 1)
       }
+
       // remove up to the last slash if it exists
-      this.currentPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+      let resultPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+      if (resultPath === '/') {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Already at top-level of mount',
+          type: 'warning'
+        })
+        return
+      }
+
       // fetch data again
+      this.currentPath = resultPath
       this.changePath(this.currentPath)
     },
 
