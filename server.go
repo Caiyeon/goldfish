@@ -145,6 +145,10 @@ func main() {
 	e.POST("/api/login", handlers.Login())
 	e.POST("/api/login/renew-self", handlers.RenewSelf())
 
+	e.GET("/api/token/accessors", handlers.GetTokenAccessors())
+	e.POST("/api/token/lookup-accessor", handlers.LookupTokenByAccessor())
+	e.DELETE("/api/token/revoke-accessor", handlers.DeleteTokenByAccessor())
+
 	e.GET("/api/users", handlers.GetUsers())
 	e.GET("/api/users/csrf", handlers.FetchCSRF())
 	e.GET("/api/tokencount", handlers.GetTokenCount())

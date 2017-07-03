@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -65,6 +66,94 @@ func GetTokenCount() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, H{
 			"result": result,
+		})
+	}
+}
+
+func GetTokenAccessors() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
+		defer auth.Clear()
+
+		// fetch results
+		result, err := auth.GetTokenAccessors()
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
+
+		return c.JSON(http.StatusOK, H{
+			"result": result,
+		})
+	}
+}
+
+func LookupTokenByAccessor() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
+		defer auth.Clear()
+
+		// scoped struct. No other functions need to know this
+		type body struct {
+			Accessors string `json:"accessors"`
+		}
+		var b = &body{}
+
+		// input can be in param or body (comma separated)
+		var err error
+		b.Accessors = c.QueryParam("accessors")
+		if b.Accessors == "" {
+			if err = c.Bind(&b); err == nil {
+				if b.Accessors == "" {
+					err = errors.New("Required key 'accessors' not found in body")
+				}
+			}
+		}
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Invalid body: " + err.Error(),
+			})
+		}
+
+		// fetch results
+		result, err := auth.LookupTokenByAccessor(b.Accessors)
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": result,
+		})
+	}
+}
+
+func DeleteTokenByAccessor() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
+		defer auth.Clear()
+
+		err := auth.DeleteTokenByAccessor(c.QueryParam("accessor"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, H{
+				"error": err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": "Token deleted successfully",
 		})
 	}
 }

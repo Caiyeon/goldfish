@@ -292,7 +292,7 @@ func TestGoldfishWrapper(t *testing.T) {
 
 				Convey("Wrapping arbitrary data", func() {
 					wrapToken, err := rootAuth.WrapData("300s",
-						"{ \"abc\": \"def\", \"ghi\": \"jkl\" }",
+						`{ "abc": "def", "ghi": "jkl" }`,
 					)
 					So(err, ShouldBeNil)
 					So(wrapToken, ShouldNotBeBlank)
@@ -313,16 +313,16 @@ func TestGoldfishWrapper(t *testing.T) {
 
 				tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
 
-				Convey("List of tokens should increase by one", func() {
-					countBefore, err := rootAuth.GetTokenCount()
+				Convey("Number of accessors should increase", func() {
+					accsBefore, err := rootAuth.GetTokenAccessors()
 					So(err, ShouldBeNil)
 
 					_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, "")
 					So(err, ShouldBeNil)
 
-					countAfter, err := rootAuth.GetTokenCount()
+					accsAfter, err := rootAuth.GetTokenAccessors()
 					So(err, ShouldBeNil)
-					So(countBefore+1, ShouldEqual, countAfter)
+					So(len(accsBefore)+1, ShouldEqual, len(accsAfter))
 				})
 
 				Convey("With a wrapped ttl", func() {
@@ -349,10 +349,18 @@ func TestGoldfishWrapper(t *testing.T) {
 					So(tempAuth, ShouldResemble, &AuthInfo{})
 				})
 
+				Convey("Accessor should be lookup-able", func() {
+					resp, err := rootAuth.LookupTokenByAccessor(resp.Auth.Accessor+","+resp.Auth.Accessor)
+					So(err, ShouldBeNil)
+					So(len(resp), ShouldEqual, 2)
+				})
+
 				Convey("Token should be deleteable via accessor", func() {
-					So(rootAuth.DeleteUser("token", resp.Auth.Accessor), ShouldBeNil)
+					So(rootAuth.DeleteTokenByAccessor(resp.Auth.Accessor), ShouldBeNil)
+
 					_, err := tempAuth.LookupSelf()
 					So(err, ShouldNotBeNil)
+
 					_, err = tempAuth.RenewSelf()
 					So(err, ShouldNotBeNil)
 				})

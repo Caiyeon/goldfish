@@ -93,7 +93,7 @@
                     Found <strong>{{ search.found }}</strong> matches out of <strong>{{ search.searched }}</strong> tokens
                   </p>
                   <p v-else class="subtitle is-5">
-                    Displaying <strong>{{Math.min(tokenCount, 300)}}</strong> out of <strong>{{tokenCount}}</strong> tokens
+                    Displaying <strong>{{Math.min(tableData.length, 300)}}</strong> out of <strong>{{accessors.length}}</strong> tokens
                   </p>
                 </div>
 
@@ -155,9 +155,6 @@
                   </td>
                   <td v-if="entry" v-for="key in tableColumns">
                     {{ entry[key] }}
-                  </td>
-                  <td v-else>
-                    ERROR: An invalid token-accessor has been found
                   </td>
                   <td width="34">
                   <span class="icon">
@@ -328,19 +325,6 @@ export default {
 
   mounted: function () {
     this.switchTab(0)
-    this.$http.get('/api/users/csrf').then((response) => {
-      this.csrf = response.headers['x-csrf-token']
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
-    this.$http.get('/api/tokencount').then((response) => {
-      this.tokenCount = response.data.result
-      this.lastPage = Math.ceil(response.data.result / 300)
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
   },
 
   computed: {
@@ -400,14 +384,28 @@ export default {
         regex: false,
         regexp: null
       }
-      // populate new table data according to tab name
-      this.$http.get('/api/users?type=' + this.tabName).then((response) => {
-        this.tableData = response.data.result
-        this.csrf = response.headers['x-csrf-token']
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
+
+      if (index === 0) {
+        // tokens tab requires special pagination
+        this.$http.get('/api/token/accessors').then((response) => {
+          this.accessors = response.data.result
+          this.csrf = response.headers['x-csrf-token']
+          this.lastPage = Math.ceil(this.accessors.length / 300)
+          this.loadPage(1)
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+      } else {
+        // otherwise populate new table data according to tab name
+        this.$http.get('/api/users?type=' + this.tabName).then((response) => {
+          this.tableData = response.data.result
+          this.csrf = response.headers['x-csrf-token']
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+      }
     },
 
     openModalBasic (index) {
@@ -428,36 +426,49 @@ export default {
     },
 
     deleteItem (index) {
-      this.$http.post('/api/users/revoke', {
-        Type: this.tabName.toLowerCase(),
-        ID: this.tableData[index][this.tableColumns[0]]
-      }, {
-        headers: {'X-CSRF-Token': this.csrf}
-      })
-      .then((response) => {
-        this.closeDeleteModal()
-        this.tableData.splice(index, 1)
-        this.$notify({
-          title: 'Success',
-          message: 'Deletion successful',
-          type: 'success'
+      // fetching extra csrf will be unnecessary after API redesign
+      this.$http.get('/api/users/csrf').then((response) => {
+        this.$http.post('/api/users/revoke', {
+          Type: this.tabName.toLowerCase(),
+          ID: this.tableData[index][this.tableColumns[0]]
+        }, {
+          headers: {'X-CSRF-Token': response.headers['x-csrf-token']}
+        })
+        .then((response) => {
+          this.closeDeleteModal()
+          this.tableData.splice(index, 1)
+          this.$notify({
+            title: 'Success',
+            message: 'Deletion successful',
+            type: 'success'
+          })
+        })
+        .catch((error) => {
+          this.closeDeleteModal()
+          this.$onError(error)
         })
       })
       .catch((error) => {
-        this.closeDeleteModal()
         this.$onError(error)
       })
     },
 
-    loadPage: function (pageNumber) {
-      if (pageNumber < 1 || pageNumber > this.lastPage || this.search.searched) {
+    loadPage: function (pg) {
+      if (pg < 1 || pg > this.lastPage || this.search.searched) {
         return
       }
-      this.currentPage = pageNumber
+      this.currentPage = pg
       this.loading = true
-      this.$http.get('/api/users?type=token&offset=' + ((this.currentPage - 1) * 300).toString()).then((response) => {
+      this.tableData = []
+
+      // construct accessor string delimited by comma, and send search request
+      this.$http.post('/api/token/lookup-accessor', {
+        Accessors: this.accessors.slice((pg - 1) * 300, pg * 300).join(',')
+      }, {
+        headers: {'X-CSRF-Token': this.csrf}
+      })
+      .then((response) => {
         this.tableData = response.data.result
-        this.csrf = response.headers['x-csrf-token']
         this.loading = false
       })
       .catch((error) => {
@@ -500,7 +511,12 @@ export default {
 
       // make an async call for each page
       for (var i = 0; i < this.lastPage; i++) {
-        this.$http.get('/api/users?type=token&offset=' + (i * 300).toString()).then((response) => {
+        this.$http.post('/api/token/lookup-accessor', {
+          Accessors: this.accessors.slice(i * 300, (i + 1) * 300).join(',')
+        }, {
+          headers: {'X-CSRF-Token': this.csrf}
+        })
+        .then((response) => {
           var found = false
           if (this.search.regex) {
             found = response.data.result.filter(this.itemContainsRegexExpr)
