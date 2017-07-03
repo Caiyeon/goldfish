@@ -106,6 +106,7 @@ export default {
   },
 
   mounted: function () {
+    // refresh current time every second, since time is not reactive
     setInterval(() => {
       this.now = moment()
     }, 1000)
