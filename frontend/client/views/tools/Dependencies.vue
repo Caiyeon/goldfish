@@ -330,12 +330,21 @@ export default {
       this.results.push(result)
       let policy = this.selectedPolicy
 
-      // for each 300 tokens, fetch, filter, and push to result
-      this.$http.get('/api/tokencount').then((response) => {
-        result.Loading = Math.ceil(response.data.result / 300)
+      // fetch a list of all accessors
+      this.$http.get('/api/token/accessors').then((response) => {
+        let accessors = response.data.result
+        let csrf = response.headers['x-csrf-token']
+        result.Loading = Math.ceil(accessors.length / 300)
 
-        for (var i = 0; i < Math.ceil(response.data.result / 300); i++) {
-          this.$http.get('/api/users?type=token&offset=' + (i * 300).toString())
+        for (var i = 0; i < Math.ceil(accessors.length / 300); i++) {
+          // construct accessor string delimited by comma, and send search request
+          this.$http.post('/api/token/lookup-accessor', {
+            Accessors: accessors.slice(i * 300, (i + 1) * 300).join(',')
+          }, {
+            headers: {'X-CSRF-Token': csrf}
+          })
+
+          // on success, parse each token detail for the target policy
           .then((response) => {
             for (var j = 0; j < response.data.result.length; j++) {
               if (response.data.result[j].policies.findIndex(function (p) { return (p === policy) }) > -1) {
@@ -344,12 +353,14 @@ export default {
             }
             result.Loading = result.Loading - 1 || false
           })
+
           .catch((error) => {
             this.$onError(error)
             result.Loading = result.Loading - 1 || false
           })
         }
       })
+
       .catch((error) => {
         this.$onError(error)
       })
