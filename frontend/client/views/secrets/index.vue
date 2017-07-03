@@ -290,7 +290,7 @@ export default {
       this.editMode = false
       this.confirmDelete = false
 
-      this.$http.get('/api/secrets?path=' + path).then((response) => {
+      this.$http.get('/api/secrets?path=' + encodeURIComponent(path)).then((response) => {
         this.tableData = []
         this.currentPath = response.data.path
         this.csrf = response.headers['x-csrf-token']
@@ -404,7 +404,7 @@ export default {
         this.addKeyValue()
       }
       var body = JSON.stringify(this.constructedPayload)
-      this.$http.post('/api/secrets?path=' + this.currentPath, querystring.stringify({
+      this.$http.post('/api/secrets?path=' + encodeURIComponent(this.currentPath), querystring.stringify({
         body: body
       }), {
         headers: {'X-CSRF-Token': this.csrf}
@@ -482,7 +482,7 @@ export default {
       }
 
       // request deletion of secret
-      this.$http.delete('/api/secrets?path=' + path, {
+      this.$http.delete('/api/secrets?path=' + encodeURIComponent(path), {
         headers: {'X-CSRF-Token': this.csrf}
       })
       .then((response) => {
