@@ -319,7 +319,9 @@ export default {
         }
       })
 
+      // upon failure, wipe data and force user to re-enter path manually or refresh
       .catch((error) => {
+        this.tableData = []
         this.$onError(error)
       })
     },
