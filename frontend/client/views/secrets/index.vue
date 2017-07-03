@@ -37,30 +37,37 @@
               <span>Insert Secret</span>
             </a> -->
 
-            <a v-if="editMode === false && currentPathType === 'Secret'"
-              class="button is-success is-small is-marginless"
-              v-on:click="startEdit">
-              Edit Secret
-            </a>
-
-            <a v-if="editMode === false && currentPathType === 'Secret'"
-              class="button is-danger is-small is-marginless"
-              v-on:click="deleteSecret(currentPath)">
-              Delete Secret
-            </a>
-
-            <a v-if="editMode === true && currentPathType === 'Secret'"
-              class="button is-success is-small is-marginless"
-              v-on:click="saveEdit">
-              Save Secret
-            </a>
-
+            <!-- Actions on current path -->
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
               v-on:click="startEdit">
               Add Secret
             </a>
 
+            <!-- Actions on current secret -->
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-success is-small is-marginless"
+              v-on:click="startEdit"
+              :disabled="displayJSON">
+              Edit Secret
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-danger is-small is-marginless"
+              v-on:click="deleteSecret(currentPath)">
+              Delete Secret
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-info is-small is-marginless"
+              v-on:click="displayJSON = !displayJSON">
+              Display JSON
+            </a>
+
+            <!-- Edit mode buttons -->
+            <a v-if="editMode === true && currentPathType === 'Secret'"
+              class="button is-success is-small is-marginless"
+              v-on:click="saveEdit">
+              Save Secret
+            </a>
             <a v-if="editMode === true"
               class="button is-warning is-small is-marginless"
               v-on:click="cancelEdit">
@@ -68,14 +75,13 @@
             </a>
 
             <!-- legend -->
-            <span class="tag is-danger is-unselectable is-pulled-right">Mount</span>
             <span class="tag is-primary is-unselectable is-pulled-right">Path</span>
             <span class="tag is-info is-unselectable is-pulled-right">Secret</span>
             <span class="tag is-success is-unselectable is-pulled-right">Key</span>
           </div>
 
           <!-- data table -->
-          <div class="table-responsive">
+          <div v-if="!displayJSON" class="table-responsive">
             <table class="table is-striped is-narrow">
 
               <!-- headers -->
@@ -208,6 +214,13 @@
             </table>
           </div>
 
+          <article v-if="displayJSON" class="message is-primary">
+            <div class="message-header">
+              JSON:
+            </div>
+            <pre v-highlightjs="JSON.stringify(constructedPayload, null, '    ')"><code class="javascript"></code></pre>
+          </article>
+
         </article>
       </div>
     </div>
@@ -228,6 +241,7 @@ export default {
       csrf: '',
       currentPath: '',
       currentPathCopy: '',
+      displayJSON: false,
       tableHeaders: [],
       tableData: [],
       tableDataCopy: [],
@@ -295,6 +309,7 @@ export default {
       this.newValue = ''
       this.editMode = false
       this.confirmDelete = false
+      this.displayJSON = false
 
       this.$http.get('/api/secrets?path=' + encodeURIComponent(path)).then((response) => {
         this.tableData = []
@@ -398,6 +413,9 @@ export default {
     },
 
     startEdit: function () {
+      if (this.displayJSON) {
+        return
+      }
       this.editMode = true
       this.currentPathCopy = this.currentPath
       // a deep copy is needed in case the edit is cancelled
