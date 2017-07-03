@@ -276,29 +276,6 @@ export default {
       this.tableData.splice(index, 1)
     },
 
-    // currently deprecated
-    getMounts: function () {
-      this.$http.get('/api/mounts').then((response) => {
-        this.tableData = []
-        this.tableHeaders = ['Mounts', 'Description', '']
-        this.csrf = response.headers['x-csrf-token']
-        let result = response.data.result
-
-        var keys = Object.keys(result)
-        for (var i = 0; i < keys.length; i++) {
-          this.tableData.push({
-            path: keys[i],
-            type: result[keys[i]]['type'],
-            desc: result[keys[i]]['description'],
-            conf: result[keys[i]]['config']
-          })
-        }
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
-    },
-
     changePath: function (path, entry) {
       if (entry) {
         if (entry.type === 'Key') {
