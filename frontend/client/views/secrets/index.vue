@@ -103,7 +103,10 @@
                   </td>
                   <!-- View-only -->
                   <td v-else>
-                    <a @click="changePath(currentPath, entry)">
+                    <span v-if="currentPathType === 'Secret'">
+                      {{ entry.path }}
+                    </span>
+                    <a v-else @click="changePath(currentPath, entry)">
                       {{ entry.path }}
                     </a>
                   </td>
@@ -119,13 +122,16 @@
                     {{ entry.desc }}
                   </td>
 
+                  <!-- Save some space for deletion button -->
                   <td width="68">
+                    <!-- Deleting a key-value pair in edit mode -->
                     <a v-if="editMode && currentPathType === 'Secret'" @click="deleteItem(index)">
                     <span class="icon">
                       <i class="fa fa-times-circle"></i>
                     </span>
                     </a>
 
+                    <!-- Deleting a secret -->
                     <a v-if="currentPathType === 'Path' && entry.type === 'Secret'" @click="deleteSecret(currentPath + entry.path)">
                     <span class="icon">
                       <i class="fa fa-trash-o"></i>
