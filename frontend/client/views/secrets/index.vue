@@ -148,16 +148,17 @@
 
                 <!-- new key value pair insertion row -->
                 <tr
-                  v-show="editMode && currentPathType === 'Secret'"
+                  v-if="editMode && currentPathType === 'Secret'"
                   @keyup.enter="addKeyValue()"
                 >
                   <td width="68">
                   </td>
                   <td>
                     <p class="control">
-                    <input
+                    <input v-focus
                       class="input is-small"
                       type="text"
+                      ref="newKey"
                       placeholder="Add a key"
                       v-model="newKey"
                       v-bind:class="[
@@ -181,14 +182,14 @@
 
                 <!-- new secret insertion -->
                 <tr
-                  v-show="editMode && currentPathType === 'Path'"
+                  v-if="editMode && currentPathType === 'Path'"
                   @keyup.enter="addSecret()"
                 >
                   <td width="68">
                   </td>
                   <td>
                     <p class="control">
-                    <input
+                    <input v-focus
                       class="input is-small"
                       type="text"
                       placeholder="Add a new secret"
@@ -410,6 +411,8 @@ export default {
       // reset so that a new pair can be inserted
       this.newKey = ''
       this.newValue = ''
+      // reset focus to key input
+      this.$refs.newKey.focus()
     },
 
     startEdit: function () {
