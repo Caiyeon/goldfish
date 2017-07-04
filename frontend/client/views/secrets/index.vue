@@ -37,30 +37,37 @@
               <span>Insert Secret</span>
             </a> -->
 
-            <a v-if="editMode === false && currentPathType === 'Secret'"
-              class="button is-success is-small is-marginless"
-              v-on:click="startEdit">
-              Edit Secret
-            </a>
-
-            <a v-if="editMode === false && currentPathType === 'Secret'"
-              class="button is-danger is-small is-marginless"
-              v-on:click="deleteSecret(currentPath)">
-              Delete Secret
-            </a>
-
-            <a v-if="editMode === true && currentPathType === 'Secret'"
-              class="button is-success is-small is-marginless"
-              v-on:click="saveEdit">
-              Save Secret
-            </a>
-
+            <!-- Actions on current path -->
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
               v-on:click="startEdit">
               Add Secret
             </a>
 
+            <!-- Actions on current secret -->
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-success is-small is-marginless"
+              v-on:click="startEdit"
+              :disabled="displayJSON">
+              Edit Secret
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-danger is-small is-marginless"
+              v-on:click="deleteSecret(currentPath)">
+              Delete Secret
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Secret'"
+              class="button is-info is-small is-marginless"
+              v-on:click="displayJSON = !displayJSON">
+              Display JSON
+            </a>
+
+            <!-- Edit mode buttons -->
+            <a v-if="editMode === true && currentPathType === 'Secret'"
+              class="button is-success is-small is-marginless"
+              v-on:click="saveEdit">
+              Save Secret
+            </a>
             <a v-if="editMode === true"
               class="button is-warning is-small is-marginless"
               v-on:click="cancelEdit">
@@ -68,14 +75,13 @@
             </a>
 
             <!-- legend -->
-            <span class="tag is-danger is-unselectable is-pulled-right">Mount</span>
             <span class="tag is-primary is-unselectable is-pulled-right">Path</span>
             <span class="tag is-info is-unselectable is-pulled-right">Secret</span>
             <span class="tag is-success is-unselectable is-pulled-right">Key</span>
           </div>
 
           <!-- data table -->
-          <div class="table-responsive">
+          <div v-if="!displayJSON" class="table-responsive">
             <table class="table is-striped is-narrow">
 
               <!-- headers -->
@@ -103,7 +109,10 @@
                   </td>
                   <!-- View-only -->
                   <td v-else>
-                    <a @click="changePath(currentPath, entry)">
+                    <span v-if="currentPathType === 'Secret'">
+                      {{ entry.path }}
+                    </span>
+                    <a v-else @click="changePath(currentPath, entry)">
                       {{ entry.path }}
                     </a>
                   </td>
@@ -119,13 +128,16 @@
                     {{ entry.desc }}
                   </td>
 
+                  <!-- Save some space for deletion button -->
                   <td width="68">
+                    <!-- Deleting a key-value pair in edit mode -->
                     <a v-if="editMode && currentPathType === 'Secret'" @click="deleteItem(index)">
                     <span class="icon">
                       <i class="fa fa-times-circle"></i>
                     </span>
                     </a>
 
+                    <!-- Deleting a secret -->
                     <a v-if="currentPathType === 'Path' && entry.type === 'Secret'" @click="deleteSecret(currentPath + entry.path)">
                     <span class="icon">
                       <i class="fa fa-trash-o"></i>
@@ -136,16 +148,17 @@
 
                 <!-- new key value pair insertion row -->
                 <tr
-                  v-show="editMode && currentPathType === 'Secret'"
+                  v-if="editMode && currentPathType === 'Secret'"
                   @keyup.enter="addKeyValue()"
                 >
                   <td width="68">
                   </td>
                   <td>
                     <p class="control">
-                    <input
+                    <input v-focus
                       class="input is-small"
                       type="text"
+                      ref="newKey"
                       placeholder="Add a key"
                       v-model="newKey"
                       v-bind:class="[
@@ -169,14 +182,14 @@
 
                 <!-- new secret insertion -->
                 <tr
-                  v-show="editMode && currentPathType === 'Path'"
+                  v-if="editMode && currentPathType === 'Path'"
                   @keyup.enter="addSecret()"
                 >
                   <td width="68">
                   </td>
                   <td>
                     <p class="control">
-                    <input
+                    <input v-focus
                       class="input is-small"
                       type="text"
                       placeholder="Add a new secret"
@@ -202,6 +215,13 @@
             </table>
           </div>
 
+          <article v-if="displayJSON" class="message is-primary">
+            <div class="message-header">
+              JSON:
+            </div>
+            <pre v-highlightjs="JSON.stringify(constructedPayload, null, '    ')"><code class="javascript"></code></pre>
+          </article>
+
         </article>
       </div>
     </div>
@@ -222,6 +242,7 @@ export default {
       csrf: '',
       currentPath: '',
       currentPathCopy: '',
+      displayJSON: false,
       tableHeaders: [],
       tableData: [],
       tableDataCopy: [],
@@ -276,29 +297,6 @@ export default {
       this.tableData.splice(index, 1)
     },
 
-    // currently deprecated
-    getMounts: function () {
-      this.$http.get('/api/mounts').then((response) => {
-        this.tableData = []
-        this.tableHeaders = ['Mounts', 'Description', '']
-        this.csrf = response.headers['x-csrf-token']
-        let result = response.data.result
-
-        var keys = Object.keys(result)
-        for (var i = 0; i < keys.length; i++) {
-          this.tableData.push({
-            path: keys[i],
-            type: result[keys[i]]['type'],
-            desc: result[keys[i]]['description'],
-            conf: result[keys[i]]['config']
-          })
-        }
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
-    },
-
     changePath: function (path, entry) {
       if (entry) {
         if (entry.type === 'Key') {
@@ -312,8 +310,9 @@ export default {
       this.newValue = ''
       this.editMode = false
       this.confirmDelete = false
+      this.displayJSON = false
 
-      this.$http.get('/api/secrets?path=' + path).then((response) => {
+      this.$http.get('/api/secrets?path=' + encodeURIComponent(path)).then((response) => {
         this.tableData = []
         this.currentPath = response.data.path
         this.csrf = response.headers['x-csrf-token']
@@ -342,20 +341,33 @@ export default {
         }
       })
 
+      // upon failure, wipe data and force user to re-enter path manually or refresh
       .catch((error) => {
+        this.tableData = []
         this.$onError(error)
       })
     },
 
     changePathUp: function () {
       // cut the trailing slash off if it exists
-      var noTrailingSlash = this.currentPath
+      let noTrailingSlash = this.currentPath
       if (this.currentPath.slice(-1) === '/') {
         noTrailingSlash = this.currentPath.substring(0, this.currentPath.length - 1)
       }
+
       // remove up to the last slash if it exists
-      this.currentPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+      let resultPath = noTrailingSlash.substring(0, noTrailingSlash.lastIndexOf('/')) + '/'
+      if (resultPath === '/') {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Already at top-level of mount',
+          type: 'warning'
+        })
+        return
+      }
+
       // fetch data again
+      this.currentPath = resultPath
       this.changePath(this.currentPath)
     },
 
@@ -374,10 +386,10 @@ export default {
 
     addKeyValue: function () {
       // only allow insertion if key and value are valid
-      if (this.newKey === '' || this.newValue === '') {
+      if (this.newKey === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'key and value must be non-empty',
+          message: 'Key is required',
           type: 'warning'
         })
         return
@@ -385,7 +397,7 @@ export default {
       if (this.newKeyExists) {
         this.$notify({
           title: 'Invalid',
-          message: 'key already exists',
+          message: 'Key already exists',
           type: 'warning'
         })
         return
@@ -399,9 +411,14 @@ export default {
       // reset so that a new pair can be inserted
       this.newKey = ''
       this.newValue = ''
+      // reset focus to key input
+      this.$refs.newKey.focus()
     },
 
     startEdit: function () {
+      if (this.displayJSON) {
+        return
+      }
       this.editMode = true
       this.currentPathCopy = this.currentPath
       // a deep copy is needed in case the edit is cancelled
@@ -414,7 +431,7 @@ export default {
         this.addKeyValue()
       }
       var body = JSON.stringify(this.constructedPayload)
-      this.$http.post('/api/secrets?path=' + this.currentPath, querystring.stringify({
+      this.$http.post('/api/secrets?path=' + encodeURIComponent(this.currentPath), querystring.stringify({
         body: body
       }), {
         headers: {'X-CSRF-Token': this.csrf}
@@ -492,7 +509,7 @@ export default {
       }
 
       // request deletion of secret
-      this.$http.delete('/api/secrets?path=' + path, {
+      this.$http.delete('/api/secrets?path=' + encodeURIComponent(path), {
         headers: {'X-CSRF-Token': this.csrf}
       })
       .then((response) => {

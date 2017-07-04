@@ -1,10 +1,17 @@
 <div align="center">
 
-<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo </a> <img height="22" src=https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg></h3>
+<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo </a></h3>
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
-<h3>Share with your colleagues and star this repo!</h3>
+<h3>
+	<a href='https://ko-fi.com/A4242ER7' target='_blank'>
+		<img height='32' style='border:0px;height:32px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Donation' />
+	</a>
+	<img height="32" src=https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg>
+	<br>
+	Share this repo with your colleagues!
+</h3>
 
 </div>
 

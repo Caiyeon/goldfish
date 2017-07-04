@@ -135,6 +135,16 @@ func main() {
 		}
 	}
 
+	// HTML, JS, CSS, and static assets are served from public folder in working directory
+	if !devMode {
+		// check whether the folder exists
+		if _, err := os.Stat("public"); os.IsNotExist(err) {
+			panic("Could not find 'public' folder. Make sure it is in the working directory!")
+		} else if err != nil {
+			panic("Could not open 'public' folder. Reason: "+err.Error())
+		}
+	}
+
 	// static routing of webpack'd folder
 	e.Static("/", "public")
 
