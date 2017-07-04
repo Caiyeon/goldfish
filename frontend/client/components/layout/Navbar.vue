@@ -43,7 +43,7 @@
                 <div class="box">
                 <aside class="menu">
                   <p class="menu-label">
-                    token-public-demo-token
+                    {{session['display_name']}}
                   </p>
                   <ul class="menu-list">
                     <li v-if="tokenExpiresIn === ''">Token will never expire</li>
