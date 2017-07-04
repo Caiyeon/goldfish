@@ -386,10 +386,10 @@ export default {
 
     addKeyValue: function () {
       // only allow insertion if key and value are valid
-      if (this.newKey === '' || this.newValue === '') {
+      if (this.newKey === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'key and value must be non-empty',
+          message: 'Key is required',
           type: 'warning'
         })
         return
@@ -397,7 +397,7 @@ export default {
       if (this.newKeyExists) {
         this.$notify({
           title: 'Invalid',
-          message: 'key already exists',
+          message: 'Key already exists',
           type: 'warning'
         })
         return
