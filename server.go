@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +15,8 @@ import (
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+
+	rice "github.com/GeertJohan/go.rice"
 
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -125,18 +128,17 @@ func main() {
 		}
 	}
 
-	// HTML, JS, CSS, and static assets are served from public folder in working directory
+	// for production, static files are packed inside binary
+	// for development, npm dev should serve the static files instead
 	if !devMode {
-		// check whether the folder exists
-		if _, err := os.Stat("public"); os.IsNotExist(err) {
-			panic("Could not find 'public' folder. Make sure it is in the working directory!")
-		} else if err != nil {
-			panic("Could not open 'public' folder. Reason: "+err.Error())
-		}
+		// use rice for static files instead of regular file system
+		assetHandler := http.FileServer(rice.MustFindBox("public").HTTPBox())
+		e.GET("/", echo.WrapHandler(assetHandler))
+		e.GET("/assets/css/*", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
+		e.GET("/assets/js/*", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
+		e.GET("/assets/fonts/*", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
+		e.GET("/assets/img/*", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
 	}
-
-	// static routing of webpack'd folder
-	e.Static("/", "public")
 
 	// API routing
 	e.GET("/api/health", handlers.VaultHealth())

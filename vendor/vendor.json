@@ -96,6 +96,18 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
+			"checksumSHA1": "c4dFBfQ1TiTG3CAp6MpMen/nWXU=",
+			"path": "github.com/GeertJohan/go.rice",
+			"revision": "c02ca9a983da5807ddf7d796784928f5be4afd09",
+			"revisionTime": "2017-04-20T13:57:05Z"
+		},
+		{
+			"checksumSHA1": "xECV8VmnSwtMPugLqB1OAXwOs48=",
+			"path": "github.com/GeertJohan/go.rice/embedded",
+			"revision": "c02ca9a983da5807ddf7d796784928f5be4afd09",
+			"revisionTime": "2017-04-20T13:57:05Z"
+		},
+		{
 			"checksumSHA1": "HLETgTgj0XOZRQlIJ36k/q6YB2s=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/Jeffail/gabs",
 			"path": "github.com/Jeffail/gabs",
@@ -575,6 +587,12 @@
 			"path": "github.com/coreos/go-semver/semver",
 			"revision": "d8e2db65a326b529477cc40295d5902906645e6b",
 			"revisionTime": "2017-06-05T02:18:34Z"
+		},
+		{
+			"checksumSHA1": "8i+beEgcVf0q/I7lTqo2ERZM/OU=",
+			"path": "github.com/daaku/go.zipexe",
+			"revision": "a5fe2436ffcb3236e175e5149162b41cd28bd27d",
+			"revisionTime": "2015-03-29T02:31:25Z"
 		},
 		{
 			"checksumSHA1": "kB1nqNgicm9nRnC6Gy1tyTuJET0=",
@@ -1415,6 +1433,12 @@
 			"path": "github.com/jtolds/gls",
 			"revision": "77f18212c9c7edc9bd6a33d383a7b545ce62f064",
 			"revisionTime": "2017-05-03T22:40:06Z"
+		},
+		{
+			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
+			"path": "github.com/kardianos/osext",
+			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
+			"revisionTime": "2017-05-10T13:15:34Z"
 		},
 		{
 			"checksumSHA1": "tK8NE7EHFc1/DiXhjCwUNkIGS3w=",
