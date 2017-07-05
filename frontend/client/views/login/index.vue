@@ -200,6 +200,13 @@ export default {
   },
 
   mounted: function () {
+    // demo
+    this.$message({
+      message: 'Try logging in with "goldfish" as token',
+      type: 'warning',
+      duration: 0,
+      showCloseButton: true
+    })
     // fetch vault cluster details
     this.getHealth()
   },

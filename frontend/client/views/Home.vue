@@ -20,6 +20,15 @@ export default {
 
   data () {
     return this.$store.state.pkg
+  },
+
+  mounted: function () {
+    this.$message({
+      message: 'Welcome to the goldfish vault UI demo. Login first!',
+      type: 'warning',
+      duration: 0,
+      showCloseButton: true
+    })
   }
 }
 </script>

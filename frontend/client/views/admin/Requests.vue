@@ -187,6 +187,12 @@ export default {
   },
 
   mounted: function () {
+    this.$message({
+      message: 'Try using a goldfish commit hash. E.g. "1bf549e5ecab43a26b041970b0df1197c38cd6f2"',
+      type: 'warning',
+      duration: 0,
+      showCloseButton: true
+    })
   },
 
   computed: {

@@ -110,7 +110,7 @@ func main() {
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
 			XFrameOptions:         "SAMEORIGIN",
-			ContentSecurityPolicy: "default-src 'self'",
+			ContentSecurityPolicy: "default-src 'self' blob: 'unsafe-inline' buttons.github.io api.github.com;",
 		}))
 
 		// if redirect is set, forward port 80 to port 443
