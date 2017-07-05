@@ -46,6 +46,9 @@ export default {
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
     bulletinPairs: function () {
       var pairs = []
       for (var i = 0; i < this.bulletins.length; i += 2) {
@@ -60,7 +63,9 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/bulletins').then((response) => {
+    this.$http.get('/api/bulletins', {
+      headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+    }).then((response) => {
       this.bulletins = response.data.result
     })
     .catch((error) => {

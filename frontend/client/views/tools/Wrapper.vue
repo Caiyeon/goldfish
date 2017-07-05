@@ -167,9 +167,17 @@ export default {
     }
   },
 
+  computed: {
+    session: function () {
+      return this.$store.getters.session
+    }
+  },
+
   mounted: function () {
     // fetch csrf token upon mounting
-    this.$http.get('/api/wrapping')
+    this.$http.get('/api/wrapping', {
+      headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+    })
     .then((response) => {
       this.csrf = response.headers['x-csrf-token']
     })
@@ -199,7 +207,10 @@ export default {
         wrapttl: this.wrap_ttl,
         data: JSON.stringify(this.packData())
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
       .then((response) => {
         this.$message({
@@ -222,7 +233,10 @@ export default {
       this.$http.post('/api/wrapping/unwrap', querystring.stringify({
         wrappingToken: this.currToken
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
       .then((response) => {
         this.tableData = []

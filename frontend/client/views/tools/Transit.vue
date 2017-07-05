@@ -121,8 +121,16 @@ export default {
     }
   },
 
+  computed: {
+    session: function () {
+      return this.$store.getters.session
+    }
+  },
+
   mounted: function () {
-    this.$http.get('/api/transit').then((response) => {
+    this.$http.get('/api/transit', {
+      headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+    }).then((response) => {
       this.csrf = response.headers['x-csrf-token']
       this.userTransitKey = response.headers['usertransitkey']
     })
@@ -141,7 +149,10 @@ export default {
         plaintext: this.plaintext,
         key: this.userTransitKey
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
 
       .then((response) => {
@@ -168,7 +179,10 @@ export default {
         cipher: this.cipher,
         key: this.userTransitKey
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
 
       .then((response) => {

@@ -257,6 +257,10 @@ export default {
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
+
     currentPathType: function () {
       if (this.currentPath === '' || this.currentPath === '/') {
         return 'Mount'
@@ -312,7 +316,9 @@ export default {
       this.confirmDelete = false
       this.displayJSON = false
 
-      this.$http.get('/api/secrets?path=' + encodeURIComponent(path)).then((response) => {
+      this.$http.get('/api/secrets?path=' + encodeURIComponent(path), {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
         this.tableData = []
         this.currentPath = response.data.path
         this.csrf = response.headers['x-csrf-token']
@@ -434,7 +440,10 @@ export default {
       this.$http.post('/api/secrets?path=' + encodeURIComponent(this.currentPath), querystring.stringify({
         body: body
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
       .then((response) => {
         this.$notify({
@@ -510,7 +519,10 @@ export default {
 
       // request deletion of secret
       this.$http.delete('/api/secrets?path=' + encodeURIComponent(path), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
       .then((response) => {
         this.$notify({

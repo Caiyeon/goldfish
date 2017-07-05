@@ -328,6 +328,10 @@ export default {
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
+
     selectedItemTitle: function () {
       if (this.selectedIndex !== -1) {
         return String(this.tableData[this.selectedIndex][this.tableColumns[0]])
@@ -387,7 +391,9 @@ export default {
 
       if (index === 0) {
         // tokens tab requires special pagination
-        this.$http.get('/api/token/accessors').then((response) => {
+        this.$http.get('/api/token/accessors', {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
           this.accessors = response.data.result
           this.csrf = response.headers['x-csrf-token']
           this.lastPage = Math.ceil(this.accessors.length / 300)
@@ -398,7 +404,9 @@ export default {
         })
       } else {
         // otherwise populate new table data according to tab name
-        this.$http.get('/api/users?type=' + this.tabName).then((response) => {
+        this.$http.get('/api/users?type=' + this.tabName, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
           this.tableData = response.data.result
           this.csrf = response.headers['x-csrf-token']
         })
@@ -427,12 +435,18 @@ export default {
 
     deleteItem (index) {
       // fetching extra csrf will be unnecessary after API redesign
-      this.$http.get('/api/users/csrf').then((response) => {
+      this.$http.get('/api/users/csrf', {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+      .then((response) => {
         this.$http.post('/api/users/revoke', {
           Type: this.tabName.toLowerCase(),
           ID: this.tableData[index][this.tableColumns[0]]
         }, {
-          headers: {'X-CSRF-Token': response.headers['x-csrf-token']}
+          headers: {
+            'X-CSRF-Token': response.headers['x-csrf-token'],
+            'X-Vault-Token': this.session ? this.session.token : ''
+          }
         })
         .then((response) => {
           this.closeDeleteModal()
@@ -465,7 +479,10 @@ export default {
       this.$http.post('/api/token/lookup-accessor', {
         Accessors: this.accessors.slice((pg - 1) * 300, pg * 300).join(',')
       }, {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
       .then((response) => {
         this.tableData = response.data.result
@@ -514,7 +531,10 @@ export default {
         this.$http.post('/api/token/lookup-accessor', {
           Accessors: this.accessors.slice(i * 300, (i + 1) * 300).join(',')
         }, {
-          headers: {'X-CSRF-Token': this.csrf}
+          headers: {
+            'X-CSRF-Token': this.csrf,
+            'X-Vault-Token': this.session ? this.session.token : ''
+          }
         })
         .then((response) => {
           var found = false

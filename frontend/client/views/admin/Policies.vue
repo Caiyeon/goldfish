@@ -146,7 +146,9 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/policy').then((response) => {
+    this.$http.get('/api/policy', {
+      headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+    }).then((response) => {
       this.policies = response.data.result
       this.csrf = response.headers['x-csrf-token']
     })
@@ -156,6 +158,9 @@ export default {
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
     filteredPolicies: function () {
       if (this.nameFilter) {
         // filter by name
@@ -179,7 +184,9 @@ export default {
       this.policyRules = ''
       this.policyRulesModified = ''
       this.selectedPolicy = policyName
-      this.$http.get('/api/policy?policy=' + policyName).then((response) => {
+      this.$http.get('/api/policy?policy=' + policyName, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
         this.policyRules = response.data.result
         this.policyRulesModified = this.policyRules
       })
@@ -199,7 +206,9 @@ export default {
       // crawl through each policy
       for (var i = 0; i < this.policies.length; i++) {
         let policyName = this.policies[i]
-        this.$http.get('/api/policy?policy=' + policyName).then((response) => {
+        this.$http.get('/api/policy?policy=' + policyName, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
           var searchString = this.search.regex ? this.search.str : this.makeRegex(this.search.str)
           if (response.data.result.match(searchString)) {
             this.search.found.push(policyName)
@@ -218,7 +227,10 @@ export default {
     addPolicyRequest: function () {
       this.$http.post('/api/policy/request?policy=' + this.selectedPolicy,
       querystring.stringify({ rules: this.policyRulesModified }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {
+          'X-CSRF-Token': this.csrf,
+          'X-Vault-Token': this.session ? this.session.token : ''
+        }
       })
 
       .then((response) => {
