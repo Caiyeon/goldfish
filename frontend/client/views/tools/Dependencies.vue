@@ -185,7 +185,6 @@
 export default {
   data () {
     return {
-      csrf: '',
       supportedResourceTypes: ['Policy', 'Mount'],
       resourceType: '',
       loading: false,
@@ -343,7 +342,6 @@ export default {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         let accessors = response.data.result
-        let csrf = response.headers['x-csrf-token']
         result.Loading = Math.ceil(accessors.length / 300)
 
         for (var i = 0; i < Math.ceil(accessors.length / 300); i++) {
@@ -351,10 +349,7 @@ export default {
           this.$http.post('/api/token/lookup-accessor', {
             Accessors: accessors.slice(i * 300, (i + 1) * 300).join(',')
           }, {
-            headers: {
-              'X-CSRF-Token': csrf,
-              'X-Vault-Token': this.session ? this.session.token : ''
-            }
+            headers: {'X-Vault-Token': this.session ? this.session.token : ''}
           })
 
           // on success, parse each token detail for the target policy

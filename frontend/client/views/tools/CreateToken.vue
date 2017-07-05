@@ -333,7 +333,6 @@ export default {
 
   data () {
     return {
-      csrf: '',
       bRenewable: true,
       bNoParent: false,
       bPeriodic: false,
@@ -423,25 +422,8 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/users/csrf', {
-      headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-    })
-    .then((response) => {
-      this.csrf = response.headers['x-csrf-token']
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
-
     // fetch available policies
-    try {
-      var session = JSON.parse(window.localStorage.getItem('session'))
-      if (Date.now() > Date.parse(session['cookie_expiry'])) {
-        throw session
-      } else {
-        this.availablePolicies = session.policies
-      }
-    } catch (e) {
+    if (!this.session || !this.session['policies']) {
       this.$notify({
         title: 'Session not found',
         message: 'Please login',
@@ -449,6 +431,7 @@ export default {
       })
       return
     }
+    this.availablePolicies = this.session['policies']
 
     // check if roles are available to logged in user
     this.$http.get('/api/users/listroles', {
@@ -536,10 +519,7 @@ export default {
 
       this.createdToken = null
       this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$notify({

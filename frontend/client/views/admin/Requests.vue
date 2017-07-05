@@ -175,7 +175,6 @@ const querystring = require('querystring')
 export default {
   data () {
     return {
-      csrf: '',
       searchString: '',
       searchType: 'changeid',
       request: null,
@@ -224,7 +223,6 @@ export default {
       this.$http.get(this.searchURL, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
-        this.csrf = response.headers['x-csrf-token']
         this.request = response.data.result
         this.progress = response.data.progress
         this.required = response.data.required
@@ -238,10 +236,7 @@ export default {
       this.$http.post(this.updateURL, querystring.stringify({
         unseal: this.unsealToken
       }), {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.unsealToken = ''
         // if more unseals are needed
@@ -282,7 +277,7 @@ export default {
 
     reject: function () {
       this.$http.delete('/api/policy/request/' + this.searchString, {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$notify({

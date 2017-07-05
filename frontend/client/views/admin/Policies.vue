@@ -129,7 +129,6 @@ const querystring = require('querystring')
 export default {
   data () {
     return {
-      csrf: '',
       policies: [],
       policyRules: '',
       policyRulesModified: '',
@@ -148,9 +147,9 @@ export default {
   mounted: function () {
     this.$http.get('/api/policy', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-    }).then((response) => {
+    })
+    .then((response) => {
       this.policies = response.data.result
-      this.csrf = response.headers['x-csrf-token']
     })
     .catch((error) => {
       this.$onError(error)
@@ -227,10 +226,7 @@ export default {
     addPolicyRequest: function () {
       this.$http.post('/api/policy/request?policy=' + this.selectedPolicy,
       querystring.stringify({ rules: this.policyRulesModified }), {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
 
       .then((response) => {

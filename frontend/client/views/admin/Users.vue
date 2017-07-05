@@ -292,7 +292,6 @@ export default {
 
   data () {
     return {
-      csrf: '',
       tabName: 'token',
       tableData: [],
       tableColumns: [
@@ -395,7 +394,6 @@ export default {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.accessors = response.data.result
-          this.csrf = response.headers['x-csrf-token']
           this.lastPage = Math.ceil(this.accessors.length / 300)
           this.loadPage(1)
         })
@@ -408,7 +406,6 @@ export default {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.tableData = response.data.result
-          this.csrf = response.headers['x-csrf-token']
         })
         .catch((error) => {
           this.$onError(error)
@@ -434,35 +431,23 @@ export default {
     },
 
     deleteItem (index) {
-      // fetching extra csrf will be unnecessary after API redesign
-      this.$http.get('/api/users/csrf', {
+      this.$http.post('/api/users/revoke', {
+        Type: this.tabName.toLowerCase(),
+        ID: this.tableData[index][this.tableColumns[0]]
+      }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
-        this.$http.post('/api/users/revoke', {
-          Type: this.tabName.toLowerCase(),
-          ID: this.tableData[index][this.tableColumns[0]]
-        }, {
-          headers: {
-            'X-CSRF-Token': response.headers['x-csrf-token'],
-            'X-Vault-Token': this.session ? this.session.token : ''
-          }
-        })
-        .then((response) => {
-          this.closeDeleteModal()
-          this.tableData.splice(index, 1)
-          this.$notify({
-            title: 'Success',
-            message: 'Deletion successful',
-            type: 'success'
-          })
-        })
-        .catch((error) => {
-          this.closeDeleteModal()
-          this.$onError(error)
+        this.closeDeleteModal()
+        this.tableData.splice(index, 1)
+        this.$notify({
+          title: 'Success',
+          message: 'Deletion successful',
+          type: 'success'
         })
       })
       .catch((error) => {
+        this.closeDeleteModal()
         this.$onError(error)
       })
     },
@@ -479,10 +464,7 @@ export default {
       this.$http.post('/api/token/lookup-accessor', {
         Accessors: this.accessors.slice((pg - 1) * 300, pg * 300).join(',')
       }, {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.tableData = response.data.result
@@ -531,10 +513,7 @@ export default {
         this.$http.post('/api/token/lookup-accessor', {
           Accessors: this.accessors.slice(i * 300, (i + 1) * 300).join(',')
         }, {
-          headers: {
-            'X-CSRF-Token': this.csrf,
-            'X-Vault-Token': this.session ? this.session.token : ''
-          }
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         })
         .then((response) => {
           var found = false

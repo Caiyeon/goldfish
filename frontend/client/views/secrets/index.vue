@@ -239,7 +239,6 @@ export default {
 
   data () {
     return {
-      csrf: '',
       currentPath: '',
       currentPathCopy: '',
       displayJSON: false,
@@ -321,7 +320,6 @@ export default {
       }).then((response) => {
         this.tableData = []
         this.currentPath = response.data.path
-        this.csrf = response.headers['x-csrf-token']
         let result = response.data.result
 
         if (this.currentPath.slice(-1) === '/') {
@@ -440,10 +438,7 @@ export default {
       this.$http.post('/api/secrets?path=' + encodeURIComponent(this.currentPath), querystring.stringify({
         body: body
       }), {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$notify({
@@ -519,10 +514,7 @@ export default {
 
       // request deletion of secret
       this.$http.delete('/api/secrets?path=' + encodeURIComponent(path), {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$notify({

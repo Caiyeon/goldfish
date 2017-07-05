@@ -113,7 +113,6 @@ export default {
 
   data () {
     return {
-      csrf: '',
       plaintext: '',
       cipher: '',
       userTransitKey: '',
@@ -131,7 +130,6 @@ export default {
     this.$http.get('/api/transit', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     }).then((response) => {
-      this.csrf = response.headers['x-csrf-token']
       this.userTransitKey = response.headers['usertransitkey']
     })
     .catch((error) => {
@@ -149,10 +147,7 @@ export default {
         plaintext: this.plaintext,
         key: this.userTransitKey
       }), {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
 
       .then((response) => {
@@ -179,10 +174,7 @@ export default {
         cipher: this.cipher,
         key: this.userTransitKey
       }), {
-        headers: {
-          'X-CSRF-Token': this.csrf,
-          'X-Vault-Token': this.session ? this.session.token : ''
-        }
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
 
       .then((response) => {

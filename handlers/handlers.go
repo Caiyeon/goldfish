@@ -7,30 +7,11 @@ import (
 	"strings"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
-	"github.com/gorilla/securecookie"
 	"github.com/labstack/echo"
 )
 
 // for returning JSON bodies
 type H map[string]interface{}
-
-// for storing ciphers of user credentials
-var scookie = &securecookie.SecureCookie{}
-
-func init() {
-	// setup cookie encryption keys
-	hashKey := securecookie.GenerateRandomKey(64)
-	blockKey := securecookie.GenerateRandomKey(32)
-	if hashKey == nil || blockKey == nil {
-		panic("Failed to generate random hashkey")
-	}
-	scookie = securecookie.New(hashKey, blockKey)
-	scookie = scookie.MaxAge(14400) // 8 hours
-	if scookie == nil {
-		panic("Failed to initialize gorilla/securecookie")
-	}
-}
 
 // returns the http status code found in the error message
 func parseError(c echo.Context, err error) error {
@@ -50,15 +31,6 @@ func parseError(c echo.Context, err error) error {
 	return c.JSON(code, H{
 		"error": "Vault: " + errMsgs[1],
 	})
-}
-
-func FetchCSRF() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-		return c.JSON(http.StatusOK, H{
-			"status": "fetched",
-		})
-	}
 }
 
 func VaultHealth() echo.HandlerFunc {
@@ -135,7 +107,7 @@ func RenewSelf() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, H{
-			"data": map[string]interface{}{
+			"result": map[string]interface{}{
 				"meta":     resp.Auth.Metadata,
 				"policies": resp.Auth.Policies,
 				"ttl":      resp.Auth.LeaseDuration,
@@ -151,7 +123,7 @@ func getSession(c echo.Context) (*vault.AuthInfo) {
 	}
 
 	// check headers first
-	if auth.ID := c.Request().Header.Get("X-Vault-Token"); auth.ID == "" {
+	if auth.ID = c.Request().Header.Get("X-Vault-Token"); auth.ID == "" {
 		c.JSON(http.StatusForbidden, H{
 			"error": "Please login first",
 		})
@@ -161,7 +133,9 @@ func getSession(c echo.Context) (*vault.AuthInfo) {
 	// if header is transit encrypted, decrypt first
 	if strings.HasPrefix(auth.ID, "vault:") {
 		if err := auth.DecryptAuth(); err != nil {
-			parseError(c, err)
+			c.JSON(http.StatusForbidden, H{
+				"error": "Cipher invalid. Please logout and login again",
+			})
 			return nil
 		}
 	}
