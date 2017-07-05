@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
 	"github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
 )
@@ -39,8 +38,6 @@ func GetUsers() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-
 		return c.JSON(http.StatusOK, H{
 			"result": result,
 		})
@@ -62,8 +59,6 @@ func GetTokenCount() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
-
 		return c.JSON(http.StatusOK, H{
 			"result": result,
 		})
@@ -84,8 +79,6 @@ func GetTokenAccessors() echo.HandlerFunc {
 		if err != nil {
 			return parseError(c, err)
 		}
-
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 
 		return c.JSON(http.StatusOK, H{
 			"result": result,

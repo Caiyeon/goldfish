@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
 	"github.com/labstack/echo"
 )
 
@@ -25,7 +24,6 @@ func TransitInfo() echo.HandlerFunc {
 		}
 
 		conf := vault.GetConfig()
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 		c.Response().Writer.Header().Set("UserTransitKey", conf.UserTransitKey)
 		return c.JSON(http.StatusOK, H{
 			"status": "fetched",
