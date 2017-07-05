@@ -202,7 +202,7 @@ func main() {
 	}
 }
 
-const versionString = "Goldfish version: v0.4.1"
+const versionString = "Goldfish version: v0.5.0-rc1"
 
 const devInitString = `
 
