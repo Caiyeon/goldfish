@@ -48,7 +48,6 @@
                   <ul class="menu-list">
                     <li v-if="tokenExpiresIn === ''">Token will never expire</li>
                     <li v-else>Token expires {{tokenExpiresIn}}</li>
-                    <li>Cookie expires {{cookieExpiresIn}}</li>
                   </ul>
                 </aside>
                 </div>
@@ -106,6 +105,7 @@ export default {
   },
 
   mounted: function () {
+    // refresh current time every second, since time is not reactive
     setInterval(() => {
       this.now = moment()
     }, 1000)
@@ -133,20 +133,10 @@ export default {
     }),
 
     tokenExpiresIn: function () {
-      if (this.session === null) {
-        return ''
-      }
-      if (this.session['token_expiry'] === 'never') {
+      if (this.session === null || this.session['token_expiry'] === 'never') {
         return ''
       }
       return this.now.to(moment(this.session['token_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))
-    },
-
-    cookieExpiresIn: function () {
-      if (this.session === null) {
-        return ''
-      }
-      return this.now.to(moment(this.session['cookie_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))
     }
   },
 

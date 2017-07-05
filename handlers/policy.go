@@ -15,7 +15,6 @@ import (
 
 	"github.com/fatih/structs"
 
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/securecookie"
 
 	"github.com/hashicorp/go-uuid"
@@ -67,7 +66,6 @@ func GetPolicy() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 		return c.JSON(http.StatusOK, H{
 			"result": result,
 		})
@@ -286,8 +284,6 @@ func getPolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash strin
 		})
 	}
 
-	// return request
-	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
 		"result":   request,
 		"progress": request.Progress,
@@ -320,8 +316,6 @@ func getPolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash str
 		}
 	}
 
-	// return request
-	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
 		"result":   changes,
 		"progress": progress,
@@ -617,8 +611,6 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 		return parseError(c, err)
 	}
 
-	// return request
-	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
 		"result": policyNow,
 	})
@@ -760,8 +752,6 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 		}
 	}
 
-	// return request
-	c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 	return c.JSON(http.StatusOK, H{
 		"result": "Complete",
 	})

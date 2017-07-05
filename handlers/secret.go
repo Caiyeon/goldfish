@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
 	"github.com/labstack/echo"
 )
 
@@ -22,8 +21,6 @@ func GetSecrets() echo.HandlerFunc {
 			conf := vault.GetConfig()
 			path = conf.DefaultSecretPath
 		}
-
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 
 		if path == "" || path[len(path)-1:] == "/" {
 			// listing a directory

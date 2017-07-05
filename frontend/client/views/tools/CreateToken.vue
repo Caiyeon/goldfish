@@ -333,7 +333,6 @@ export default {
 
   data () {
     return {
-      csrf: '',
       bRenewable: true,
       bNoParent: false,
       bPeriodic: false,
@@ -360,6 +359,10 @@ export default {
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
+
     // returns all policies in availablePolicies that contain the policyFilter substring
     filteredPolicies: function () {
       var filter = this.policyFilter
@@ -419,23 +422,8 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/users/csrf')
-    .then((response) => {
-      this.csrf = response.headers['x-csrf-token']
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
-
     // fetch available policies
-    try {
-      var session = JSON.parse(window.localStorage.getItem('session'))
-      if (Date.now() > Date.parse(session['cookie_expiry'])) {
-        throw session
-      } else {
-        this.availablePolicies = session.policies
-      }
-    } catch (e) {
+    if (!this.session || !this.session['policies']) {
       this.$notify({
         title: 'Session not found',
         message: 'Please login',
@@ -443,9 +431,12 @@ export default {
       })
       return
     }
+    this.availablePolicies = this.session['policies']
 
     // check if roles are available to logged in user
-    this.$http.get('/api/users/listroles').then((response) => {
+    this.$http.get('/api/users/listroles', {
+      headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+    }).then((response) => {
       if (response.data.result !== null) {
         this.availableRoles = response.data.result
       }
@@ -463,7 +454,9 @@ export default {
 
     // if root policy, fetch all available policies from server
     if (this.availablePolicies.indexOf('root') > -1) {
-      this.$http.get('/api/policy').then((response) => {
+      this.$http.get('/api/policy', {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
         this.availablePolicies = response.data.result
         // default policy is always an option, and the first item in list
         var i = this.availablePolicies.indexOf('default')
@@ -526,7 +519,7 @@ export default {
 
       this.createdToken = null
       this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$notify({
@@ -544,7 +537,9 @@ export default {
     loadRoleDetails: function (rolename) {
       this.selectedRoleLoading = true
       this.selectedRoleDetails = ''
-      this.$http.get('/api/users/role?rolename=' + rolename)
+      this.$http.get('/api/users/role?rolename=' + rolename, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
       .then((response) => {
         this.selectedRoleDetails = response.data.result
         this.selectedRoleLoading = false

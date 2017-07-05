@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gorilla/csrf"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
 )
@@ -21,8 +20,6 @@ func GetMounts() echo.HandlerFunc {
 		if err != nil {
 			return parseError(c, err)
 		}
-
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 
 		return c.JSON(http.StatusOK, H{
 			"result": mounts,

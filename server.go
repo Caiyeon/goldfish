@@ -12,8 +12,6 @@ import (
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
-	"github.com/gorilla/securecookie"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -98,14 +96,6 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.BodyLimit("32M"))
-	e.Use(echo.WrapMiddleware(
-		csrf.Protect(
-			// Generate a new encryption key for cookies each launch
-			// invalidating previous goldfish instance's cookies is purposeful
-			[]byte(securecookie.GenerateRandomKey(32)),
-			// https-only unless tls_disable
-			csrf.Secure(!cfg.Listener.Tls_disable),
-		)))
 
 	// unless explicitly disabled, some extra https configurations need to be set
 	if !cfg.Listener.Tls_disable {
@@ -151,7 +141,6 @@ func main() {
 	// API routing
 	e.GET("/api/health", handlers.VaultHealth())
 
-	e.GET("/api/login/csrf", handlers.FetchCSRF())
 	e.POST("/api/login", handlers.Login())
 	e.POST("/api/login/renew-self", handlers.RenewSelf())
 
@@ -160,7 +149,6 @@ func main() {
 	e.DELETE("/api/token/revoke-accessor", handlers.DeleteTokenByAccessor())
 
 	e.GET("/api/users", handlers.GetUsers())
-	e.GET("/api/users/csrf", handlers.FetchCSRF())
 	e.GET("/api/tokencount", handlers.GetTokenCount())
 	e.GET("/api/users/role", handlers.GetRole())
 	e.GET("/api/users/listroles", handlers.ListRoles())
@@ -189,7 +177,6 @@ func main() {
 
 	e.GET("/api/bulletins", handlers.GetBulletins())
 
-	e.GET("/api/wrapping", handlers.FetchCSRF())
 	e.POST("/api/wrapping/wrap", handlers.WrapHandler())
 	e.POST("/api/wrapping/unwrap", handlers.UnwrapHandler())
 
