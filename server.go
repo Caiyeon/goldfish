@@ -99,6 +99,9 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.BodyLimit("32M"))
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
 
 	// unless explicitly disabled, some extra https configurations need to be set
 	if !cfg.Listener.Tls_disable {
