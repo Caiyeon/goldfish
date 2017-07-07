@@ -242,7 +242,6 @@ export default {
       currentPath: '',
       currentPathCopy: '',
       displayJSON: false,
-      tableHeaders: [],
       tableData: [],
       tableDataCopy: [],
       newKey: '',
@@ -292,6 +291,15 @@ export default {
       } else {
         return {}
       }
+    },
+
+    tableHeaders: function () {
+      if (this.currentPathType === 'Secret') {
+        return ['Key', 'Value', '']
+      } else if (this.currentPathType === 'Path') {
+        return ['Subpaths', 'Description', '']
+      }
+      return []
     }
   },
 
@@ -317,14 +325,13 @@ export default {
 
       this.$http.get('/api/secrets?path=' + encodeURIComponent(path), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-      }).then((response) => {
+      })
+      .then((response) => {
         this.tableData = []
         this.currentPath = response.data.path
         let result = response.data.result
-
-        if (this.currentPath.slice(-1) === '/') {
+        if (this.currentPathType === 'Path') {
           // listing subdirectories
-          this.tableHeaders = ['Subpaths', 'Description', '']
           for (var i = 0; i < result.length; i++) {
             this.tableData.push({
               path: result[i],
@@ -333,7 +340,6 @@ export default {
           }
         } else {
           // listing key value pairs
-          this.tableHeaders = ['Key', 'Value', '']
           var keys = Object.keys(result)
           for (var j = 0; j < keys.length; j++) {
             this.tableData.push({
