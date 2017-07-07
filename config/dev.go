@@ -99,10 +99,10 @@ func setupVault(addr, rootToken string) error {
 	}
 	if _, err := client.Logical().Write("auth/approle/role/goldfish", map[string]interface{}{
 		"role_name":          "goldfish",
-		"secret_id_ttl":      "5m",
-		"token_ttl":          "480h",
-		"secret_id_num_uses": 1,
 		"policies":           "default, goldfish",
+		"secret_id_num_uses": 1,
+		"secret_id_ttl":      "5m",
+		"period":             "24h",
 	}); err != nil {
 		return err
 	}

@@ -1,3 +1,5 @@
+# You need go (v1.8), npm (v3), nodejs (v7)
+
 # generate frontend static assets
 cd frontend
 npm run build
