@@ -172,9 +172,8 @@ func main() {
 	e.POST("/api/transit/encrypt", handlers.EncryptString())
 	e.POST("/api/transit/decrypt", handlers.DecryptString())
 
-	e.GET("/api/mounts", handlers.GetMounts())
-	e.GET("/api/mounts/:mountname", handlers.GetMount())
-	e.POST("/api/mounts/:mountname", handlers.ConfigMount())
+	e.GET("/api/mount", handlers.GetMount())
+	e.POST("/api/mount", handlers.ConfigMount())
 
 	e.GET("/api/secrets", handlers.GetSecrets())
 	e.POST("/api/secrets", handlers.PostSecrets())

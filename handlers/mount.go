@@ -7,26 +7,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-func GetMounts() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// fetch auth from header or cookie
-		auth := getSession(c)
-		if auth == nil {
-			return nil
-		}
-		defer auth.Clear()
-
-		mounts, err := auth.ListMounts()
-		if err != nil {
-			return parseError(c, err)
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": mounts,
-		})
-	}
-}
-
 func GetMount() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// fetch auth from header or cookie
@@ -36,15 +16,24 @@ func GetMount() echo.HandlerFunc {
 		}
 		defer auth.Clear()
 
-		// fetch results
-		result, err := auth.GetMount(c.Param("mountname"))
-		if err != nil {
-			return parseError(c, err)
+		// if no mount is specified, list all mounts
+		if mount := c.QueryParam("mount"); mount == "" {
+			result, err := auth.ListMounts()
+			if err != nil {
+				return parseError(c, err)
+			}
+			return c.JSON(http.StatusOK, H{
+				"result": result,
+			})
+		} else {
+			result, err := auth.GetMount(mount)
+			if err != nil {
+				return parseError(c, err)
+			}
+			return c.JSON(http.StatusOK, H{
+				"result": result,
+			})
 		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
 	}
 }
 
@@ -65,7 +54,7 @@ func ConfigMount() echo.HandlerFunc {
 		}
 
 		// fetch results
-		err := auth.TuneMount(c.Param("mountname"), *config)
+		err := auth.TuneMount(c.QueryParam("mount"), *config)
 		if err != nil {
 			return parseError(c, err)
 		}

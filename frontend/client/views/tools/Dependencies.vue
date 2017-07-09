@@ -312,7 +312,7 @@ export default {
       this.selectedMount = ''
 
       // fetch list of mounts
-      this.$http.get('/api/mounts', {
+      this.$http.get('/api/mount', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.mounts = Object.keys(response.data.result)
