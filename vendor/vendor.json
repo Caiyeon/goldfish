@@ -743,18 +743,6 @@
 			"revisionTime": "2017-06-09T00:26:10Z"
 		},
 		{
-			"checksumSHA1": "IkPM2QLv9urri7S49wzroQx9oXA=",
-			"path": "github.com/gorilla/context",
-			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
-			"revisionTime": "2016-08-17T18:46:32Z"
-		},
-		{
-			"checksumSHA1": "vjmVZVteJnamdLT/cQX4ZcF+fu0=",
-			"path": "github.com/gorilla/csrf",
-			"revision": "c5a2560016c225d14b67dadd102650167fc343fc",
-			"revisionTime": "2017-06-06T23:08:13Z"
-		},
-		{
 			"checksumSHA1": "GKB96ojS6AY/uBnfLWqZBsxTBY4=",
 			"path": "github.com/gorilla/securecookie",
 			"revision": "e59506cc896acb7f7bf732d4fdf5e25f7ccd8983",
@@ -1664,12 +1652,6 @@
 			"path": "github.com/patrickmn/go-cache",
 			"revision": "d8e2db65a326b529477cc40295d5902906645e6b",
 			"revisionTime": "2017-06-05T02:18:34Z"
-		},
-		{
-			"checksumSHA1": "mR79ABWFyrDTTdhFPxwUN19T45Q=",
-			"path": "github.com/pkg/errors",
-			"revision": "c605e284fe17294bda444b34710735b29d1a9d90",
-			"revisionTime": "2017-05-05T04:36:39Z"
 		},
 		{
 			"checksumSHA1": "9vLwf5gN2ADrzc9Wkuk7ZZYGdLI=",
