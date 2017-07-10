@@ -1,97 +1,99 @@
 <template>
   <section class="hero is-bold app-navbar animated" :class="{ slideInDown: show, slideOutDown: !show }">
     <div class="hero-head">
+      <nav class="navbar">
 
-      <nav class="nav">
-
-        <div class="nav-left">
-          <a class="nav-item is-hidden-tablet" @click="toggleSidebar(!sidebar.opened)">
-            <i class="fa fa-bars" aria-hidden="true"></i>
-          </a>
-        </div>
-
-        <div class="nav-center">
-          <a class="nav-item hero-brand" href="/">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="/">
             <img src="~assets/logo.svg" :alt="pkginfo.description">
-            <tooltip :label="'v' + pkginfo.version" placement="right" type="success" size="small" :no-animate="true" :always="true" :rounded="true">
-              <div class="is-hidden-mobile">
-                <span class="vue">Gold</span><strong class="admin">fish</strong>
-              </div>
-            </tooltip>
+            &nbsp;<span style="color:hsl(171, 100%, 41%)">Goldfish</span>
           </a>
+
+          <a class="navbar-item is-hidden-desktop"
+          href="https://github.com/Caiyeon/goldfish" target="_blank">
+            <span class="icon" style="color: #333;">
+              <i class="fa fa-github"></i>
+            </span>
+          </a>
+
+          <div class="navbar-burger burger"
+          @click="toggleSidebar(!sidebar.opened)"
+          data-target="navMenuExample">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
 
-        <div class="nav-right is-flex">
+        <div class="navbar-menu">
 
-          <!-- session dropdown -->
-          <div v-if="session" class="nav-item">
-            <dropdown animation="ani-slide-y"
-            :position="position"
-            :visible="profileDropdown">
-
-              <!-- profile button -->
-              <a class="button is-primary is-outlined"
-              @click="profileDropdown = !profileDropdown">
-                <span class="icon">
-                  <i class="fa fa-user"></i>
-                </span>
-                <span class="is-hidden-mobile">Session</span>
+          <!-- leftside -->
+          <div class="navbar-start">
+            <!-- session dropdown -->
+            <div v-if="session" class="navbar-item has-dropdown is-hoverable">
+              <a class="navbar-link is-active">
+                Session
               </a>
-
-              <!-- dropdown menu -->
-              <div slot="dropdown" class="dialog">
-                <div class="box">
-                <aside class="menu">
-                  <p class="menu-label">
-                    {{session['display_name']}}
-                  </p>
-                  <ul class="menu-list">
-                    <li v-if="tokenExpiresIn === ''">Token will never expire</li>
-                    <li v-else>Token expires {{tokenExpiresIn}}</li>
-                  </ul>
-                </aside>
+              <div class="navbar-dropdown is-boxed">
+                <div class="navbar-item">
+                  <div>Token expires in<p class="has-text-info">{{tokenExpiresIn || 'never'}}</p></div>
                 </div>
               </div>
-
-            </dropdown>
+            </div>
           </div>
 
-          <!-- github button -->
-          <div class="nav-item">
-            <div class="field is-grouped">
-              <p class="control">
-                <a class="button is-info is-outlined"
-                href="https://github.com/Caiyeon/goldfish">
-                  <span class="icon">
-                    <i class="fa fa-github"></i>
-                  </span>
-                  <span class="is-hidden-mobile">Source Code</span>
+          <!-- rightside -->
+          <div class="navbar-end">
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a class="navbar-link is-active">
+                Docs
+              </a>
+              <div class="navbar-dropdown ">
+                <a class="navbar-item" target="_blank" href="https://github.com/Caiyeon/goldfish/wiki/Configuration#run-time-configurations">
+                  Configuration
                 </a>
-              </p>
+                <a class="navbar-item" target="_blank" href="https://github.com/Caiyeon/goldfish/wiki/Features">
+                  Features
+                </a>
+                <a class="navbar-item" target="_blank" href="https://github.com/Caiyeon/goldfish">
+                  Source
+                </a>
+                <hr class="navbar-divider">
+                <div class="navbar-item">
+                  <div>Version <p class="has-text-info">{{pkginfo.version}}</p></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- github button -->
+            <div class="navbar-item">
+              <div class="field is-grouped">
+                <p class="control">
+                  <a class="button is-info is-outlined"
+                  href="https://github.com/Caiyeon/goldfish"
+                  target="_blank">
+                    <span class="icon">
+                      <i class="fa fa-github"></i>
+                    </span>
+                    <span class="is-hidden-mobile">Source Code</span>
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
 
         </div>
 
       </nav>
-
     </div>
   </section>
 </template>
 
 <script>
-import Tooltip from 'vue-bulma-tooltip'
 import { mapGetters, mapActions } from 'vuex'
-import dropdown from 'vue-my-dropdown'
 import moment from 'moment'
 
 export default {
-
-  components: {
-    Tooltip,
-    dropdown
-  },
-
   props: {
     show: Boolean
   },
@@ -170,20 +172,5 @@ export default {
     overflow-x: auto;
     white-space: nowrap;
   }
-}
-
-.hero-brand {
-  .vue {
-    margin-left: 10px;
-    color: #36AC70;
-  }
-  .admin {
-    color: #28374B;
-  }
-}
-
-/* If not anchored, dropdown will move down as page scrolls */
-.my-dropdown-dd {
-  top: 47px !important;
 }
 </style>
