@@ -388,7 +388,7 @@ export default {
         regexp: null
       }
 
-      if (index === 0) {
+      if (this.tabName === 'token') {
         // tokens tab requires special pagination
         this.$http.get('/api/token/accessors', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -431,25 +431,44 @@ export default {
     },
 
     deleteItem (index) {
-      this.$http.post('/api/users/revoke', {
-        Type: this.tabName.toLowerCase(),
-        ID: this.tableData[index][this.tableColumns[0]]
-      }, {
-        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-      })
-      .then((response) => {
-        this.closeDeleteModal()
-        this.tableData.splice(index, 1)
-        this.$notify({
-          title: 'Success',
-          message: 'Deletion successful',
-          type: 'success'
+      if (this.tabName === 'token') {
+        // tokens tab requires special pagination
+        this.$http.post('/api/token/revoke-accessor?accessor=' + this.tableData[index][this.tableColumns[0]], {}, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.closeDeleteModal()
+          this.tableData.splice(index, 1)
+          this.$notify({
+            title: 'Success',
+            message: 'Deletion successful',
+            type: 'success'
+          })
         })
-      })
-      .catch((error) => {
-        this.closeDeleteModal()
-        this.$onError(error)
-      })
+        .catch((error) => {
+          this.closeDeleteModal()
+          this.$onError(error)
+        })
+      } else {
+        this.$http.post('/api/users/revoke', {
+          Type: this.tabName.toLowerCase(),
+          ID: this.tableData[index][this.tableColumns[0]]
+        }, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        })
+        .then((response) => {
+          this.closeDeleteModal()
+          this.tableData.splice(index, 1)
+          this.$notify({
+            title: 'Success',
+            message: 'Deletion successful',
+            type: 'success'
+          })
+        })
+        .catch((error) => {
+          this.closeDeleteModal()
+          this.$onError(error)
+        })
+      }
     },
 
     loadPage: function (pg) {

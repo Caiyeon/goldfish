@@ -151,10 +151,9 @@ func main() {
 
 	e.GET("/api/token/accessors", handlers.GetTokenAccessors())
 	e.POST("/api/token/lookup-accessor", handlers.LookupTokenByAccessor())
-	e.DELETE("/api/token/revoke-accessor", handlers.DeleteTokenByAccessor())
+	e.POST("/api/token/revoke-accessor", handlers.RevokeTokenByAccessor())
 
 	e.GET("/api/users", handlers.GetUsers())
-	e.GET("/api/tokencount", handlers.GetTokenCount())
 	e.GET("/api/users/role", handlers.GetRole())
 	e.GET("/api/users/listroles", handlers.ListRoles())
 	e.POST("/api/users/revoke", handlers.DeleteUser())

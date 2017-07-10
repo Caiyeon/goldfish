@@ -314,15 +314,16 @@ func TestGoldfishWrapper(t *testing.T) {
 				tempAuth := &AuthInfo{ID: resp.Auth.ClientToken, Type: "token"}
 
 				Convey("Number of accessors should increase", func() {
-					accsBefore, err := rootAuth.GetTokenAccessors()
+					accessors, err := rootAuth.GetTokenAccessors()
 					So(err, ShouldBeNil)
+					So(len(accessors), ShouldEqual, 3)
 
 					_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, "")
 					So(err, ShouldBeNil)
 
-					accsAfter, err := rootAuth.GetTokenAccessors()
+					accessorsAfter, err := rootAuth.GetTokenAccessors()
 					So(err, ShouldBeNil)
-					So(len(accsBefore)+1, ShouldEqual, len(accsAfter))
+					So(len(accessors)+1, ShouldEqual, len(accessorsAfter))
 				})
 
 				Convey("With a wrapped ttl", func() {
@@ -350,13 +351,13 @@ func TestGoldfishWrapper(t *testing.T) {
 				})
 
 				Convey("Accessor should be lookup-able", func() {
-					resp, err := rootAuth.LookupTokenByAccessor(resp.Auth.Accessor+","+resp.Auth.Accessor)
+					resp, err := rootAuth.LookupTokenByAccessor(resp.Auth.Accessor + "," + resp.Auth.Accessor)
 					So(err, ShouldBeNil)
 					So(len(resp), ShouldEqual, 2)
 				})
 
 				Convey("Token should be deleteable via accessor", func() {
-					So(rootAuth.DeleteTokenByAccessor(resp.Auth.Accessor), ShouldBeNil)
+					So(rootAuth.RevokeTokenByAccessor(resp.Auth.Accessor), ShouldBeNil)
 
 					_, err := tempAuth.LookupSelf()
 					So(err, ShouldNotBeNil)
@@ -463,27 +464,17 @@ func TestGoldfishWrapper(t *testing.T) {
 
 			// users
 			Convey("Listing users of all types should work", func() {
-				// there should be only two tokens: root and goldfish
-				resp, err := rootAuth.ListUsers("token", 0)
-				So(err, ShouldBeNil)
-				So(len(resp.([]interface{})), ShouldEqual, 2)
-
-				// should be an out of bounds error
-				resp, err = rootAuth.ListUsers("token", 300)
-				So(err, ShouldNotBeNil)
-				So(resp, ShouldBeNil)
-
 				// there should be only one user created in PrepareVault()
-				_, err = rootAuth.ListUsers("userpass", 0)
+				_, err = rootAuth.ListUsers("userpass")
 				So(err, ShouldBeNil)
-				// So(len(resp.([]interface{})), ShouldEqual, 1)
+
 				err = rootAuth.DeleteUser("userpass", "testuser")
 				So(err, ShouldBeNil)
 
 				// there should be only one approle (goldfish)
-				_, err = rootAuth.ListUsers("approle", 0)
+				_, err = rootAuth.ListUsers("approle")
 				So(err, ShouldBeNil)
-				// So(len(resp.([]interface{})), ShouldEqual, 1)
+
 				err = rootAuth.DeleteUser("approle", "goldfish")
 				So(err, ShouldBeNil)
 			})
