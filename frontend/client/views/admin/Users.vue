@@ -8,10 +8,19 @@
           <!-- Tab navigation -->
           <div class="tabs is-medium is-boxed is-fullwidth">
             <ul>
-              <li v-bind:class="tabName === 'token' ? 'is-active' : ''" v-on:click="switchTab(0)"><a>Tokens</a></li>
-              <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''" v-on:click="switchTab(1)"><a>Userpass</a></li>
-              <li v-bind:class="tabName === 'approle' ? 'is-active' : ''" v-on:click="switchTab(2)"><a>Approle</a></li>
-              <li disabled><a>Certificates</a></li>
+              <li v-bind:class="tabName === 'token' ? 'is-active' : ''"
+                  v-on:click="switchTab(0)"
+                  :disabled="loading">
+                  <a>Tokens</a></li>
+              <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''"
+                  v-on:click="switchTab(1)"
+                  :disabled="loading">
+                  <a>Userpass</a></li>
+              <li v-bind:class="tabName === 'approle' ? 'is-active' : ''"
+                  v-on:click="switchTab(2)"
+                  :disabled="loading">
+                  <a>Approle</a></li>
+              <!-- <li disabled><a>Certificates</a></li> -->
             </ul>
           </div>
 
@@ -259,30 +268,6 @@ import Modal from './modals/InfoModal'
 import ConfirmModal from './modals/ConfirmModal'
 
 var TabNames = ['token', 'userpass', 'approle']
-var TabColumns = [
-  [
-    'accessor',
-    'display_name',
-    'num_uses',
-    'orphan',
-    'policies',
-    'ttl'
-  ],
-  [
-    'Name',
-    'TTL',
-    'Max_TTL',
-    'Policies'
-  ],
-  [
-    'Roleid',
-    'Policies',
-    'Token_TTL',
-    'Token_max_TTL',
-    'Secret_id_TTL',
-    'Secret_id_num_uses'
-  ]
-]
 
 export default {
   components: {
@@ -294,14 +279,6 @@ export default {
     return {
       tabName: 'token',
       tableData: [],
-      tableColumns: [
-        'accessor',
-        'display_name',
-        'num_uses',
-        'orphan',
-        'policies',
-        'ttl'
-      ],
       showModal: false,
       showDeleteModal: false,
       selectedIndex: -1,
@@ -329,6 +306,39 @@ export default {
   computed: {
     session: function () {
       return this.$store.getters.session
+    },
+
+    tableColumns: function () {
+      switch (this.tabName) {
+        case 'token': {
+          return [
+            'accessor',
+            'display_name',
+            'num_uses',
+            'orphan',
+            'policies',
+            'ttl'
+          ]
+        }
+        case 'userpass': {
+          return [
+            'Name',
+            'TTL',
+            'Max_TTL',
+            'Policies'
+          ]
+        }
+        case 'approle': {
+          return [
+            'Roleid',
+            'Policies',
+            'Token_TTL',
+            'Token_max_TTL',
+            'Secret_id_TTL',
+            'Secret_id_num_uses'
+          ]
+        }
+      }
     },
 
     selectedItemTitle: function () {
@@ -378,7 +388,6 @@ export default {
       // on swap, clear data and load new column names
       this.tableData = []
       this.tabName = TabNames[index]
-      this.tableColumns = TabColumns[index]
       this.search = {
         show: false,
         str: '',
