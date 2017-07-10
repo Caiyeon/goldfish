@@ -47,7 +47,7 @@
                 </div>
                 <div class="field">
                   <p class="control has-icons-left">
-                    <input class="input" type="password" placeholder="Vault Password" v-model="Password">
+                    <input class="input" type="password" placeholder="Vault Password" v-model="password">
                     <span class="icon is-small">
                       <i class="fa fa-lock"></i>
                     </span>
@@ -77,7 +77,7 @@
                 </div>
                 <div class="field">
                   <p class="control has-icons-left">
-                    <input class="input" type="password" placeholder="Password" v-model="Password">
+                    <input class="input" type="password" placeholder="Password" v-model="password">
                     <span class="icon is-small">
                       <i class="fa fa-lock"></i>
                     </span>
@@ -193,7 +193,7 @@ export default {
     return {
       type: 'Token',
       ID: '',
-      Password: '',
+      password: '',
       healthData: {},
       healthLoading: false
     }
@@ -237,8 +237,8 @@ export default {
     login: function () {
       this.$http.post('/api/login', {
         Type: this.type.toLowerCase(),
-        ID: this.ID,
-        Password: this.Password
+        id: this.ID,
+        Password: this.password
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
@@ -291,7 +291,7 @@ export default {
 
     clearFormData: function () {
       this.ID = ''
-      this.Password = ''
+      this.password = ''
     },
 
     renewLogin: function () {
