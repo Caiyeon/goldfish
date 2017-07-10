@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"os"
+	"time"
+	"net/http"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -40,7 +42,27 @@ import (
 	"github.com/mitchellh/cli"
 )
 
-func SetupVault(addr, rootToken string) error {
+func setupVault(addr, rootToken string) error {
+	ticker := time.NewTicker(time.Millisecond * 200)
+
+	// allow 5 seconds for vault to launch
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker.Stop()
+	}()
+
+	// if vault is ready before 5 seconds countdown, proceed immediately
+	var err error
+	for range ticker.C {
+		_, err = http.Get(addr+"/v1/sys/health")
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	// initialize vault with required setup details
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
@@ -57,7 +79,6 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write(
 		"transit/keys/goldfish",
 		map[string]interface{}{},
@@ -76,17 +97,15 @@ func SetupVault(addr, rootToken string) error {
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("auth/approle/role/goldfish", map[string]interface{}{
 		"role_name":          "goldfish",
-		"secret_id_ttl":      "5m",
-		"token_ttl":          "480h",
-		"secret_id_num_uses": 1,
 		"policies":           "default, goldfish",
+		"secret_id_num_uses": 1,
+		"secret_id_ttl":      "5m",
+		"period":             "24h",
 	}); err != nil {
 		return err
 	}
-
 	if _, err := client.Logical().Write("auth/approle/role/goldfish/role-id", map[string]interface{}{
 		"role_id": "goldfish",
 	}); err != nil {
@@ -104,17 +123,74 @@ func SetupVault(addr, rootToken string) error {
 		return err
 	}
 
-	// mount userpass
+	// mount userpass and write a test user
 	if err := client.Sys().EnableAuthWithOptions("userpass", &api.EnableAuthOptions{
 		Type: "userpass",
 	}); err != nil {
 		return err
 	}
+	if _, err := client.Logical().Write("auth/userpass/users/fish1", map[string]interface{}{
+		"password": "golden",
+	}); err != nil {
+		return err
+	}
 
-	// create 'goldfish' root token
-	if _, err := client.Auth().Token().Create(&api.TokenCreateRequest{
-		ID:       "goldfish",
-		Policies: []string{"root"},
+	// write sample bulletins
+	if _, err := client.Logical().Write("secret/bulletins/bulletina", map[string]interface{}{
+		"message": "hello world",
+		"title":   "sampleBulletinA",
+		"type":    "is-success",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("secret/bulletins/bulletinb", map[string]interface{}{
+		"message": "this is sample b",
+		"title":   "sampleBulletinB",
+		"type":    "is-success",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("secret/bulletins/bulletinc", map[string]interface{}{
+		"message": "this is sample c",
+		"title":   "sampleBulletinc",
+		"type":    "is-success",
+	}); err != nil {
+		return err
+	}
+
+	// setup pki backend
+	if err := client.Sys().Mount("pki", &api.MountInput{
+		Type: "pki",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/root/generate/internal", map[string]interface{}{
+		"common_name": "myvault.com",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/config/urls", map[string]interface{}{
+		"issuing_certificates":    "http://127.0.0.1:8200/v1/pki/ca",
+		"crl_distribution_points": "http://127.0.0.1:8200/v1/pki/crl",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/roles/example-dot-com", map[string]interface{}{
+		"allowed_domains":  "example.com",
+		"allow_subdomains": "true",
+		"max_ttl":          "72h",
+	}); err != nil {
+		return err
+	}
+
+	// generate a couple of certificates
+	if _, err := client.Logical().Write("pki/issue/example-dot-com", map[string]interface{}{
+		"common_name": "blah.example.com",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("pki/issue/example-dot-com", map[string]interface{}{
+		"common_name": "blah2.example.com",
 	}); err != nil {
 		return err
 	}

@@ -158,7 +158,6 @@ const querystring = require('querystring')
 export default {
   data () {
     return {
-      csrf: '',
       tableData: [],
       currToken: '',
       newKey: '',
@@ -167,19 +166,16 @@ export default {
     }
   },
 
+  computed: {
+    session: function () {
+      return this.$store.getters.session
+    }
+  },
+
   mounted: function () {
-    // fetch csrf token upon mounting
-    this.$http.get('/api/wrapping')
-    .then((response) => {
-      this.csrf = response.headers['x-csrf-token']
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
   },
 
   methods: {
-
     // takes out "isClicked" field in tableData so content can be sent off
     packData: function () {
       var data = {}
@@ -199,7 +195,7 @@ export default {
         wrapttl: this.wrap_ttl,
         data: JSON.stringify(this.packData())
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$message({
@@ -222,7 +218,7 @@ export default {
       this.$http.post('/api/wrapping/unwrap', querystring.stringify({
         wrappingToken: this.currToken
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.tableData = []

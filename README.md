@@ -1,10 +1,17 @@
 <div align="center">
 
-<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo </a> <img height="22" src=https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg></h3>
+<h3>Goldfish Vault UI - <a href="https://vault-ui.io">Live Demo </a></h3>
 
 <p><img width="250" height="194" src="https://github.com/Caiyeon/goldfish/blob/master/frontend/client/assets/logo%402x.png"></p>
 
-<h3>Share with your colleagues and star this repo!</h3>
+<h3>
+	<a href='https://ko-fi.com/A4242ER7' target='_blank'>
+		<img height='32' style='border:0px;height:32px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Donation' />
+	</a>
+	<img height="32" src=https://circleci.com/gh/Caiyeon/goldfish.svg?style=svg>
+	<br>
+	Share this repo with your colleagues!
+</h3>
 
 </div>
 
@@ -19,7 +26,7 @@ Goldfish answers many auditing and administration questions that Vault API can't
 * The unseal admins are working from home, but we need a policy changed.
 	* How do we generate a root token only for this change, and make sure it's revoked after?
 * I store my policies on a Github repo. Can I deploy all my policies in one go? [See more](https://github.com/Caiyeon/goldfish/wiki/Features#request-policy-change-by-github-commit)
-* *Coming soon* If I remove this secret/policy, will anybody's workflow break?
+* If I remove this secret/policy, will anybody's workflow break?
 
 
 <!--
@@ -55,14 +62,15 @@ Seriously, the instructions fit on one screen!
 	- Fetch a folder of policies from a commit in github
 	- Admins can enter their unseal tokens for approval to set vault policies according to policies found
 	- Change dozens of policies in one go!
-* [ ] Resource dependency chain
+* [x] **DONE!** Resource dependency chain
 	- E.g. Will removing a particular policy affect current users?
 	- Will removing a mount or secret path affect current users?
 * [ ] Certificate management panel
 	- If vault is a certificate authority, there should be a user-friendly panel of details and statistics
 * [ ] Moving root tokens away from the human eye
 	- More root operations like mount tuning should also be done via request & approval basis, like policy changes
-* [ ] Secret backend specific tools (e.g. AWS backend)
+* [ ] Database management panel
+	- Vault 0.7.3 allows for multiple db connections per backend, but lacks a management system
 
 
 

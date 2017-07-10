@@ -4,28 +4,26 @@ import (
 	"net/http"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
 	"github.com/labstack/echo"
 )
 
 func TransitInfo() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// ensure user has default policy before giving transit key name
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
 
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
+		// ensure token can lookup self before exposing transit key name
+		if _, err := auth.Client(); err != nil {
 			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
+				"error": "Invalid vault token",
 			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
 		}
 
 		conf := vault.GetConfig()
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 		c.Response().Writer.Header().Set("UserTransitKey", conf.UserTransitKey)
 		return c.JSON(http.StatusOK, H{
 			"status": "fetched",
@@ -35,18 +33,12 @@ func TransitInfo() echo.HandlerFunc {
 
 func EncryptString() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		plaintext := c.FormValue("plaintext")
 		if plaintext == "" {
@@ -69,18 +61,12 @@ func EncryptString() echo.HandlerFunc {
 
 func DecryptString() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		cipher := c.FormValue("cipher")
 		if cipher == "" {

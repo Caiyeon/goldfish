@@ -36,7 +36,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 	case "userpass":
 		client.SetToken("")
 		// fetch client access token by performing a login
-		resp, err := client.Logical().Write("auth/userpass/login/" + auth.ID,
+		resp, err := client.Logical().Write("auth/userpass/login/"+auth.ID,
 			map[string]interface{}{
 				"password": auth.Pass,
 			})
@@ -86,7 +86,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 
 	case "ldap":
 		client.SetToken("")
-		resp, err := client.Logical().Write("auth/ldap/login/" + auth.ID,
+		resp, err := client.Logical().Write("auth/ldap/login/"+auth.ID,
 			map[string]interface{}{
 				"password": auth.Pass,
 			})
@@ -105,7 +105,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 
 		// let future requests re-use the client token
 		auth.Type = "token"
-		auth.ID   = resp.Auth.ClientToken
+		auth.ID = resp.Auth.ClientToken
 		auth.Pass = ""
 		return lookupResp.Data, nil
 

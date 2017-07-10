@@ -19,11 +19,12 @@ type Config struct {
 }
 
 type ListenerConfig struct {
-	Type          string
-	Address       string
-	Tls_disable   bool
-	Tls_cert_file string
-	Tls_key_file  string
+	Type             string
+	Address          string
+	Tls_disable      bool
+	Tls_cert_file    string
+	Tls_key_file     string
+	Tls_autoredirect bool
 }
 
 type VaultConfig struct {
@@ -51,7 +52,7 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 	shutdownCh := initDevVaultCore()
 
 	// setup local vault instance with required mounts
-	err := SetupVault("http://127.0.0.1:8200", "goldfish")
+	err := setupVault("http://127.0.0.1:8200", "goldfish")
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -173,6 +174,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		"tls_disable",
 		"tls_cert_file",
 		"tls_key_file",
+		"tls_autoredirect",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
@@ -204,6 +206,17 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 			result.Listener.Tls_disable = true
 		} else if tlsDisable != "0" {
 			return fmt.Errorf("listener.%s: tls_disable can be 0 or 1", key)
+		}
+	}
+
+	if redirect, ok := m["tls_autoredirect"]; ok {
+		if redirect == "1" {
+			if result.Listener.Tls_disable {
+				return fmt.Errorf("listener.%s: tls_autoredirect conflicts with tls_disable", key)
+			}
+			result.Listener.Tls_autoredirect = true
+		} else if redirect != "0" {
+			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1")
 		}
 	}
 
@@ -241,6 +254,9 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		if url, err := url.Parse(address); err != nil {
 			return fmt.Errorf("failed to set address: %v", err)
 		} else {
+			if !(url.Scheme == "http" || url.Scheme == "https") {
+				return fmt.Errorf("vault.%s: address must be prefixed with scheme i.e. http:// or https://")
+			}
 			result.Vault.Address = url.String()
 		}
 	}

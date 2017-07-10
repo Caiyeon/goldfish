@@ -8,10 +8,19 @@
           <!-- Tab navigation -->
           <div class="tabs is-medium is-boxed is-fullwidth">
             <ul>
-              <li v-bind:class="tabName === 'token' ? 'is-active' : ''" v-on:click="switchTab(0)"><a>Tokens</a></li>
-              <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''" v-on:click="switchTab(1)"><a>Userpass</a></li>
-              <li v-bind:class="tabName === 'approle' ? 'is-active' : ''" v-on:click="switchTab(2)"><a>Approle</a></li>
-              <li disabled><a>Certificates</a></li>
+              <li v-bind:class="tabName === 'token' ? 'is-active' : ''"
+                  v-on:click="switchTab(0)"
+                  :disabled="loading">
+                  <a>Tokens</a></li>
+              <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''"
+                  v-on:click="switchTab(1)"
+                  :disabled="loading">
+                  <a>Userpass</a></li>
+              <li v-bind:class="tabName === 'approle' ? 'is-active' : ''"
+                  v-on:click="switchTab(2)"
+                  :disabled="loading">
+                  <a>Approle</a></li>
+              <!-- <li disabled><a>Certificates</a></li> -->
             </ul>
           </div>
 
@@ -93,7 +102,7 @@
                     Found <strong>{{ search.found }}</strong> matches out of <strong>{{ search.searched }}</strong> tokens
                   </p>
                   <p v-else class="subtitle is-5">
-                    Displaying <strong>{{Math.min(tokenCount, 300)}}</strong> out of <strong>{{tokenCount}}</strong> tokens
+                    Displaying <strong>{{Math.min(tableData.length, 300)}}</strong> out of <strong>{{accessors.length}}</strong> tokens
                   </p>
                 </div>
 
@@ -155,9 +164,6 @@
                   </td>
                   <td v-if="entry" v-for="key in tableColumns">
                     {{ entry[key] }}
-                  </td>
-                  <td v-else>
-                    ERROR: An invalid token-accessor has been found
                   </td>
                   <td width="34">
                   <span class="icon">
@@ -262,30 +268,6 @@ import Modal from './modals/InfoModal'
 import ConfirmModal from './modals/ConfirmModal'
 
 var TabNames = ['token', 'userpass', 'approle']
-var TabColumns = [
-  [
-    'accessor',
-    'display_name',
-    'num_uses',
-    'orphan',
-    'policies',
-    'ttl'
-  ],
-  [
-    'Name',
-    'TTL',
-    'Max_TTL',
-    'Policies'
-  ],
-  [
-    'Roleid',
-    'Policies',
-    'Token_TTL',
-    'Token_max_TTL',
-    'Secret_id_TTL',
-    'Secret_id_num_uses'
-  ]
-]
 
 export default {
   components: {
@@ -295,17 +277,8 @@ export default {
 
   data () {
     return {
-      csrf: '',
       tabName: 'token',
       tableData: [],
-      tableColumns: [
-        'accessor',
-        'display_name',
-        'num_uses',
-        'orphan',
-        'policies',
-        'ttl'
-      ],
       showModal: false,
       showDeleteModal: false,
       selectedIndex: -1,
@@ -328,22 +301,46 @@ export default {
 
   mounted: function () {
     this.switchTab(0)
-    this.$http.get('/api/users/csrf').then((response) => {
-      this.csrf = response.headers['x-csrf-token']
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
-    this.$http.get('/api/tokencount').then((response) => {
-      this.tokenCount = response.data.result
-      this.lastPage = Math.ceil(response.data.result / 300)
-    })
-    .catch((error) => {
-      this.$onError(error)
-    })
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
+
+    tableColumns: function () {
+      switch (this.tabName) {
+        case 'token': {
+          return [
+            'accessor',
+            'display_name',
+            'num_uses',
+            'orphan',
+            'policies',
+            'ttl'
+          ]
+        }
+        case 'userpass': {
+          return [
+            'Name',
+            'TTL',
+            'Max_TTL',
+            'Policies'
+          ]
+        }
+        case 'approle': {
+          return [
+            'Roleid',
+            'Policies',
+            'Token_TTL',
+            'Token_max_TTL',
+            'Secret_id_TTL',
+            'Secret_id_num_uses'
+          ]
+        }
+      }
+    },
+
     selectedItemTitle: function () {
       if (this.selectedIndex !== -1) {
         return String(this.tableData[this.selectedIndex][this.tableColumns[0]])
@@ -391,7 +388,6 @@ export default {
       // on swap, clear data and load new column names
       this.tableData = []
       this.tabName = TabNames[index]
-      this.tableColumns = TabColumns[index]
       this.search = {
         show: false,
         str: '',
@@ -400,14 +396,30 @@ export default {
         regex: false,
         regexp: null
       }
-      // populate new table data according to tab name
-      this.$http.get('/api/users?type=' + this.tabName).then((response) => {
-        this.tableData = response.data.result
-        this.csrf = response.headers['x-csrf-token']
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
+
+      if (this.tabName === 'token') {
+        // tokens tab requires special pagination
+        this.$http.get('/api/token/accessors', {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.accessors = response.data.result
+          this.lastPage = Math.ceil(this.accessors.length / 300)
+          this.loadPage(1)
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+      } else {
+        // otherwise populate new table data according to tab name
+        this.$http.get('/api/users?type=' + this.tabName, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.tableData = response.data.result
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+      }
     },
 
     openModalBasic (index) {
@@ -428,36 +440,62 @@ export default {
     },
 
     deleteItem (index) {
-      this.$http.post('/api/users/revoke', {
-        Type: this.tabName.toLowerCase(),
-        ID: this.tableData[index][this.tableColumns[0]]
-      }, {
-        headers: {'X-CSRF-Token': this.csrf}
-      })
-      .then((response) => {
-        this.closeDeleteModal()
-        this.tableData.splice(index, 1)
-        this.$notify({
-          title: 'Success',
-          message: 'Deletion successful',
-          type: 'success'
+      if (this.tabName === 'token') {
+        // tokens tab requires special pagination
+        this.$http.post('/api/token/revoke-accessor?accessor=' + this.tableData[index][this.tableColumns[0]], {}, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.closeDeleteModal()
+          this.tableData.splice(index, 1)
+          this.$notify({
+            title: 'Success',
+            message: 'Deletion successful',
+            type: 'success'
+          })
         })
-      })
-      .catch((error) => {
-        this.closeDeleteModal()
-        this.$onError(error)
-      })
+        .catch((error) => {
+          this.closeDeleteModal()
+          this.$onError(error)
+        })
+      } else {
+        this.$http.post('/api/users/revoke', {
+          Type: this.tabName.toLowerCase(),
+          ID: this.tableData[index][this.tableColumns[0]]
+        }, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        })
+        .then((response) => {
+          this.closeDeleteModal()
+          this.tableData.splice(index, 1)
+          this.$notify({
+            title: 'Success',
+            message: 'Deletion successful',
+            type: 'success'
+          })
+        })
+        .catch((error) => {
+          this.closeDeleteModal()
+          this.$onError(error)
+        })
+      }
     },
 
-    loadPage: function (pageNumber) {
-      if (pageNumber < 1 || pageNumber > this.lastPage || this.search.searched) {
+    loadPage: function (pg) {
+      if (pg < 1 || pg > this.lastPage || this.search.searched) {
         return
       }
-      this.currentPage = pageNumber
+      this.currentPage = pg
       this.loading = true
-      this.$http.get('/api/users?type=token&offset=' + ((this.currentPage - 1) * 300).toString()).then((response) => {
+      this.tableData = []
+
+      // construct accessor string delimited by comma, and send search request
+      this.$http.post('/api/token/lookup-accessor', {
+        Accessors: this.accessors.slice((pg - 1) * 300, pg * 300).join(',')
+      }, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+      .then((response) => {
         this.tableData = response.data.result
-        this.csrf = response.headers['x-csrf-token']
         this.loading = false
       })
       .catch((error) => {
@@ -500,7 +538,12 @@ export default {
 
       // make an async call for each page
       for (var i = 0; i < this.lastPage; i++) {
-        this.$http.get('/api/users?type=token&offset=' + (i * 300).toString()).then((response) => {
+        this.$http.post('/api/token/lookup-accessor', {
+          Accessors: this.accessors.slice(i * 300, (i + 1) * 300).join(',')
+        }, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        })
+        .then((response) => {
           var found = false
           if (this.search.regex) {
             found = response.data.result.filter(this.itemContainsRegexExpr)

@@ -96,6 +96,18 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
+			"checksumSHA1": "c4dFBfQ1TiTG3CAp6MpMen/nWXU=",
+			"path": "github.com/GeertJohan/go.rice",
+			"revision": "c02ca9a983da5807ddf7d796784928f5be4afd09",
+			"revisionTime": "2017-04-20T13:57:05Z"
+		},
+		{
+			"checksumSHA1": "xECV8VmnSwtMPugLqB1OAXwOs48=",
+			"path": "github.com/GeertJohan/go.rice/embedded",
+			"revision": "c02ca9a983da5807ddf7d796784928f5be4afd09",
+			"revisionTime": "2017-04-20T13:57:05Z"
+		},
+		{
 			"checksumSHA1": "HLETgTgj0XOZRQlIJ36k/q6YB2s=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/Jeffail/gabs",
 			"path": "github.com/Jeffail/gabs",
@@ -577,6 +589,12 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
+			"checksumSHA1": "8i+beEgcVf0q/I7lTqo2ERZM/OU=",
+			"path": "github.com/daaku/go.zipexe",
+			"revision": "a5fe2436ffcb3236e175e5149162b41cd28bd27d",
+			"revisionTime": "2015-03-29T02:31:25Z"
+		},
+		{
 			"checksumSHA1": "kB1nqNgicm9nRnC6Gy1tyTuJET0=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/denisenkom/go-mssqldb",
 			"path": "github.com/denisenkom/go-mssqldb",
@@ -723,18 +741,6 @@
 			"path": "github.com/gopherjs/gopherjs/js",
 			"revision": "dc374d32704510cb387457180ca9d5193978b555",
 			"revisionTime": "2017-06-09T00:26:10Z"
-		},
-		{
-			"checksumSHA1": "IkPM2QLv9urri7S49wzroQx9oXA=",
-			"path": "github.com/gorilla/context",
-			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
-			"revisionTime": "2016-08-17T18:46:32Z"
-		},
-		{
-			"checksumSHA1": "vjmVZVteJnamdLT/cQX4ZcF+fu0=",
-			"path": "github.com/gorilla/csrf",
-			"revision": "c5a2560016c225d14b67dadd102650167fc343fc",
-			"revisionTime": "2017-06-06T23:08:13Z"
 		},
 		{
 			"checksumSHA1": "GKB96ojS6AY/uBnfLWqZBsxTBY4=",
@@ -922,10 +928,10 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
-			"checksumSHA1": "QHuUJtX9TiA32UXIhsQSe6x4qVA=",
+			"checksumSHA1": "s+zW+jrMxK1e8OxXKjN0FgwxCPk=",
 			"path": "github.com/hashicorp/vault/api",
-			"revision": "d8e2db65a326b529477cc40295d5902906645e6b",
-			"revisionTime": "2017-06-05T02:18:34Z"
+			"revision": "49f508b46923d19eac573e0563ee5074478b2a17",
+			"revisionTime": "2017-06-27T23:31:37Z"
 		},
 		{
 			"checksumSHA1": "WlSbfcFNLcFEHneJ6aqzfjfkWUk=",
@@ -1417,6 +1423,12 @@
 			"revisionTime": "2017-05-03T22:40:06Z"
 		},
 		{
+			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
+			"path": "github.com/kardianos/osext",
+			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
+			"revisionTime": "2017-05-10T13:15:34Z"
+		},
+		{
 			"checksumSHA1": "tK8NE7EHFc1/DiXhjCwUNkIGS3w=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/keybase/go-crypto/brainpool",
 			"path": "github.com/keybase/go-crypto/brainpool",
@@ -1640,12 +1652,6 @@
 			"path": "github.com/patrickmn/go-cache",
 			"revision": "d8e2db65a326b529477cc40295d5902906645e6b",
 			"revisionTime": "2017-06-05T02:18:34Z"
-		},
-		{
-			"checksumSHA1": "mR79ABWFyrDTTdhFPxwUN19T45Q=",
-			"path": "github.com/pkg/errors",
-			"revision": "c605e284fe17294bda444b34710735b29d1a9d90",
-			"revisionTime": "2017-05-05T04:36:39Z"
 		},
 		{
 			"checksumSHA1": "9vLwf5gN2ADrzc9Wkuk7ZZYGdLI=",

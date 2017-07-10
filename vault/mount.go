@@ -1,6 +1,8 @@
 package vault
 
 import (
+	"errors"
+
 	"github.com/hashicorp/vault/api"
 )
 
@@ -15,15 +17,23 @@ func (auth AuthInfo) ListMounts() (map[string]*api.MountOutput, error) {
 }
 
 func (auth AuthInfo) GetMount(path string) (*api.MountConfigOutput, error) {
+	if path == "" {
+		return nil, errors.New("Empty mount name")
+	}
+
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Sys().MountConfig(path + "/")
+	return client.Sys().MountConfig(path+"/")
 }
 
 func (auth AuthInfo) TuneMount(path string, config api.MountConfigInput) error {
+	if path == "" {
+		return errors.New("Empty mount name")
+	}
+
 	client, err := auth.Client()
 	if err != nil {
 		return err

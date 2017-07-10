@@ -4,32 +4,23 @@ import (
 	"net/http"
 
 	"github.com/caiyeon/goldfish/vault"
-	"github.com/gorilla/csrf"
 	"github.com/labstack/echo"
 )
 
 func GetSecrets() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		path := c.QueryParam("path")
 		if path == "" {
 			conf := vault.GetConfig()
 			path = conf.DefaultSecretPath
 		}
-
-		c.Response().Writer.Header().Set("X-CSRF-Token", csrf.Token(c.Request()))
 
 		if path == "" || path[len(path)-1:] == "/" {
 			// listing a directory
@@ -57,18 +48,12 @@ func GetSecrets() echo.HandlerFunc {
 
 func PostSecrets() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		path := c.QueryParam("path")
 		body := c.FormValue("body")
@@ -98,18 +83,12 @@ func PostSecrets() echo.HandlerFunc {
 
 func DeleteSecrets() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var auth = &vault.AuthInfo{}
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
 		defer auth.Clear()
-
-		// fetch auth from cookie
-		if err := getSession(c, auth); err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": "Please login first",
-			})
-		}
-		if err := auth.DecryptAuth(); err != nil {
-			return parseError(c, err)
-		}
 
 		_, err := auth.DeleteSecret(c.QueryParam("path"))
 		if err != nil {

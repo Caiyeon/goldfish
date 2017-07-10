@@ -70,7 +70,7 @@ func GetHCLFilesFromPath(accessToken, owner, repo, branch, path, base, head stri
 			}
 
 			// fetch contents of file as a string
-			file, _, _, err := client.Repositories.GetContents(ctx, owner, repo, path + "/" + *file.Name,
+			file, _, _, err := client.Repositories.GetContents(ctx, owner, repo, path+"/"+*file.Name,
 				&github.RepositoryContentGetOptions{Ref: head},
 			)
 			if err != nil {

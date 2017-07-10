@@ -175,7 +175,6 @@ const querystring = require('querystring')
 export default {
   data () {
     return {
-      csrf: '',
       searchString: '',
       searchType: 'changeid',
       request: null,
@@ -191,6 +190,10 @@ export default {
   },
 
   computed: {
+    session: function () {
+      return this.$store.getters.session
+    },
+
     searchURL: function () {
       var url = '/api/policy/request?type=' + this.searchType
       if (this.searchType === 'changeid') {
@@ -217,8 +220,9 @@ export default {
       if (this.request !== null) {
         return
       }
-      this.$http.get(this.searchURL).then((response) => {
-        this.csrf = response.headers['x-csrf-token']
+      this.$http.get(this.searchURL, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
         this.request = response.data.result
         this.progress = response.data.progress
         this.required = response.data.required
@@ -232,12 +236,9 @@ export default {
       this.$http.post(this.updateURL, querystring.stringify({
         unseal: this.unsealToken
       }), {
-        headers: {'X-CSRF-Token': this.csrf}
-      })
-
-      .then((response) => {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
         this.unsealToken = ''
-
         // if more unseals are needed
         if (response.data.progress) {
           this.progress = response.data.progress
@@ -254,7 +255,6 @@ export default {
               type: 'warning'
             })
           }
-
         // if change was successfully completed
         } else {
           this.progress = this.required
@@ -277,7 +277,7 @@ export default {
 
     reject: function () {
       this.$http.delete('/api/policy/request/' + this.searchString, {
-        headers: {'X-CSRF-Token': this.csrf}
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
         this.$notify({

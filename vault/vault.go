@@ -17,12 +17,12 @@ type AuthInfo struct {
 
 var (
 	// for authenticating this web server with vault
-	VaultAddress  = ""
-	VaultSkipTLS  = false
+	VaultAddress = ""
+	VaultSkipTLS = false
 
-	vaultToken    = ""
-	vaultClient   *api.Client
-	errorChannel  chan error
+	vaultToken   = ""
+	vaultClient  *api.Client
+	errorChannel chan error
 )
 
 func init() {

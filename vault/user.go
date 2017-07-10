@@ -3,11 +3,12 @@ package vault
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/hashicorp/vault/api"
 )
 
-func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) {
+func (auth AuthInfo) ListUsers(backend string) (interface{}, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -15,39 +16,6 @@ func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) 
 	logical := client.Logical()
 
 	switch backend {
-	case "token":
-		// get a list of token accessors
-		resp, err := logical.List("auth/token/accessors")
-		if err != nil {
-			return nil, err
-		}
-		accessors, ok := resp.Data["keys"].([]interface{})
-		if !ok {
-			return nil, errors.New("Failed to convert response")
-		}
-
-		// calculate how many accessors to read, to avoid too much stress on vault server
-		limit := 300
-		if offset > len(accessors) {
-			return nil, errors.New("Offset out of bound")
-		} else if offset + limit > len(accessors) {
-			limit = len(accessors) - offset
-		}
-
-		// fetch details for each accessor
-		tokens := make([]interface{}, limit)
-		for i := 0; i < limit; i++ {
-			resp, err := logical.Write("auth/token/lookup-accessor",
-				map[string]interface{}{
-					"accessor": accessors[i + offset],
-				})
-			// error may occur if accessor expired, simply ignore it
-			if err == nil {
-				tokens[i] = resp.Data
-			}
-		}
-		return tokens, nil
-
 	case "userpass":
 		type User struct {
 			Name     string
@@ -132,10 +100,6 @@ func (auth AuthInfo) DeleteUser(backend string, deleteID string) error {
 	}
 
 	switch backend {
-	case "token":
-		_, err := logical.Write("/auth/token/revoke-accessor/"+deleteID, nil)
-		return err
-
 	case "userpass":
 		_, err := logical.Delete("/auth/userpass/users/" + deleteID)
 		return err
@@ -149,24 +113,67 @@ func (auth AuthInfo) DeleteUser(backend string, deleteID string) error {
 	}
 }
 
-func (auth AuthInfo) GetTokenCount() (int, error) {
+func (auth AuthInfo) GetTokenAccessors() ([]interface{}, error) {
 	client, err := auth.Client()
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
-	logical := client.Logical()
 
-	resp, err := logical.List("auth/token/accessors")
+	resp, err := client.Logical().List("auth/token/accessors")
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	accessors, ok := resp.Data["keys"].([]interface{})
 	if !ok {
-		return -1, errors.New("Failed to convert response")
+		return nil, errors.New("Failed to fetch token accessors")
 	}
 
-	return len(accessors), nil
+	return accessors, nil
+}
+
+func (auth AuthInfo) LookupTokenByAccessor(accs string) ([]interface{}, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	logical := client.Logical()
+
+	// accessors should be comma delimited
+	accessors := strings.Split(accs, ",")
+	if len(accessors) == 1 && accessors[0] == "" {
+		return nil, errors.New("No accessors provided")
+	}
+
+	// excessive numbers of tokens are not allowed, to avoid stress on vault
+	if len(accessors) > 500 {
+		return nil, errors.New("Maximum number of accessors: 500")
+	}
+
+	// for each accessor, lookup details
+	tokens := make([]interface{}, len(accessors))
+	for i, _ := range tokens {
+		resp, err := logical.Write("auth/token/lookup-accessor",
+			map[string]interface{}{
+				"accessor": accessors[i],
+			})
+		// error may occur if accessor was invalid or expired, simply ignore it
+		if err == nil {
+			tokens[i] = resp.Data
+		}
+	}
+	return tokens, nil
+}
+
+func (auth AuthInfo) RevokeTokenByAccessor(acc string) error {
+	client, err := auth.Client()
+	if err != nil {
+		return err
+	}
+	logical := client.Logical()
+
+	_, err = logical.Write("/auth/token/revoke-accessor/"+acc, nil)
+	return err
 }
 
 func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest, wrapttl string) (*api.Secret, error) {

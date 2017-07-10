@@ -143,4 +143,11 @@ Vue.directive('highlightjs', {
   }
 })
 
+// custom directive to set focus on an element when it is loaded into the DOM
+Vue.directive('focus', {
+  inserted: function (el) {
+    el.focus()
+  }
+})
+
 export { app, router, store }
