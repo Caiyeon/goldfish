@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
 # Version of goldfish to install
-ENV GOLDFISH_VERSION=v0.4.0 \
+ENV GOLDFISH_VERSION=v0.5.0 \
     VAULT_TOKEN=
 
 # Directory to put Goldfish binary in
@@ -30,4 +30,4 @@ RUN chmod +x ./entrypoint.sh
 EXPOSE 8000
 
 #Default command to run
-CMD /app/goldfish -dev
+CMD /app/goldfish -config=/app/config.hcl -token=${VAULT_TOKEN}

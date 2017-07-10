@@ -11,21 +11,12 @@ services:
   goldfish:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.compose
     stdin_open: true
+    ports:
+      - "8000:8000"
     links:
       - vault
     depends_on:
       - vault
     command: /app/entrypoint.sh
-  goldfish-frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    ports:
-      - 8080:80/tcp
-    links:
-      - goldfish
-    depends_on:
-      - goldfish
-    stdin_open: true
