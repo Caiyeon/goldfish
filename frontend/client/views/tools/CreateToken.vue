@@ -434,7 +434,7 @@ export default {
     this.availablePolicies = this.session['policies']
 
     // check if roles are available to logged in user
-    this.$http.get('/api/users/listroles', {
+    this.$http.get('/api/token/listroles', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     }).then((response) => {
       if (response.data.result !== null) {
@@ -537,7 +537,7 @@ export default {
     loadRoleDetails: function (rolename) {
       this.selectedRoleLoading = true
       this.selectedRoleDetails = ''
-      this.$http.get('/api/users/role?rolename=' + rolename, {
+      this.$http.get('/api/token/role?rolename=' + rolename, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

@@ -153,9 +153,10 @@ func main() {
 	e.POST("/api/token/lookup-accessor", handlers.LookupTokenByAccessor())
 	e.POST("/api/token/revoke-accessor", handlers.RevokeTokenByAccessor())
 
+	e.GET("/api/token/role", handlers.GetRole())
+	e.GET("/api/token/listroles", handlers.ListRoles())
+
 	e.GET("/api/users", handlers.GetUsers())
-	e.GET("/api/users/role", handlers.GetRole())
-	e.GET("/api/users/listroles", handlers.ListRoles())
 	e.POST("/api/users/revoke", handlers.DeleteUser())
 	e.POST("/api/users/create", handlers.CreateUser())
 
