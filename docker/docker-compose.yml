@@ -1,0 +1,22 @@
+version: '2'
+services:
+  vault:
+    image: vault
+    stdin_open: true
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=goldfish
+    cap_add:
+        - IPC_LOCK
+    command: server -dev
+  goldfish:
+    build:
+      context: .
+      dockerfile: Dockerfile.compose
+    stdin_open: true
+    ports:
+      - "8000:8000"
+    links:
+      - vault
+    depends_on:
+      - vault
+    command: /app/entrypoint.sh
