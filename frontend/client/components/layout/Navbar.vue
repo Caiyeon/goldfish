@@ -36,7 +36,10 @@
               </a>
               <div class="navbar-dropdown is-boxed">
                 <div class="navbar-item">
-                  <div>Token expires in<p class="has-text-info">{{tokenExpiresIn || 'never'}}</p></div>
+                  <div>{{session.display_name}}
+                    <p v-if="tokenExpiresIn === ''" class="has-text-info">will not expire</p>
+                    <p v-if="tokenExpiresIn !== ''" class="has-text-info">expires in {{tokenExpiresIn}}</p>
+                  </div>
                 </div>
               </div>
             </div>
