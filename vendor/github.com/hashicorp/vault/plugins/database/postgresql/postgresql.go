@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/vault/plugins/helper/database/credsutil"
 	"github.com/hashicorp/vault/plugins/helper/database/dbutil"
 	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -29,8 +30,10 @@ func New() (interface{}, error) {
 	connProducer.Type = postgreSQLTypeName
 
 	credsProducer := &credsutil.SQLCredentialsProducer{
-		DisplayNameLen: 10,
+		DisplayNameLen: 8,
+		RoleNameLen:    8,
 		UsernameLen:    63,
+		Separator:      "-",
 	}
 
 	dbType := &PostgreSQL{
@@ -71,7 +74,7 @@ func (p *PostgreSQL) getConnection() (*sql.DB, error) {
 	return db.(*sql.DB), nil
 }
 
-func (p *PostgreSQL) CreateUser(statements dbplugin.Statements, usernamePrefix string, expiration time.Time) (username string, password string, err error) {
+func (p *PostgreSQL) CreateUser(statements dbplugin.Statements, usernameConfig dbplugin.UsernameConfig, expiration time.Time) (username string, password string, err error) {
 	if statements.CreationStatements == "" {
 		return "", "", dbutil.ErrEmptyCreationStatement
 	}
@@ -80,7 +83,7 @@ func (p *PostgreSQL) CreateUser(statements dbplugin.Statements, usernamePrefix s
 	p.Lock()
 	defer p.Unlock()
 
-	username, err = p.GenerateUsername(usernamePrefix)
+	username, err = p.GenerateUsername(usernameConfig)
 	if err != nil {
 		return "", "", err
 	}
