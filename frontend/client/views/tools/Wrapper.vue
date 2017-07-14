@@ -41,7 +41,7 @@
                 <tbody>
                   <tr v-for="(entry, index) in tableData">
                     <!-- Editable key field -->
-                    <td v-if="entry.isClicked">
+                    <td v-if="tableArr[index]">
                       <p class="control">
                         <input class="input is-small"
                                type="text" placeholder="" v-model="entry.key"
@@ -56,7 +56,7 @@
                     </td>
 
                     <!-- Editable value field -->
-                    <td v-if="entry.isClicked">
+                    <td v-if="tableArr[index]">
                       <p class="control">
                         <input class="input is-small" type="text" placeholder="" v-model="entry.value"
                                @keyup.enter="doneEdit(entry.key,index)">
@@ -70,7 +70,7 @@
 
 
                     <td width="30">
-                      <a v-if="entry.isClicked" @click="deleteItem(index)">
+                      <a v-if="tableArr[index]" @click="deleteItem(index)">
                         <span class="icon">
                           <i class="fa fa-times-circle"></i>
                         </span>
@@ -159,6 +159,7 @@ export default {
   data () {
     return {
       tableData: [],
+      tableArr: [],
       currToken: '',
       newKey: '',
       newValue: '',
@@ -177,13 +178,13 @@ export default {
 
   methods: {
     // takes out "isClicked" field in tableData so content can be sent off
-    packData: function () {
-      var data = {}
-      for (var i = 0; i < this.tableData.length; i++) {
-        data[this.tableData[i].key] = this.tableData[i].value
-      }
-      return data
-    },
+    // packData: function () {
+    //   var data = {}
+    //   for (var i = 0; i < this.tableData.length; i++) {
+    //     data[this.tableData[i].key] = this.tableData[i].value
+    //   }
+    //   return data
+    // },
 
     wrapData: function () {
       // do nothing if the table is empty
@@ -193,7 +194,7 @@ export default {
 
       this.$http.post('/api/wrapping/wrap', querystring.stringify({
         wrapttl: this.wrap_ttl,
-        data: JSON.stringify(this.packData())
+        data: JSON.stringify(this.tableData)
       }), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
@@ -221,8 +222,8 @@ export default {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
-        this.tableData = []
-        this.unpackData(response.data.result)
+        this.tableData = response.data.result
+        // this.unpackData(response.data.result)
       })
       .catch((error) => {
         this.$onError(error)
@@ -230,20 +231,20 @@ export default {
     },
 
     // Extracts the received data (a map) into tableData format with isClicked field
-    unpackData: function (rawTable) {
-      Object.keys(rawTable).map((index) => this.tableData.push({
-        key: index,
-        value: rawTable[index],
-        isClicked: false
-      }))
-    },
+    // unpackData: function (rawTable) {
+    //   Object.keys(rawTable).map((index) => this.tableData.push({
+    //     key: index,
+    //     value: rawTable[index],
+    //     isClicked: false
+    //   }))
+    // },
 
     deleteItem: function (index) {
       this.tableData.splice(index, 1)
     },
 
     clicked: function (index) {
-      this.tableData[index].isClicked = true
+      this.tableArr[index] = true
     },
 
     // Returns true if the new key already exists in the current table
@@ -278,9 +279,10 @@ export default {
       // insert new key value pair to table data
       this.tableData.push({
         key: this.newKey,
-        value: this.newValue,
-        isClicked: false
+        value: this.newValue
       })
+
+      this.tableArr.push(true)
 
       // reset so that a new pair can be inserted
       this.newKey = ''
@@ -305,7 +307,7 @@ export default {
         })
         return
       }
-      this.tableData[index].isClicked = false
+      this.tableArr[index] = false
     },
 
     stringToSeconds: function (str) {
