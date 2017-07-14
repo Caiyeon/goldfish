@@ -151,12 +151,12 @@ func main() {
 
 	e.GET("/api/token/accessors", handlers.GetTokenAccessors())
 	e.POST("/api/token/lookup-accessor", handlers.LookupTokenByAccessor())
-	e.DELETE("/api/token/revoke-accessor", handlers.DeleteTokenByAccessor())
+	e.POST("/api/token/revoke-accessor", handlers.RevokeTokenByAccessor())
+
+	e.GET("/api/token/role", handlers.GetRole())
+	e.GET("/api/token/listroles", handlers.ListRoles())
 
 	e.GET("/api/users", handlers.GetUsers())
-	e.GET("/api/tokencount", handlers.GetTokenCount())
-	e.GET("/api/users/role", handlers.GetRole())
-	e.GET("/api/users/listroles", handlers.ListRoles())
 	e.POST("/api/users/revoke", handlers.DeleteUser())
 	e.POST("/api/users/create", handlers.CreateUser())
 
@@ -172,9 +172,8 @@ func main() {
 	e.POST("/api/transit/encrypt", handlers.EncryptString())
 	e.POST("/api/transit/decrypt", handlers.DecryptString())
 
-	e.GET("/api/mounts", handlers.GetMounts())
-	e.GET("/api/mounts/:mountname", handlers.GetMount())
-	e.POST("/api/mounts/:mountname", handlers.ConfigMount())
+	e.GET("/api/mount", handlers.GetMount())
+	e.POST("/api/mount", handlers.ConfigMount())
 
 	e.GET("/api/secrets", handlers.GetSecrets())
 	e.POST("/api/secrets", handlers.PostSecrets())
@@ -202,7 +201,7 @@ func main() {
 	}
 }
 
-const versionString = "Goldfish version: v0.5.0-rc1"
+const versionString = "Goldfish version: v0.5.1-dev"
 
 const devInitString = `
 

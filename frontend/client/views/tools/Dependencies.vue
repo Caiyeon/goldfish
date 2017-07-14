@@ -312,7 +312,7 @@ export default {
       this.selectedMount = ''
 
       // fetch list of mounts
-      this.$http.get('/api/mounts', {
+      this.$http.get('/api/mount', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.mounts = Object.keys(response.data.result)
@@ -414,7 +414,7 @@ export default {
       let policy = this.selectedPolicy
 
       // fetch all users and filter by policy
-      this.$http.get('/api/users/listroles', {
+      this.$http.get('/api/token/listroles', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         // if there are no roles found
@@ -425,7 +425,7 @@ export default {
           result.Loading = response.data.result.length
           for (var i = 0; i < response.data.result.length; i++) {
             let rolename = response.data.result[i]
-            this.$http.get('/api/users/role?rolename=' + rolename, {
+            this.$http.get('/api/token/role?rolename=' + rolename, {
               headers: {'X-Vault-Token': this.session ? this.session.token : ''}
             }).then((response) => {
               if (response.data.result && response.data.result['allowed_policies'].includes(policy)) {

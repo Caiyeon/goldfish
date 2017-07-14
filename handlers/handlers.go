@@ -15,21 +15,21 @@ type H map[string]interface{}
 
 // returns the http status code found in the error message
 func parseError(c echo.Context, err error) error {
+	// if error came from vault, relay it
 	errCode := strings.Split(err.Error(), "Code:")
 	errMsgs := strings.Split(err.Error(), "*")
-
-	// if error string did not contain error response code
-	if len(errCode) < 2 || len(errMsgs) < 2 {
-		log.Println("[ERROR]: ", err.Error())
-		return c.JSON(http.StatusInternalServerError, H{
-			"error": "Invalid vault response",
+	if len(errCode) > 1 && len(errMsgs) > 1 {
+		code := 500
+		fmt.Sscanf(errCode[1], "%d", &code)
+		return c.JSON(code, H{
+			"error": "Vault: " + errMsgs[1],
 		})
 	}
 
-	code := 500
-	fmt.Sscanf(errCode[1], "%d", &code)
-	return c.JSON(code, H{
-		"error": "Vault: " + errMsgs[1],
+	// if error came from goldfish
+	log.Println("[ERROR]: ", err.Error())
+	return c.JSON(http.StatusInternalServerError, H{
+		"error": err.Error(),
 	})
 }
 
@@ -117,7 +117,7 @@ func RenewSelf() echo.HandlerFunc {
 }
 
 // reads header as an encrypted
-func getSession(c echo.Context) (*vault.AuthInfo) {
+func getSession(c echo.Context) *vault.AuthInfo {
 	var auth = &vault.AuthInfo{
 		Type: "token",
 	}

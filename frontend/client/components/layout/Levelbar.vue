@@ -8,22 +8,19 @@
       </div>
     </div>
 
-    <div class="level-right is-hidden-mobile">
-      <breadcrumb :list="list"></breadcrumb>
-    </div>
+    <nav class="breadcrumb is-right">
+      <ul>
+        <li v-for="(item, index) in list" v-bind:class="{ 'is-active': (index + 1 === list.length) }">
+          <router-link :to="item.path">{{item.name}}</router-link>
+        </li>
+      </ul>
+    </nav>
+
   </nav>
 </template>
 
 <script>
-import Breadcrumb from 'vue-bulma-breadcrumb'
-import Tooltip from 'vue-bulma-tooltip'
-
 export default {
-  components: {
-    Breadcrumb,
-    Tooltip
-  },
-
   data () {
     return {
       list: null

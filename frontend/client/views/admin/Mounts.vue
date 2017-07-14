@@ -101,7 +101,7 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/mounts', {
+    this.$http.get('/api/mount', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     })
     .then((response) => {
@@ -126,7 +126,7 @@ export default {
   methods: {
     getMountConfig: function (index) {
       this.selectedIndex = index
-      this.$http.get('/api/mounts/' + this.mounts[index].path.slice(0, -1), {
+      this.$http.get('/api/mount?mount=' + encodeURIComponent(this.mounts[index].path.slice(0, -1)), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
@@ -139,8 +139,17 @@ export default {
     },
 
     postMountConfig: function () {
-      let address = '/api/mounts/' + this.mounts[this.selectedIndex].path.slice(0, -1)
-      let parsed = JSON.parse(this.mountConfigModified)
+      var address = '/api/mount?mount=' + encodeURIComponent(this.mounts[this.selectedIndex].path.slice(0, -1))
+      try {
+        var parsed = JSON.parse(this.mountConfigModified)
+      } catch (e) {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Could not parse JSON',
+          type: 'warning'
+        })
+        return
+      }
 
       this.$http.post(address, {
         default_lease_ttl: parsed.default_lease_ttl.toString(),

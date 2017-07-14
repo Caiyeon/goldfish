@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
-func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) {
+func (auth AuthInfo) ListUsers(backend string) (interface{}, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -16,39 +16,6 @@ func (auth AuthInfo) ListUsers(backend string, offset int) (interface{}, error) 
 	logical := client.Logical()
 
 	switch backend {
-	case "token":
-		// get a list of token accessors
-		resp, err := logical.List("auth/token/accessors")
-		if err != nil {
-			return nil, err
-		}
-		accessors, ok := resp.Data["keys"].([]interface{})
-		if !ok {
-			return nil, errors.New("Failed to convert response")
-		}
-
-		// calculate how many accessors to read, to avoid too much stress on vault server
-		limit := 300
-		if offset > len(accessors) {
-			return nil, errors.New("Offset out of bound")
-		} else if offset+limit > len(accessors) {
-			limit = len(accessors) - offset
-		}
-
-		// fetch details for each accessor
-		tokens := make([]interface{}, limit)
-		for i := 0; i < limit; i++ {
-			resp, err := logical.Write("auth/token/lookup-accessor",
-				map[string]interface{}{
-					"accessor": accessors[i+offset],
-				})
-			// error may occur if accessor expired, simply ignore it
-			if err == nil {
-				tokens[i] = resp.Data
-			}
-		}
-		return tokens, nil
-
 	case "userpass":
 		type User struct {
 			Name     string
@@ -133,10 +100,6 @@ func (auth AuthInfo) DeleteUser(backend string, deleteID string) error {
 	}
 
 	switch backend {
-	case "token":
-		_, err := logical.Write("/auth/token/revoke-accessor/"+deleteID, nil)
-		return err
-
 	case "userpass":
 		_, err := logical.Delete("/auth/userpass/users/" + deleteID)
 		return err
@@ -148,26 +111,6 @@ func (auth AuthInfo) DeleteUser(backend string, deleteID string) error {
 	default:
 		return errors.New("Unsupported user deletion type")
 	}
-}
-
-func (auth AuthInfo) GetTokenCount() (int, error) {
-	client, err := auth.Client()
-	if err != nil {
-		return -1, err
-	}
-	logical := client.Logical()
-
-	resp, err := logical.List("auth/token/accessors")
-	if err != nil {
-		return -1, err
-	}
-
-	accessors, ok := resp.Data["keys"].([]interface{})
-	if !ok {
-		return -1, errors.New("Failed to convert response")
-	}
-
-	return len(accessors), nil
 }
 
 func (auth AuthInfo) GetTokenAccessors() ([]interface{}, error) {
@@ -222,7 +165,7 @@ func (auth AuthInfo) LookupTokenByAccessor(accs string) ([]interface{}, error) {
 	return tokens, nil
 }
 
-func (auth AuthInfo) DeleteTokenByAccessor(acc string) (error) {
+func (auth AuthInfo) RevokeTokenByAccessor(acc string) error {
 	client, err := auth.Client()
 	if err != nil {
 		return err

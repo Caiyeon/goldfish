@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/hashicorp/vault/api"
@@ -19,42 +18,8 @@ func GetUsers() echo.HandlerFunc {
 		}
 		defer auth.Clear()
 
-		var offset int
-		var err error
-		if c.QueryParam("offset") == "" {
-			offset = 0
-		} else {
-			offset, err = strconv.Atoi(c.QueryParam("offset"))
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, H{
-					"error": "Offset is not an integer",
-				})
-			}
-		}
-
 		// fetch results
-		result, err := auth.ListUsers(c.QueryParam("type"), offset)
-		if err != nil {
-			return parseError(c, err)
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
-
-func GetTokenCount() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// fetch auth from header or cookie
-		auth := getSession(c)
-		if auth == nil {
-			return nil
-		}
-		defer auth.Clear()
-
-		// fetch results
-		result, err := auth.GetTokenCount()
+		result, err := auth.ListUsers(c.QueryParam("type"))
 		if err != nil {
 			return parseError(c, err)
 		}
@@ -129,7 +94,7 @@ func LookupTokenByAccessor() echo.HandlerFunc {
 	}
 }
 
-func DeleteTokenByAccessor() echo.HandlerFunc {
+func RevokeTokenByAccessor() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// fetch auth from header or cookie
 		auth := getSession(c)
@@ -138,7 +103,7 @@ func DeleteTokenByAccessor() echo.HandlerFunc {
 		}
 		defer auth.Clear()
 
-		err := auth.DeleteTokenByAccessor(c.QueryParam("accessor"))
+		err := auth.RevokeTokenByAccessor(c.QueryParam("accessor"))
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, H{
 				"error": err.Error(),
