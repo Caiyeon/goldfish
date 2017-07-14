@@ -43,7 +43,6 @@
     "mdi": "^1.8.36",
     "moment": "^2.18.1",
     "vue": "^2.2.1",
-    "vue-bulma-breadcrumb": "^1.0.1",
     "vue-bulma-expanding": "^0.0.1",
     "vue-bulma-message": "^1.1.1",
     "vue-bulma-modal": "1.0.1",
