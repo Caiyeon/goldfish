@@ -332,7 +332,8 @@ func TestGoldfishWrapper(t *testing.T) {
 					So(len(resp.WrapInfo.Token), ShouldEqual, 36)
 
 					// SoonTM
-					// Convey("And unwrapping that wrapped token", func() {})
+					// Convey("Unwrapping", func() {})
+					// Convey("Unwrapping without auth", func() {})
 				})
 
 				Convey("Token lookup self, renew self, and revoke self", func() {
