@@ -17,7 +17,7 @@ curl ${CURL_OPT} ${VAULT_ADDR}/v1/sys/auth/approle -d '{"type":"approle"}'
 
 # see the policy file for details
 curl ${CURL_OPT} -X PUT ${VAULT_ADDR}/v1/sys/policy/goldfish -d '{"rules": "path \"transit/encrypt/goldfish\" {capabilities = [\"read\",\"update\"]}, path \"transit/decrypt/goldfish\" {capabilities = [\"read\",\"update\"]}, path \"secret/goldfish*\" {capabilities = [\"read\",\"update\"]}"}'
-curl ${CURL_OPT} ${VAULT_ADDR}/v1/auth/approle/role/goldfish -d '{"policies":"default,goldfish", "secret_id_ttl":"5", "token_ttl":"480h", "token_max_ttl":"720h", "secret_id_num_uses":"1", "period":"24h"}'
+curl ${CURL_OPT} ${VAULT_ADDR}/v1/auth/approle/role/goldfish -d '{"policies":"default,goldfish", "secret_id_num_uses":"1", "secret_id_ttl":"5", "period":"24h"}'
 curl ${CURL_OPT} ${VAULT_ADDR}/v1/auth/approle/role/goldfish/role-id -d '{"role_id":"goldfish"}'
 
 # initialize transit key. This is not strictly required but is proper procedure
