@@ -50,7 +50,7 @@
                       <div class="level-left">
                         <div class="level-item">
                           <button class="button is-primary is-small"
-                            @click="renewLogin()" :disabled="session.renewable">
+                            @click="renewLogin()" :disabled="!session.renewable">
                             Renew
                           </button>
                         </div>
