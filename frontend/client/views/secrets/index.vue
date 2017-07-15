@@ -229,14 +229,9 @@
 </template>
 
 <script>
-import VbSwitch from 'vue-bulma-switch'
 const querystring = require('querystring')
 
 export default {
-  components: {
-    VbSwitch
-  },
-
   data () {
     return {
       currentPath: '',
