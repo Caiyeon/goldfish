@@ -431,6 +431,8 @@ export default {
         .catch((error) => {
           this.$onError(error)
         })
+
+      // this should not be reachable through the UI by normal means
       } else {
         this.$notify({
           title: 'Invalid',
@@ -458,6 +460,7 @@ export default {
     },
 
     deleteItem (index) {
+      // deleting a token via accessor
       if (this.tabName === 'token') {
         this.$http.post('/api/token/revoke-accessor?accessor=' + this.tableData[index][this.tableColumns[0]], {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -474,6 +477,8 @@ export default {
           this.closeDeleteModal()
           this.$onError(error)
         })
+
+      // deleting a user via username
       } else if (this.tabName === 'userpass') {
         this.$http.post('/api/userpass/delete?username=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -490,6 +495,8 @@ export default {
           this.closeDeleteModal()
           this.$onError(error)
         })
+
+      // deleting an approle via role name
       } else if (this.tabName === 'approle') {
         this.$http.post('/api/approle/delete?role=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -506,6 +513,8 @@ export default {
           this.closeDeleteModal()
           this.$onError(error)
         })
+
+      // this should not be reachable through the UI by normal means
       } else {
         this.$notify({
           title: 'Invalid',
@@ -604,7 +613,7 @@ export default {
       this.loadPage(this.currentPage)
     }
 
-  }
+  } // end methods
 
 }
 </script>
