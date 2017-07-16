@@ -30,6 +30,7 @@ test:
           npm install
           cd ..
           sh build.sh
+          mv goldfish-linux-amd64 $CIRCLE_ARTIFACTS
         fi
       :
           parallel: true # make full use of 2 containers
