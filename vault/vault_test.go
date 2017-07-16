@@ -466,17 +466,18 @@ func TestGoldfishWrapper(t *testing.T) {
 			// users
 			Convey("Listing users of all types should work", func() {
 				// there should be only one user created in PrepareVault()
-				_, err = rootAuth.ListUsers("userpass")
+				_, err = rootAuth.ListUserpassUsers()
 				So(err, ShouldBeNil)
 
-				err = rootAuth.DeleteUser("userpass", "testuser")
+				_, err = rootAuth.DeleteRaw("auth/userpass/users/testuser")
 				So(err, ShouldBeNil)
 
 				// there should be only one approle (goldfish)
-				_, err = rootAuth.ListUsers("approle")
+				roles, err := rootAuth.ListApproleRoles()
 				So(err, ShouldBeNil)
+				So(len(roles), ShouldEqual, 1)
 
-				err = rootAuth.DeleteUser("approle", "goldfish")
+				_, err = rootAuth.DeleteRaw("auth/approle/role/goldfish")
 				So(err, ShouldBeNil)
 			})
 

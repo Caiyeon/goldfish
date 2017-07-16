@@ -415,7 +415,7 @@ export default {
 
     wrapParam: function () {
       if (this.bWrapped) {
-        return '&wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
+        return 'wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
       }
       return ''
     }
@@ -518,7 +518,7 @@ export default {
       }
 
       this.createdToken = null
-      this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
+      this.$http.post('/api/token/create?' + this.wrapParam, this.payloadJSON, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
