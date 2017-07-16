@@ -26,11 +26,8 @@
     "build": "cross-env NODE_ENV=production node build/build.js",
     "clean": "rm -rf dist",
     "dev": "cross-env NODE_ENV=development node build/dev-server.js",
-    "electron": "cross-env NODE_ELECTRON=true npm run build && electron electronIndex.js",
-    "gh": "npm run build && gh-pages -d dist",
     "lint": "eslint --ext .js .vue client/*",
-    "lint:fix": "eslint --fix --ext .js .vue electron.js client/* build/* config/*",
-    "test": "echo lol"
+    "lint:fix": "eslint --fix --ext .js .vue electron.js client/* build/* config/*"
   },
   "dependencies": {
     "animate.css": "3.5.2",
