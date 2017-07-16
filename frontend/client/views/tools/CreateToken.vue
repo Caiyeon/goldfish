@@ -280,11 +280,17 @@
               </div>
             </article>
           </div>
-          <div class="field"
-          v-if="this.max_ttl != '' && (stringToSeconds(this.ttl) > stringToSeconds(this.max_ttl))">
+          <div v-if="this.max_ttl != '' && (stringToSeconds(this.ttl) > stringToSeconds(this.max_ttl))" class="field">
             <article class="message is-warning">
               <div class="message-body">
                 <strong>Warning: ttl is longer than max_ttl</strong>
+              </div>
+            </article>
+          </div>
+          <div v-if="bWrapped && this.wrap_ttl === ''" class="field">
+            <article class="message is-warning">
+              <div class="message-body">
+                <strong>Warning: Wrapping is selected but no wrapttl is given</strong>
               </div>
             </article>
           </div>
