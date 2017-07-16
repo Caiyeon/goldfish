@@ -28,7 +28,8 @@ test:
           rm -rf node_modules
           npm cache clean
           npm install
-          npm run build
+          cd ..
+          sh build.sh
         fi
       :
           parallel: true # make full use of 2 containers

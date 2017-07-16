@@ -13,3 +13,6 @@ $GOPATH/bin/rice embed-go || exit 1
 
 # compile goldfish binary
 env GOOS=linux GOARCH=amd64 go build -o goldfish-linux-amd64 -v github.com/caiyeon/goldfish
+
+# report build
+echo 'Successfully built ' $(git describe --tags)
