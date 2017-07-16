@@ -17,7 +17,7 @@ test:
           go build -v -a github.com/caiyeon/goldfish
           ./goldfish --version
           echo $PWD
-          go test -v $(go list ./... | grep -v /vendor/)
+          go test -race $(go list ./... | grep -v /vendor/)
 
         # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
