@@ -13,6 +13,7 @@ import (
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
+	"github.com/hashicorp/vault/helper/mlock"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -64,6 +65,17 @@ func main() {
 		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
+
+		// Only in prod mode and only when mlock is not disabled
+		if !cfg.Listener.Disable_mlock {
+			// Ensure our memory usage is locked into physical RAM
+			if err = mlock.LockMemory(); err != nil {
+				log.Fatalf("Failed to lock memory: %s. Probably mlock syscall is not available."+
+					"To leave memory unsafe set `disable_mlock` configuration option in config",
+					err)
+			}
+		}
+
 	}
 	if err != nil {
 		panic(err)

@@ -1,11 +1,11 @@
 package config
 
 import (
-	"io/ioutil"
-	"fmt"
 	"errors"
-	"strings"
+	"fmt"
+	"io/ioutil"
 	"net/url"
+	"strings"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -25,6 +25,7 @@ type ListenerConfig struct {
 	Tls_cert_file    string
 	Tls_key_file     string
 	Tls_autoredirect bool
+	Disable_mlock    bool
 }
 
 type VaultConfig struct {
@@ -175,6 +176,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		"tls_cert_file",
 		"tls_key_file",
 		"tls_autoredirect",
+		"disable_mlock",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
@@ -216,7 +218,15 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 			}
 			result.Listener.Tls_autoredirect = true
 		} else if redirect != "0" {
-			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1")
+			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1", key)
+		}
+	}
+
+	if disableMlock, ok := m["tls_disable"]; ok {
+		if disableMlock == "1" {
+			result.Listener.Disable_mlock = true
+		} else if disableMlock != "0" {
+			return fmt.Errorf("listener.%s: disable_mlock can be 0 or 1", key)
 		}
 	}
 
@@ -255,7 +265,7 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 			return fmt.Errorf("failed to set address: %v", err)
 		} else {
 			if !(url.Scheme == "http" || url.Scheme == "https") {
-				return fmt.Errorf("vault.%s: address must be prefixed with scheme i.e. http:// or https://")
+				return fmt.Errorf("vault.%s: address must be prefixed with scheme i.e. http:// or https://", key)
 			}
 			result.Vault.Address = url.String()
 		}
