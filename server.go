@@ -63,8 +63,15 @@ func main() {
 	// if dev mode, run a localhost dev vault instance
 	if devMode {
 		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
+		if err != nil {
+			panic(err)
+		}
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
+
+		if err != nil {
+			panic(err)
+		}
 
 		// Only in prod mode and only when mlock is not disabled
 		if !cfg.Listener.Disable_mlock {
@@ -75,10 +82,6 @@ func main() {
 					err)
 			}
 		}
-
-	}
-	if err != nil {
-		panic(err)
 	}
 
 	// if API wrapper can't start, panic is justified
