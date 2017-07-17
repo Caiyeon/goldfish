@@ -222,7 +222,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		}
 	}
 
-	if disableMlock, ok := m["tls_disable"]; ok {
+	if disableMlock, ok := m["disable_mlock"]; ok {
 		if disableMlock == "1" {
 			result.Listener.Disable_mlock = true
 		} else if disableMlock != "0" {
