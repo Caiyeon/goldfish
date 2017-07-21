@@ -152,13 +152,15 @@ func main() {
 	e.GET("/api/token/accessors", handlers.GetTokenAccessors())
 	e.POST("/api/token/lookup-accessor", handlers.LookupTokenByAccessor())
 	e.POST("/api/token/revoke-accessor", handlers.RevokeTokenByAccessor())
-
-	e.GET("/api/token/role", handlers.GetRole())
+	e.POST("/api/token/create", handlers.CreateToken())
 	e.GET("/api/token/listroles", handlers.ListRoles())
+	e.GET("/api/token/role", handlers.GetRole())
 
-	e.GET("/api/users", handlers.GetUsers())
-	e.POST("/api/users/revoke", handlers.DeleteUser())
-	e.POST("/api/users/create", handlers.CreateUser())
+	e.GET("/api/userpass/users", handlers.GetUserpassUsers())
+	e.POST("/api/userpass/delete", handlers.DeleteUserpassUser())
+
+	e.GET("/api/approle/roles", handlers.GetApproleRoles())
+	e.POST("/api/approle/delete", handlers.DeleteApproleRole())
 
 	e.GET("/api/policy", handlers.GetPolicy())
 	e.DELETE("/api/policy", handlers.DeletePolicy())
