@@ -99,6 +99,11 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 		return err
 	}
 
+	// verify that the token can renew itself
+	if err := renewServerToken(); err != nil {
+		return err
+	}
+
 	// errors that are not catastrophic can be logged here
 	go func() {
 		for err := range errorChannel {
