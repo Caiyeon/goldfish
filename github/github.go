@@ -2,6 +2,7 @@ package github
 
 import (
 	"errors"
+	"os"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -10,11 +11,23 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var demoAccessToken string
+
+func init() {
+	if acc := os.Getenv("GITHUB_ACCESS_TOKEN"); acc == "" {
+		panic("Demo instance requires env var GITHUB_ACCESS_TOKEN")
+	} else {
+		demoAccessToken = acc
+	}
+}
+
 // if head commit is somewhere between current commit state and head of target branch,
 // find all hcl files in the path folder of commit, and return contents as a map
 func GetHCLFilesFromPath(accessToken, owner, repo, branch, path, base, head string) (map[string]string, error) {
 	if accessToken == "" || owner == "" || repo == "" || head == "" {
-		return nil, errors.New("Config_path does not include GitHub info required")
+		//return nil, errors.New("Config_path does not include GitHub info required")
+		// demo instance will override accesstoken with env var
+		accessToken = demoAccessToken
 	}
 
 	// construct oauth github client from personal access token
