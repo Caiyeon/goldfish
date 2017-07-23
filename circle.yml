@@ -24,6 +24,7 @@ test:
           cd frontend
           nvm install v6.11.1
           sudo -E env "PATH=$PATH" npm install -g cross-env
+          sudo -E env "PATH=$PATH" npm install -g npm@5
           npm link webpack
           rm -rf node_modules
           npm cache clean --force
