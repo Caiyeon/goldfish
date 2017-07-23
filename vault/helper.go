@@ -84,7 +84,7 @@ func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 	return vaultClient.Logical().Delete("cubbyhole/" + name)
 }
 
-func renewServerToken() (err error) {
+func renewServerToken() error {
 	client, err := NewVaultClient()
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func renewServerToken() (err error) {
 		return errors.New("Could not renew token... response from vault was nil")
 	}
 	log.Println("[INFO ]: Server token renewed")
-	return
+	return nil
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {

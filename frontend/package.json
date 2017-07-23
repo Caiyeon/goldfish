@@ -19,8 +19,8 @@
     "golang"
   ],
   "engines": {
-    "node": ">=7",
-    "npm": ">=3"
+    "node": ">=8",
+    "npm": ">=5"
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production node build/build.js",
