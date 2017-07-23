@@ -3,6 +3,7 @@ package vault
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/hashicorp/vault/api"
@@ -89,7 +90,14 @@ func renewServerToken() (err error) {
 		return err
 	}
 	client.SetToken(vaultToken)
-	_, err = client.Auth().Token().RenewSelf(0)
+	resp, err := client.Auth().Token().RenewSelf(0)
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("Could not renew token... response from vault was nil")
+	}
+	log.Println("[INFO ]: Server token renewed")
 	return
 }
 

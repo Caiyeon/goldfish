@@ -22,7 +22,7 @@ var (
 
 	vaultToken   = ""
 	vaultClient  *api.Client
-	errorChannel chan error
+	errorChannel = make(chan error, 1)
 )
 
 func init() {
@@ -97,6 +97,11 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 	vaultToken = resp.Auth.ClientToken
 	vaultClient.SetToken(resp.Auth.ClientToken)
 	if _, err := vaultClient.Auth().Token().LookupSelf(); err != nil {
+		return err
+	}
+
+	// verify that the client token is renewable
+	if err := renewServerToken(); err != nil {
 		return err
 	}
 

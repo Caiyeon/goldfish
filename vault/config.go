@@ -87,7 +87,7 @@ func loadConfigFromVault(path string) error {
 	temp.LastUpdated = time.Now().Format(time.UnixDate)
 	_, err = vaultClient.Logical().Write(path, structs.Map(temp))
 	if err != nil {
-		return errors.New("As of v0.2.3, goldfish needs write permissions to the config_path vault endpoint.")
+		return errors.New("Goldfish could not write to runtime config path: " + err.Error())
 	}
 
 	// RWLock.Lock() will block read lock requests until it is done
@@ -97,6 +97,6 @@ func loadConfigFromVault(path string) error {
 	config = temp
 	configHash = newHash
 
-	log.Println("Goldfish config reloaded")
+	log.Println("[INFO ]: Server config reloaded")
 	return nil
 }
