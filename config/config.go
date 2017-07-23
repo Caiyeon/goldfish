@@ -1,11 +1,11 @@
 package config
 
 import (
-	"io/ioutil"
-	"fmt"
 	"errors"
-	"strings"
+	"fmt"
+	"io/ioutil"
 	"net/url"
+	"strings"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -120,7 +120,7 @@ func ParseConfig(d string) (*Config, error) {
 	} else {
 		// there should be only one listener to parse
 		if err := parseListener(&result, object.Items[0]); err != nil {
-			return nil, fmt.Errorf("Error parsing 'listener': %s", err)
+			return nil, fmt.Errorf("Error parsing 'listener': %s", err.Error())
 		}
 	}
 
@@ -129,7 +129,7 @@ func ParseConfig(d string) (*Config, error) {
 	} else {
 		// there should be only one vault to parse
 		if err := parseVault(&result, object.Items[0]); err != nil {
-			return nil, fmt.Errorf("Error parsing 'vault': %s", err)
+			return nil, fmt.Errorf("Error parsing 'vault': %s", err.Error())
 		}
 	}
 
@@ -216,7 +216,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 			}
 			result.Listener.Tls_autoredirect = true
 		} else if redirect != "0" {
-			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1")
+			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1", key)
 		}
 	}
 
@@ -252,10 +252,10 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		return fmt.Errorf("vault.%s: address is required", key)
 	} else {
 		if url, err := url.Parse(address); err != nil {
-			return fmt.Errorf("failed to set address: %v", err)
+			return fmt.Errorf("failed to set address %v reason: %s", address, err.Error())
 		} else {
 			if !(url.Scheme == "http" || url.Scheme == "https") {
-				return fmt.Errorf("vault.%s: address must be prefixed with scheme i.e. http:// or https://")
+				return fmt.Errorf("vault.%s: address must be prefixed with scheme i.e. http:// or https://", key)
 			}
 			result.Vault.Address = url.String()
 		}

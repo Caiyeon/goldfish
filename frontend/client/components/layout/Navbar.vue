@@ -41,7 +41,38 @@
                     <p v-if="tokenExpiresIn !== ''" class="has-text-info">expires in {{tokenExpiresIn}}</p>
                   </div>
                 </div>
-              </div>
+
+                <hr v-if="session !== null" class="navbar-divider">
+                <div v-if="session !== null" class="navbar-item">
+                  <div class="navbar-content">
+                    <div class="level">
+
+                      <div class="level-left">
+                        <div class="level-item">
+                          <button class="button is-primary is-small"
+                            @click="renewLogin()" :disabled="!session.renewable">
+                            Renew
+                          </button>
+                        </div>
+                      </div>&nbsp;&nbsp;&nbsp;
+
+                      <div class="level-right">
+                        <div class="level-item">
+                          <p v-if="session !== null" class="control">
+                            <button class="button is-warning is-small"
+                             @click="logout()">
+                              Logout
+                            </button>
+                          </p>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div> <!-- end navbar dropdown -->
+
             </div>
           </div>
 
@@ -148,7 +179,39 @@ export default {
   methods: {
     ...mapActions([
       'toggleSidebar'
-    ])
+    ]),
+
+    logout: function () {
+      // purge session from localstorage
+      window.localStorage.removeItem('session')
+      // mutate vuex state
+      this.$store.commit('clearSession')
+    },
+
+    renewLogin: function () {
+      this.$http.post('/api/login/renew-self', {}, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+      .then((response) => {
+        // deep copy session, update fields, and mutate state
+        let newSession = JSON.parse(JSON.stringify(this.session))
+
+        newSession['meta'] = response.data.result['meta']
+        newSession['policies'] = response.data.result['policies']
+        newSession['token_expiry'] = response.data.result['ttl'] === 0 ? 'never' : moment().add(response.data.result['ttl'], 'seconds').format('ddd, h:mm:ss A MMMM Do YYYY')
+
+        window.localStorage.setItem('session', JSON.stringify(newSession))
+        this.$store.commit('setSession', newSession)
+        this.$notify({
+          title: 'Renew success!',
+          message: '',
+          type: 'success'
+        })
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    }
   }
 }
 </script>

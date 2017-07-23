@@ -17,18 +17,22 @@ test:
           go build -v -a github.com/caiyeon/goldfish
           ./goldfish --version
           echo $PWD
-          go test -v $(go list ./... | grep -v /vendor/)
+          go test -race $(go list ./... | grep -v /vendor/)
 
         # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
           cd frontend
-          nvm install v7.10.0
+          nvm install v6.11.1
           sudo -E env "PATH=$PATH" npm install -g cross-env
+          sudo -E env "PATH=$PATH" npm install -g npm@5
           npm link webpack
           rm -rf node_modules
-          npm cache clean
+          npm cache clean --force
           npm install
-          npm run build
+          cd ..
+          sh build.sh
+          mv goldfish-linux-amd64 $CIRCLE_ARTIFACTS
+          mv goldfish-windows-amd64 $CIRCLE_ARTIFACTS
         fi
       :
           parallel: true # make full use of 2 containers

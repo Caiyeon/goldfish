@@ -280,11 +280,17 @@
               </div>
             </article>
           </div>
-          <div class="field"
-          v-if="this.max_ttl != '' && (stringToSeconds(this.ttl) > stringToSeconds(this.max_ttl))">
+          <div v-if="this.max_ttl != '' && (stringToSeconds(this.ttl) > stringToSeconds(this.max_ttl))" class="field">
             <article class="message is-warning">
               <div class="message-body">
                 <strong>Warning: ttl is longer than max_ttl</strong>
+              </div>
+            </article>
+          </div>
+          <div v-if="bWrapped && this.wrap_ttl === ''" class="field">
+            <article class="message is-warning">
+              <div class="message-body">
+                <strong>Warning: Wrapping is selected but no wrapttl is given</strong>
               </div>
             </article>
           </div>
@@ -415,7 +421,7 @@ export default {
 
     wrapParam: function () {
       if (this.bWrapped) {
-        return '&wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
+        return 'wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
       }
       return ''
     }
@@ -518,7 +524,7 @@ export default {
       }
 
       this.createdToken = null
-      this.$http.post('/api/users/create?type=token' + this.wrapParam, this.payloadJSON, {
+      this.$http.post('/api/token/create?' + this.wrapParam, this.payloadJSON, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

@@ -283,13 +283,13 @@ export default {
         }
       })
       .catch((error) => {
+        // to avoid ambiguity, current session should be purged when new login fails
+        this.logout()
         this.$onError(error)
       })
     },
 
     logout: function () {
-      // force cookie timeout
-      document.cookie = 'auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
       // purge session from localstorage
       window.localStorage.removeItem('session')
       // mutate vuex state

@@ -4,31 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/caiyeon/goldfish/vault"
 	"github.com/hashicorp/vault/api"
 	"github.com/labstack/echo"
 )
-
-func GetUsers() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// fetch auth from header or cookie
-		auth := getSession(c)
-		if auth == nil {
-			return nil
-		}
-		defer auth.Clear()
-
-		// fetch results
-		result, err := auth.ListUsers(c.QueryParam("type"))
-		if err != nil {
-			return parseError(c, err)
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": result,
-		})
-	}
-}
 
 func GetTokenAccessors() echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -116,7 +94,7 @@ func RevokeTokenByAccessor() echo.HandlerFunc {
 	}
 }
 
-func DeleteUser() echo.HandlerFunc {
+func CreateToken() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// fetch auth from header or cookie
 		auth := getSession(c)
@@ -125,69 +103,20 @@ func DeleteUser() echo.HandlerFunc {
 		}
 		defer auth.Clear()
 
-		// verify form data
-		var deleteTarget = &vault.AuthInfo{}
-		if err := c.Bind(deleteTarget); err != nil {
+		var request = &api.TokenCreateRequest{}
+		if err := c.Bind(request); err != nil {
 			return c.JSON(http.StatusBadRequest, H{
-				"error": "Invalid format for deletion target",
-			})
-		}
-		if deleteTarget.Type == "" || deleteTarget.ID == "" {
-			return c.JSON(http.StatusBadRequest, H{
-				"error": "Deletion target cannot be empty",
+				"error": "Invalid token creation format",
 			})
 		}
 
-		// delete user
-		if err := auth.DeleteUser(deleteTarget.Type, deleteTarget.ID); err != nil {
+		if resp, err := auth.CreateToken(request, c.QueryParam("wrap-ttl")); err != nil {
 			return parseError(c, err)
-		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": "User deleted successfully",
-		})
-	}
-}
-
-func CreateUser() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// fetch auth from header or cookie
-		auth := getSession(c)
-		if auth == nil {
-			return nil
-		}
-		defer auth.Clear()
-
-		var resp *api.Secret
-		switch c.QueryParam("type") {
-		case "":
-			return c.JSON(http.StatusBadRequest, H{
-				"error": "User creation type cannot be empty",
-			})
-
-		case "token":
-			var request = &api.TokenCreateRequest{}
-			err := c.Bind(request)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, H{
-					"error": "Invalid token creation format",
-				})
-			}
-
-			resp, err = auth.CreateToken(request, c.QueryParam("wrap-ttl"))
-			if err != nil {
-				return parseError(c, err)
-			}
-
-		default:
-			return c.JSON(http.StatusBadRequest, H{
-				"error": "User creation type not supported",
+		} else {
+			return c.JSON(http.StatusOK, H{
+				"result": resp,
 			})
 		}
-
-		return c.JSON(http.StatusOK, H{
-			"result": resp,
-		})
 	}
 }
 

@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
+	"github.com/caiyeon/goldfish/vault"
 	"github.com/labstack/echo"
 )
 
@@ -38,12 +40,21 @@ func WrapHandler() echo.HandlerFunc {
 
 func UnwrapHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// fetch auth from header or cookie
-		auth := getSession(c)
-		if auth == nil {
-			return nil
+		var auth = &vault.AuthInfo{
+			Type: "token",
+			ID:   "",
 		}
 		defer auth.Clear()
+
+		// fetch auth from header or cookie
+		auth.ID = c.Request().Header.Get("X-Vault-Token")
+		if strings.HasPrefix(auth.ID, "vault:") {
+			if err := auth.DecryptAuth(); err != nil {
+				return c.JSON(http.StatusForbidden, H{
+					"error": "Cipher invalid. Please logout and login again",
+				})
+			}
+		}
 
 		wrappingToken := c.FormValue("wrappingToken")
 		if wrappingToken == "" {

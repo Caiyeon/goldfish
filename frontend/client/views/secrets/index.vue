@@ -229,14 +229,9 @@
 </template>
 
 <script>
-import VbSwitch from 'vue-bulma-switch'
 const querystring = require('querystring')
 
 export default {
-  components: {
-    VbSwitch
-  },
-
   data () {
     return {
       currentPath: '',
@@ -351,9 +346,7 @@ export default {
         }
       })
 
-      // upon failure, wipe data and force user to re-enter path manually or refresh
       .catch((error) => {
-        this.tableData = []
         this.$onError(error)
       })
     },

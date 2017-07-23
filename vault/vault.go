@@ -22,7 +22,7 @@ var (
 
 	vaultToken   = ""
 	vaultClient  *api.Client
-	errorChannel chan error
+	errorChannel = make(chan error, 1)
 )
 
 func init() {
@@ -67,7 +67,8 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
 	}
 	if resp == nil {
-		return errors.New("Unwrap response from vault was nil. Please revoke token")
+		return errors.New("Vault response was nil. Please revoke token.\n" +
+			"If your vault cert is self-signed, you'll need to enable tls_skip_verify in goldfish config.")
 	}
 
 	// verify that a secret_id was wrapped
@@ -96,6 +97,11 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 	vaultToken = resp.Auth.ClientToken
 	vaultClient.SetToken(resp.Auth.ClientToken)
 	if _, err := vaultClient.Auth().Token().LookupSelf(); err != nil {
+		return err
+	}
+
+	// verify that the client token is renewable
+	if err := renewServerToken(); err != nil {
 		return err
 	}
 

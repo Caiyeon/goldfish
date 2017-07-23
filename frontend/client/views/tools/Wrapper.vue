@@ -215,13 +215,21 @@ export default {
       if (this.currToken === '') {
         return
       }
+      // purge data to avoid ambiguity
+      this.tableData = []
+
+      // request to unwrap
       this.$http.post('/api/wrapping/unwrap', querystring.stringify({
         wrappingToken: this.currToken
       }), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
-        this.tableData = []
+        this.$notify({
+          title: 'Success',
+          message: 'Token unwrapped',
+          type: 'success'
+        })
         this.unpackData(response.data.result)
       })
       .catch((error) => {
@@ -246,10 +254,10 @@ export default {
       this.tableData[index].isClicked = true
     },
 
-    // Returns true if the new key already exists in the current table
-    keyExists: function (key) {
+    // Returns true if the new key already exists in the current table (other than the ignored index)
+    keyExists: function (key, ignoreIndex) {
       for (var i = 0; i < this.tableData.length; i++) {
-        if (this.tableData[i].key === key) {
+        if (this.tableData[i].key === key && i !== ignoreIndex) {
           return true
         }
       }
@@ -292,12 +300,12 @@ export default {
       if (this.tableData[index].key === '') {
         this.$notify({
           title: 'Invalid',
-          message: 'Key already exists',
+          message: 'Key cannot be empty',
           type: 'warning'
         })
         return
       }
-      if (this.keyExists(key)) {
+      if (this.keyExists(key, index)) {
         this.$notify({
           title: 'Invalid',
           message: 'Key already exists',

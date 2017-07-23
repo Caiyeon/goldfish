@@ -3,6 +3,8 @@ package vault
 import (
 	"encoding/base64"
 	"errors"
+
+	"github.com/hashicorp/vault/api"
 )
 
 // zeros out credentials, call by defer
@@ -76,4 +78,12 @@ func (auth *AuthInfo) CapabilitiesSelf(path string) ([]string, error) {
 		return []string{}, err
 	}
 	return client.Sys().CapabilitiesSelf(path)
+}
+
+func (auth AuthInfo) DeleteRaw(path string) (*api.Secret, error) {
+	client, err := auth.Client()
+	if err != nil {
+		return nil, err
+	}
+	return client.Logical().Delete(path)
 }

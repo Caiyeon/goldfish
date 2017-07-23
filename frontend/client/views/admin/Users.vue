@@ -397,8 +397,8 @@ export default {
         regexp: null
       }
 
+      // listing tokens
       if (this.tabName === 'token') {
-        // tokens tab requires special pagination
         this.$http.get('/api/token/accessors', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
@@ -409,15 +409,35 @@ export default {
         .catch((error) => {
           this.$onError(error)
         })
-      } else {
-        // otherwise populate new table data according to tab name
-        this.$http.get('/api/users?type=' + this.tabName, {
+
+      // listing userpass users
+      } else if (this.tabName === 'userpass') {
+        this.$http.get('/api/userpass/users', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.tableData = response.data.result
         })
         .catch((error) => {
           this.$onError(error)
+        })
+
+      // listing approle roles
+      } else if (this.tabName === 'approle') {
+        this.$http.get('/api/approle/roles', {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.tableData = response.data.result
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+
+      // this should not be reachable through the UI by normal means
+      } else {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Unsupported tab name',
+          type: 'warning'
         })
       }
     },
@@ -440,8 +460,8 @@ export default {
     },
 
     deleteItem (index) {
+      // deleting a token via accessor
       if (this.tabName === 'token') {
-        // tokens tab requires special pagination
         this.$http.post('/api/token/revoke-accessor?accessor=' + this.tableData[index][this.tableColumns[0]], {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
@@ -457,14 +477,12 @@ export default {
           this.closeDeleteModal()
           this.$onError(error)
         })
-      } else {
-        this.$http.post('/api/users/revoke', {
-          Type: this.tabName.toLowerCase(),
-          ID: this.tableData[index][this.tableColumns[0]]
-        }, {
+
+      // deleting a user via username
+      } else if (this.tabName === 'userpass') {
+        this.$http.post('/api/userpass/delete?username=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-        })
-        .then((response) => {
+        }).then((response) => {
           this.closeDeleteModal()
           this.tableData.splice(index, 1)
           this.$notify({
@@ -476,6 +494,32 @@ export default {
         .catch((error) => {
           this.closeDeleteModal()
           this.$onError(error)
+        })
+
+      // deleting an approle via role name
+      } else if (this.tabName === 'approle') {
+        this.$http.post('/api/approle/delete?role=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.closeDeleteModal()
+          this.tableData.splice(index, 1)
+          this.$notify({
+            title: 'Success',
+            message: 'Deletion successful',
+            type: 'success'
+          })
+        })
+        .catch((error) => {
+          this.closeDeleteModal()
+          this.$onError(error)
+        })
+
+      // this should not be reachable through the UI by normal means
+      } else {
+        this.$notify({
+          title: 'Invalid',
+          message: 'Unsupported tab name',
+          type: 'warning'
         })
       }
     },
@@ -569,7 +613,7 @@ export default {
       this.loadPage(this.currentPage)
     }
 
-  }
+  } // end methods
 
 }
 </script>

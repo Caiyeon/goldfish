@@ -30,15 +30,20 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 	return resp.WrapInfo.Token, nil
 }
 
-// to do: Find an optimal way to allow unauthenticated users to unwrap data
 func (auth *AuthInfo) UnwrapData(wrappingToken string) (map[string]interface{}, error) {
-	client, err := auth.Client()
+	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(vaultToken)
+	client.SetToken(auth.ID)
 
-	// make a raw unwrap call. This will use the token as a header
+	// if auth is empty, unwrapping is still allowed. It just won't be vault audited
+	if auth.ID == "" {
+		client.SetToken(wrappingToken)
+		wrappingToken = ""
+	}
+
+	// unwrap either with auth or without
 	resp, err := client.Logical().Unwrap(wrappingToken)
 	if err != nil {
 		return nil, errors.New("Failed to unwrap provided token " + err.Error())

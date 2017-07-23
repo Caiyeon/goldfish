@@ -71,7 +71,7 @@ func Login() echo.HandlerFunc {
 		// encrypt auth.ID with vault's transit backend
 		if err := auth.EncryptAuth(); err != nil {
 			return c.JSON(http.StatusInternalServerError, H{
-				"error": "Goldfish could not use transit key",
+				"error": "Goldfish could not use transit key: " + err.Error(),
 			})
 		}
 
