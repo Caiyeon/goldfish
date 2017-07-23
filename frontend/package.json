@@ -1,6 +1,6 @@
 {
   "name": "goldfish",
-  "version": "0.5.1-dev",
+  "version": "0.5.1",
   "description": "Vault Admin Panel",
   "repository": "caiyeon/goldfish",
   "homepage": "",
@@ -19,7 +19,7 @@
     "golang"
   ],
   "engines": {
-    "node": ">=8",
+    "node": ">=6",
     "npm": ">=5"
   },
   "scripts": {

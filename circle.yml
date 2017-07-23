@@ -22,15 +22,16 @@ test:
         # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
           cd frontend
-          nvm install v8.2.1
+          nvm install v6.11.1
           sudo -E env "PATH=$PATH" npm install -g cross-env
           npm link webpack
           rm -rf node_modules
-          npm cache clean
+          npm cache clean --force
           npm install
           cd ..
           sh build.sh
           mv goldfish-linux-amd64 $CIRCLE_ARTIFACTS
+          mv goldfish-windows-amd64 $CIRCLE_ARTIFACTS
         fi
       :
           parallel: true # make full use of 2 containers

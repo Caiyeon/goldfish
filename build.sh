@@ -13,6 +13,7 @@ rice embed-go || exit 1
 
 # compile goldfish binary
 env GOOS=linux GOARCH=amd64 go build -o goldfish-linux-amd64 -v github.com/caiyeon/goldfish
+env GOOS=windows GOARCH=amd64 go build -o goldfish-windows-amd64 -v github.com/caiyeon/goldfish
 
 # report build
 echo 'Successfully built ' $(git describe --always --tags)
