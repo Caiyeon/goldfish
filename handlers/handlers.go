@@ -68,11 +68,14 @@ func Login() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 
-		// encrypt auth.ID with vault's transit backend
-		if err := auth.EncryptAuth(); err != nil {
-			return c.JSON(http.StatusInternalServerError, H{
-				"error": "Goldfish could not use transit key: " + err.Error(),
-			})
+		// if goldfish is configured to use transit encryption
+		if conf := vault.GetConfig(); conf.ServerTransitKey != "" {
+			// encrypt auth.ID with vault's transit backend
+			if err := auth.EncryptAuth(); err != nil {
+				return c.JSON(http.StatusInternalServerError, H{
+					"error": "Goldfish could not use transit key: " + err.Error(),
+				})
+			}
 		}
 
 		// return useful information to user
