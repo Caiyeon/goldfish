@@ -334,7 +334,7 @@ export default {
         // notify user of generated client-token
         if (this.type === 'Userpass' || this.type === 'LDAP') {
           this.$message({
-            message: 'Your access token is: ' + response.data.data['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
+            message: 'Your access token is: ' + response.data.result['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',
             duration: 0,
             showCloseButton: true
