@@ -152,12 +152,12 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="key in healthKeys">
+                    <tr v-for="key in Object.keys(vaultHealthData)">
                       <td>
                         {{ key }}
                       </td>
                       <td>
-                        {{ healthData[key] }}
+                        {{ vaultHealthData[key] }}
                       </td>
                     </tr>
                   </tbody>
@@ -165,17 +165,53 @@
                 <p class="control">
                   <button class="button is-primary"
                     v-bind:class="{
-                      'is-loading': healthLoading,
-                      'is-disabled': healthLoading
+                      'is-loading': vaultHealthLoading,
+                      'is-disabled': vaultHealthLoading
                     }"
-                    @click="getHealth()">
+                    @click="getVaultHealth()">
                   Refresh
-                </button>
-              </p>
+                  </button>
+                </p>
               </div>
             </div>
           </article>
 
+          <!-- Goldfish Health tile -->
+          <article class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Goldfish Health</h1>
+            <div class="box is-parent is-6">
+              <div class="table-responsive">
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th>Key</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="key in Object.keys(goldfishHealthData)">
+                      <td>
+                        {{ key }}
+                      </td>
+                      <td>
+                        {{ goldfishHealthData[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p class="control">
+                  <button class="button is-primary"
+                    v-bind:class="{
+                      'is-loading': goldfishHealthLoading,
+                      'is-disabled': goldfishHealthLoading
+                    }"
+                    @click="getGoldfishHealth()">
+                  Refresh
+                  </button>
+                </p>
+              </div>
+            </div>
+          </article>
         <!-- Right side (end) -->
         </article>
 
@@ -194,22 +230,21 @@ export default {
       type: 'Token',
       ID: '',
       password: '',
-      healthData: {},
-      healthLoading: false
+      vaultHealthData: {},
+      vaultHealthLoading: false,
+      goldfishHealthData: {},
+      goldfishHealthLoading: false
     }
   },
 
   mounted: function () {
-    // fetch vault cluster details
-    this.getHealth()
+    this.getVaultHealth()
+    this.getGoldfishHealth()
   },
 
   computed: {
     session: function () {
       return this.$store.getters.session
-    },
-    healthKeys: function () {
-      return Object.keys(this.healthData)
     },
     renewable: function () {
       return (this.session && this.session['renewable'])
@@ -220,17 +255,43 @@ export default {
   },
 
   methods: {
-    getHealth: function () {
-      this.healthLoading = true
-      this.$http.get('/v1/health')
+    getVaultHealth: function () {
+      this.vaultHealthLoading = true
+      this.$http.get('/v1/vaulthealth')
       .then((response) => {
-        this.healthData = JSON.parse(response.data.result)
-        this.healthData['server_time_utc'] = moment.utc(moment.unix(this.healthData['server_time_utc'])).format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
-        this.healthLoading = false
+        this.vaultHealthData = JSON.parse(response.data.result)
+        this.vaultHealthData['server_time_utc'] = moment.utc(
+          moment.unix(this.vaultHealthData['server_time_utc']))
+          .format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
+        this.vaultHealthLoading = false
       })
       .catch((error) => {
         this.$onError(error)
-        this.healthLoading = false
+        this.vaultHealthLoading = false
+      })
+    },
+
+    getGoldfishHealth: function () {
+      this.goldfishHealthLoading = true
+      this.$http.get('/v1/health')
+      .then((response) => {
+        this.goldfishHealthData = response.data
+        this.goldfishHealthData['deployment_time_utc'] = moment.utc(
+          moment.unix(this.goldfishHealthData['deployment_time_utc']))
+          .format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
+        this.goldfishHealthLoading = false
+      })
+      .catch((error) => {
+        if (error.response.data.error === 'Vault:  permission denied') {
+          this.$notify({
+            title: 'Error',
+            message: 'Goldfish server could not authenticate against vault',
+            type: 'danger'
+          })
+        } else {
+          this.$onError(error)
+        }
+        this.goldfishHealthLoading = false
       })
     },
 

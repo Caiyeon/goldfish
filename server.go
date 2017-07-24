@@ -144,7 +144,8 @@ func main() {
 	}
 
 	// API routing
-	e.GET("/v1/health", handlers.VaultHealth())
+	e.GET("/v1/health", handlers.Health())
+	e.GET("/v1/vaulthealth", handlers.VaultHealth())
 
 	e.POST("/v1/login", handlers.Login())
 	e.POST("/v1/login/renew-self", handlers.RenewSelf())

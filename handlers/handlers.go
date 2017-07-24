@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -41,6 +42,27 @@ func VaultHealth() echo.HandlerFunc {
 		}
 		return c.JSON(http.StatusOK, H{
 			"result": string(resp),
+		})
+	}
+}
+
+func Health() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// check server token
+		resp, err := vault.LookupSelf()
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		// check transit encryption config
+		transitEnabled := "false"
+		if conf := vault.GetConfig(); conf.ServerTransitKey != "" {
+			transitEnabled = "true"
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"deployment_time_utc": string(resp["creation_time"].(json.Number)),
+			"transit_encryption":  transitEnabled,
 		})
 	}
 }

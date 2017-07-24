@@ -134,3 +134,17 @@ func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	}
 	return resp.Data, nil
 }
+
+func LookupSelf() (map[string]interface{}, error) {
+	client, err := NewVaultClient()
+	if err != nil {
+		return nil, err
+	}
+	client.SetToken(vaultToken)
+
+	resp, err := vaultClient.Logical().Read("/auth/token/lookup-self")
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+}
