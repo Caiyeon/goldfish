@@ -399,7 +399,7 @@ export default {
 
       // listing tokens
       if (this.tabName === 'token') {
-        this.$http.get('/api/token/accessors', {
+        this.$http.get('/v1/token/accessors', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.accessors = response.data.result
@@ -412,7 +412,7 @@ export default {
 
       // listing userpass users
       } else if (this.tabName === 'userpass') {
-        this.$http.get('/api/userpass/users', {
+        this.$http.get('/v1/userpass/users', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.tableData = response.data.result
@@ -423,7 +423,7 @@ export default {
 
       // listing approle roles
       } else if (this.tabName === 'approle') {
-        this.$http.get('/api/approle/roles', {
+        this.$http.get('/v1/approle/roles', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.tableData = response.data.result
@@ -462,7 +462,7 @@ export default {
     deleteItem (index) {
       // deleting a token via accessor
       if (this.tabName === 'token') {
-        this.$http.post('/api/token/revoke-accessor?accessor=' + this.tableData[index][this.tableColumns[0]], {}, {
+        this.$http.post('/v1/token/revoke-accessor?accessor=' + this.tableData[index][this.tableColumns[0]], {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.closeDeleteModal()
@@ -480,7 +480,7 @@ export default {
 
       // deleting a user via username
       } else if (this.tabName === 'userpass') {
-        this.$http.post('/api/userpass/delete?username=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
+        this.$http.post('/v1/userpass/delete?username=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.closeDeleteModal()
@@ -498,7 +498,7 @@ export default {
 
       // deleting an approle via role name
       } else if (this.tabName === 'approle') {
-        this.$http.post('/api/approle/delete?role=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
+        this.$http.post('/v1/approle/delete?role=' + encodeURIComponent(this.tableData[index][this.tableColumns[0]]), {}, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.closeDeleteModal()
@@ -533,7 +533,7 @@ export default {
       this.tableData = []
 
       // construct accessor string delimited by comma, and send search request
-      this.$http.post('/api/token/lookup-accessor', {
+      this.$http.post('/v1/token/lookup-accessor', {
         Accessors: this.accessors.slice((pg - 1) * 300, pg * 300).join(',')
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -582,7 +582,7 @@ export default {
 
       // make an async call for each page
       for (var i = 0; i < this.lastPage; i++) {
-        this.$http.post('/api/token/lookup-accessor', {
+        this.$http.post('/v1/token/lookup-accessor', {
           Accessors: this.accessors.slice(i * 300, (i + 1) * 300).join(',')
         }, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}

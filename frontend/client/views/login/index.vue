@@ -222,7 +222,7 @@ export default {
   methods: {
     getHealth: function () {
       this.healthLoading = true
-      this.$http.get('/api/health')
+      this.$http.get('/v1/health')
       .then((response) => {
         this.healthData = JSON.parse(response.data.result)
         this.healthData['server_time_utc'] = moment.utc(moment.unix(this.healthData['server_time_utc'])).format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
@@ -235,7 +235,7 @@ export default {
     },
 
     login: function () {
-      this.$http.post('/api/login', {
+      this.$http.post('/v1/login', {
         Type: this.type.toLowerCase(),
         id: this.ID,
         Password: this.password
@@ -295,7 +295,7 @@ export default {
     },
 
     renewLogin: function () {
-      this.$http.post('/api/login/renew-self', {}, {
+      this.$http.post('/v1/login/renew-self', {}, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

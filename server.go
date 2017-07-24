@@ -144,47 +144,47 @@ func main() {
 	}
 
 	// API routing
-	e.GET("/api/health", handlers.VaultHealth())
+	e.GET("/v1/health", handlers.VaultHealth())
 
-	e.POST("/api/login", handlers.Login())
-	e.POST("/api/login/renew-self", handlers.RenewSelf())
+	e.POST("/v1/login", handlers.Login())
+	e.POST("/v1/login/renew-self", handlers.RenewSelf())
 
-	e.GET("/api/token/accessors", handlers.GetTokenAccessors())
-	e.POST("/api/token/lookup-accessor", handlers.LookupTokenByAccessor())
-	e.POST("/api/token/revoke-accessor", handlers.RevokeTokenByAccessor())
-	e.POST("/api/token/create", handlers.CreateToken())
-	e.GET("/api/token/listroles", handlers.ListRoles())
-	e.GET("/api/token/role", handlers.GetRole())
+	e.GET("/v1/token/accessors", handlers.GetTokenAccessors())
+	e.POST("/v1/token/lookup-accessor", handlers.LookupTokenByAccessor())
+	e.POST("/v1/token/revoke-accessor", handlers.RevokeTokenByAccessor())
+	e.POST("/v1/token/create", handlers.CreateToken())
+	e.GET("/v1/token/listroles", handlers.ListRoles())
+	e.GET("/v1/token/role", handlers.GetRole())
 
-	e.GET("/api/userpass/users", handlers.GetUserpassUsers())
-	e.POST("/api/userpass/delete", handlers.DeleteUserpassUser())
+	e.GET("/v1/userpass/users", handlers.GetUserpassUsers())
+	e.POST("/v1/userpass/delete", handlers.DeleteUserpassUser())
 
-	e.GET("/api/approle/roles", handlers.GetApproleRoles())
-	e.POST("/api/approle/delete", handlers.DeleteApproleRole())
+	e.GET("/v1/approle/roles", handlers.GetApproleRoles())
+	e.POST("/v1/approle/delete", handlers.DeleteApproleRole())
 
-	e.GET("/api/policy", handlers.GetPolicy())
-	e.DELETE("/api/policy", handlers.DeletePolicy())
+	e.GET("/v1/policy", handlers.GetPolicy())
+	e.DELETE("/v1/policy", handlers.DeletePolicy())
 
-	e.GET("/api/policy/request", handlers.GetPolicyRequest())
-	e.POST("/api/policy/request", handlers.AddPolicyRequest())
-	e.POST("/api/policy/request/update", handlers.UpdatePolicyRequest())
-	e.DELETE("/api/policy/request/:id", handlers.DeletePolicyRequest())
+	e.GET("/v1/policy/request", handlers.GetPolicyRequest())
+	e.POST("/v1/policy/request", handlers.AddPolicyRequest())
+	e.POST("/v1/policy/request/update", handlers.UpdatePolicyRequest())
+	e.DELETE("/v1/policy/request/:id", handlers.DeletePolicyRequest())
 
-	e.GET("/api/transit", handlers.TransitInfo())
-	e.POST("/api/transit/encrypt", handlers.EncryptString())
-	e.POST("/api/transit/decrypt", handlers.DecryptString())
+	e.GET("/v1/transit", handlers.TransitInfo())
+	e.POST("/v1/transit/encrypt", handlers.EncryptString())
+	e.POST("/v1/transit/decrypt", handlers.DecryptString())
 
-	e.GET("/api/mount", handlers.GetMount())
-	e.POST("/api/mount", handlers.ConfigMount())
+	e.GET("/v1/mount", handlers.GetMount())
+	e.POST("/v1/mount", handlers.ConfigMount())
 
-	e.GET("/api/secrets", handlers.GetSecrets())
-	e.POST("/api/secrets", handlers.PostSecrets())
-	e.DELETE("/api/secrets", handlers.DeleteSecrets())
+	e.GET("/v1/secrets", handlers.GetSecrets())
+	e.POST("/v1/secrets", handlers.PostSecrets())
+	e.DELETE("/v1/secrets", handlers.DeleteSecrets())
 
-	e.GET("/api/bulletins", handlers.GetBulletins())
+	e.GET("/v1/bulletins", handlers.GetBulletins())
 
-	e.POST("/api/wrapping/wrap", handlers.WrapHandler())
-	e.POST("/api/wrapping/unwrap", handlers.UnwrapHandler())
+	e.POST("/v1/wrapping/wrap", handlers.WrapHandler())
+	e.POST("/v1/wrapping/unwrap", handlers.UnwrapHandler())
 
 	// serving both static folder and API
 	if cfg.Listener.Tls_disable {

@@ -318,7 +318,7 @@ export default {
       this.confirmDelete = false
       this.displayJSON = false
 
-      this.$http.get('/api/secrets?path=' + encodeURIComponent(path), {
+      this.$http.get('/v1/secrets?path=' + encodeURIComponent(path), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
@@ -434,7 +434,7 @@ export default {
         this.addKeyValue()
       }
       var body = JSON.stringify(this.constructedPayload)
-      this.$http.post('/api/secrets?path=' + encodeURIComponent(this.currentPath), querystring.stringify({
+      this.$http.post('/v1/secrets?path=' + encodeURIComponent(this.currentPath), querystring.stringify({
         body: body
       }), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -512,7 +512,7 @@ export default {
       }
 
       // request deletion of secret
-      this.$http.delete('/api/secrets?path=' + encodeURIComponent(path), {
+      this.$http.delete('/v1/secrets?path=' + encodeURIComponent(path), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
