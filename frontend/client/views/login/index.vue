@@ -113,7 +113,12 @@
                       <td>
                         {{ key }}
                       </td>
-                      <td>
+                      <td v-if="key === 'policies'">
+                        <span v-for="policy in session['policies']" class="tag is-info">
+                          {{policy}}
+                        </span>
+                      </td>
+                      <td v-else>
                         {{ session[key] }}
                       </td>
                     </tr>
