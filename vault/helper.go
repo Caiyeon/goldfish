@@ -3,6 +3,7 @@ package vault
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/hashicorp/vault/api"
@@ -83,14 +84,21 @@ func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 	return vaultClient.Logical().Delete("cubbyhole/" + name)
 }
 
-func renewServerToken() (err error) {
+func renewServerToken() error {
 	client, err := NewVaultClient()
 	if err != nil {
 		return err
 	}
 	client.SetToken(vaultToken)
-	_, err = client.Auth().Token().RenewSelf(0)
-	return
+	resp, err := client.Auth().Token().RenewSelf(0)
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("Could not renew token... response from vault was nil")
+	}
+	log.Println("[INFO ]: Server token renewed")
+	return nil
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
@@ -123,6 +131,20 @@ func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	resp, err := client.Logical().Unwrap(wrappingToken)
 	if err != nil {
 		return nil, errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+	}
+	return resp.Data, nil
+}
+
+func LookupSelf() (map[string]interface{}, error) {
+	client, err := NewVaultClient()
+	if err != nil {
+		return nil, err
+	}
+	client.SetToken(vaultToken)
+
+	resp, err := vaultClient.Logical().Read("/auth/token/lookup-self")
+	if err != nil {
+		return nil, err
 	}
 	return resp.Data, nil
 }

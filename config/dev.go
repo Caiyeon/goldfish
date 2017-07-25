@@ -2,9 +2,9 @@ package config
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"time"
-	"net/http"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -34,11 +34,11 @@ import (
 	"github.com/hashicorp/vault/builtin/logical/totp"
 	"github.com/hashicorp/vault/builtin/logical/transit"
 
-	"github.com/hashicorp/vault/audit"
-	"github.com/hashicorp/vault/logical"
-	"github.com/hashicorp/vault/command"
-	"github.com/hashicorp/vault/meta"
 	"github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/audit"
+	"github.com/hashicorp/vault/command"
+	"github.com/hashicorp/vault/logical"
+	"github.com/hashicorp/vault/meta"
 	"github.com/mitchellh/cli"
 )
 
@@ -54,7 +54,7 @@ func setupVault(addr, rootToken string) error {
 	// if vault is ready before 5 seconds countdown, proceed immediately
 	var err error
 	for range ticker.C {
-		_, err = http.Get(addr+"/v1/sys/health")
+		_, err = http.Get(addr + "/v1/sys/health")
 		if err == nil {
 			break
 		}
@@ -204,7 +204,7 @@ func initDevVaultCore() chan struct{} {
 		Writer: os.Stdout,
 	}
 	m := meta.Meta{
-		Ui: ui,
+		Ui:          ui,
 		TokenHelper: command.DefaultTokenHelper,
 	}
 	shutdownCh := make(chan struct{})

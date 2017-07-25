@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -45,6 +46,27 @@ func VaultHealth() echo.HandlerFunc {
 	}
 }
 
+func Health() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// check server token
+		resp, err := vault.LookupSelf()
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		// check transit encryption config
+		transitEnabled := "false"
+		if conf := vault.GetConfig(); conf.ServerTransitKey != "" {
+			transitEnabled = "true"
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"deployment_time_utc": string(resp["creation_time"].(json.Number)),
+			"transit_encryption":  transitEnabled,
+		})
+	}
+}
+
 func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		auth := new(vault.AuthInfo)
@@ -68,11 +90,14 @@ func Login() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 
-		// encrypt auth.ID with vault's transit backend
-		if err := auth.EncryptAuth(); err != nil {
-			return c.JSON(http.StatusInternalServerError, H{
-				"error": "Goldfish could not use transit key",
-			})
+		// if goldfish is configured to use transit encryption
+		if conf := vault.GetConfig(); conf.ServerTransitKey != "" {
+			// encrypt auth.ID with vault's transit backend
+			if err := auth.EncryptAuth(); err != nil {
+				return c.JSON(http.StatusInternalServerError, H{
+					"error": "Goldfish could not use transit key: " + err.Error(),
+				})
+			}
 		}
 
 		// return useful information to user

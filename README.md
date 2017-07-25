@@ -102,7 +102,7 @@ Seriously, the instructions fit on one screen!
 ## Developing Goldfish
 
 #### Running locally
-You'll need go (v1.8), npm (v3), nodejs (v7), and jq (`sudo apt-get install jq`)
+You'll need go (v1.8), nodejs (v6), and npm (v5)
 
 ```bash
 # hashicorp vault ui

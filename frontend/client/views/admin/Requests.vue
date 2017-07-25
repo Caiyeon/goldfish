@@ -77,7 +77,7 @@
                   <div class="message-header">
                     Current policy rules
                   </div>
-                  <pre v-highlightjs="request.Current"><code class="javascript"></code></pre>
+                  <pre v-highlightjs="request.Current"><code class="ruby"></code></pre>
                 </article>
               </div>
 
@@ -86,7 +86,7 @@
                   <div class="message-header">
                   Proposed policy rules
                   </div>
-                  <pre v-highlightjs="request.New"><code class="javascript"></code></pre>
+                  <pre v-highlightjs="request.New"><code class="ruby"></code></pre>
                 </article>
               </div>
             </div>
@@ -146,7 +146,7 @@
                     <div class="message-header">
                       Current policy rules
                     </div>
-                    <pre v-highlightjs="policy.Current"><code class="javascript"></code></pre>
+                    <pre v-highlightjs="policy.Current"><code class="ruby"></code></pre>
                   </article>
                 </div>
 
@@ -155,7 +155,7 @@
                     <div class="message-header">
                     Proposed policy rules
                     </div>
-                    <pre v-highlightjs="policy.New"><code class="javascript"></code></pre>
+                    <pre v-highlightjs="policy.New"><code class="ruby"></code></pre>
                   </article>
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default {
     },
 
     searchURL: function () {
-      var url = '/api/policy/request?type=' + this.searchType
+      var url = '/v1/policy/request?type=' + this.searchType
       if (this.searchType === 'changeid') {
         url += '&id=' + this.searchString
       } else if (this.searchType === 'commit') {
@@ -205,7 +205,7 @@ export default {
     },
 
     updateURL: function () {
-      var url = '/api/policy/request/update?type=' + this.searchType
+      var url = '/v1/policy/request/update?type=' + this.searchType
       if (this.searchType === 'changeid') {
         url += '&id=' + this.searchString
       } else if (this.searchType === 'commit') {
@@ -276,7 +276,7 @@ export default {
     },
 
     reject: function () {
-      this.$http.delete('/api/policy/request/' + this.searchString, {
+      this.$http.delete('/v1/policy/request/' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

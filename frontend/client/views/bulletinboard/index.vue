@@ -62,7 +62,7 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/bulletins', {
+    this.$http.get('/v1/bulletins', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     }).then((response) => {
       this.bulletins = response.data.result
