@@ -385,7 +385,7 @@ export default {
       this.results.push(result)
 
       // fetch all users and filter by policy
-      this.$http.get('/api/users?type=userpass', {
+      this.$http.get('/api/userpass/users', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         let users = response.data.result
@@ -457,7 +457,7 @@ export default {
       this.results.push(result)
 
       // fetch all users and filter by policy
-      this.$http.get('/api/users?type=approle', {
+      this.$http.get('/api/approle/roles', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         let users = response.data.result
