@@ -1,7 +1,6 @@
 package vault
 
 import (
-	"encoding/gob"
 	"errors"
 	"log"
 	"time"
@@ -24,11 +23,6 @@ var (
 	vaultClient  *api.Client
 	errorChannel = make(chan error, 1)
 )
-
-func init() {
-	// for gorilla securecookie to encode and decode
-	gob.Register(&AuthInfo{})
-}
 
 func NewVaultClient() (*api.Client, error) {
 	config := api.DefaultConfig()
