@@ -10,7 +10,7 @@ import (
 )
 
 func VaultHealth() (string, error) {
-	resp, err := http.Get(VaultAddress + "/v1/sys/health")
+	resp, err := http.Get(vaultConfig.Address + "/v1/sys/health")
 	if err != nil {
 		return "", err
 	}

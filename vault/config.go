@@ -12,7 +12,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
-type Config struct {
+type RuntimeConfig struct {
 	ServerTransitKey  string
 	UserTransitKey    string
 	TransitBackend    string
@@ -34,16 +34,16 @@ type Config struct {
 }
 
 var (
-	config                     = Config{}
+	conf                       = RuntimeConfig{}
 	configLock                 = new(sync.RWMutex)
 	configHash          uint64 = 0
 	GithubCurrentCommit        = ""
 )
 
-func GetConfig() Config {
+func GetConfig() RuntimeConfig {
 	configLock.RLock()
 	defer configLock.RUnlock()
-	return config
+	return conf
 }
 
 func loadConfigFromVault(path string) error {
@@ -55,7 +55,7 @@ func loadConfigFromVault(path string) error {
 	}
 
 	// marshall into temp config to ensure it is valid
-	temp := Config{}
+	temp := RuntimeConfig{}
 	if b, err := json.Marshal(resp.Data); err == nil {
 		if err := json.Unmarshal(b, &temp); err != nil {
 			return err
@@ -94,7 +94,7 @@ func loadConfigFromVault(path string) error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
-	config = temp
+	conf = temp
 	configHash = newHash
 
 	log.Println("[INFO ]: Server config reloaded")

@@ -62,30 +62,24 @@ func main() {
 	// if dev mode, run a localhost dev vault instance
 	if devMode {
 		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
+		fmt.Println("wrapping token: " + wrappingToken)
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
 	}
+
 	if err != nil {
 		panic(err)
 	}
+	vault.SetConfig(cfg.Vault)
 
-	// if API wrapper can't start, panic is justified
-	vault.VaultAddress = cfg.Vault.Address
-	vault.VaultSkipTLS = cfg.Vault.Tls_skip_verify
-	if err := vault.StartGoldfishWrapper(
-		wrappingToken,
-		cfg.Vault.Approle_login,
-		cfg.Vault.Approle_id,
-	); err != nil {
-		panic(err)
+	// if wrapping token is provided, bootstrap goldfish immediately
+	if wrappingToken != "" {
+		if err := vault.StartGoldfishWrapper(wrappingToken); err != nil {
+			panic(err)
+		}
 	}
 
-	// load config from vault and start goroutines
-	if err := vault.LoadRuntimeConfig(cfg.Vault.Runtime_config); err != nil {
-		panic(err)
-	}
-
-	// if we got here, goldfish has hooked up to vault successfully
+	// display welcome message
 	if devMode {
 		fmt.Printf(devInitString)
 	}
@@ -146,6 +140,7 @@ func main() {
 	// API routing
 	e.GET("/v1/health", handlers.Health())
 	e.GET("/v1/vaulthealth", handlers.VaultHealth())
+	e.POST("/v1/bootstrap", handlers.Bootstrap())
 
 	e.POST("/v1/login", handlers.Login())
 	e.POST("/v1/login/renew-self", handlers.RenewSelf())

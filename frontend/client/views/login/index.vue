@@ -6,6 +6,33 @@
         <!-- Left side -->
         <article class="tile is-parent is-5 is-vertical">
 
+          <!-- Bootstrap tile -->
+          <article v-if="goldfishHealthData && goldfishHealthData['bootstrapped'] === false"
+            class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Welcome!</h1>
+
+            <div class="box is-parent is-6">
+              <label class="label">Setting up Goldfish</label>
+              <div class="field has-addons">
+                <div class="control">
+                  <input class="input" type="text" v-model="secretID"
+                  placeholder="Insert wrapping token">
+                  <p class="help is-info">
+                    vault write -f -wrap-ttl=5m auth/approle/role/goldfish/secret-id
+                  </p>
+                </div>
+                <div class="control">
+                  <button class="button is-info"
+                  v-bind:class="{ 'is-loading': bootstrapLoading }"
+                  :disabled="secretID === ''"
+                  @click="bootstrapGoldfish()">
+                    Swim!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
           <!-- Login tile -->
           <article class="tile is-child is-marginless is-paddingless">
             <h1 class="title">Vault Login</h1>
@@ -234,7 +261,9 @@ export default {
       vaultHealthData: {},
       vaultHealthLoading: false,
       goldfishHealthData: {},
-      goldfishHealthLoading: false
+      goldfishHealthLoading: false,
+      secretID: '',
+      bootstrapLoading: false
     }
   },
 
@@ -256,6 +285,25 @@ export default {
   },
 
   methods: {
+    bootstrapGoldfish: function () {
+      this.bootstrapLoading = true
+      this.$http.post('/v1/bootstrap', {
+        wrapping_token: this.secretID
+      })
+      .then((response) => {
+        this.secretID = ''
+        this.bootstrapLoading = false
+        console.log(response.data.result)
+        // reload health so that setup tiles can be swapped to login tiles
+        this.getGoldfishHealth()
+      })
+      .catch((error) => {
+        this.secretID = ''
+        this.bootstrapLoading = false
+        this.$onError(error)
+      })
+    },
+
     getVaultHealth: function () {
       this.vaultHealthLoading = true
       this.$http.get('/v1/vaulthealth')

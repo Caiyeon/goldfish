@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/caiyeon/goldfish/config"
 	"github.com/hashicorp/vault/api"
 )
 
@@ -15,20 +16,25 @@ type AuthInfo struct {
 }
 
 var (
-	// for authenticating this web server with vault
-	VaultAddress = ""
-	VaultSkipTLS = false
-
-	vaultToken   = ""
+	vaultConfig  config.VaultConfig
+	vaultToken   string
 	vaultClient  *api.Client
 	errorChannel = make(chan error, 1)
 )
+
+func Bootstrapped() bool {
+	return vaultToken != ""
+}
+
+func SetConfig(c *config.VaultConfig) {
+	vaultConfig = *c
+}
 
 func NewVaultClient() (*api.Client, error) {
 	config := api.DefaultConfig()
 	err := config.ConfigureTLS(
 		&api.TLSConfig{
-			Insecure: VaultSkipTLS,
+			Insecure: vaultConfig.Tls_skip_verify,
 		},
 	)
 	if err != nil {
@@ -38,12 +44,12 @@ func NewVaultClient() (*api.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(VaultAddress)
+	client.SetAddress(vaultConfig.Address)
 	client.SetToken("")
 	return client, nil
 }
 
-func StartGoldfishWrapper(wrappingToken, login, id string) error {
+func StartGoldfishWrapper(wrappingToken string) error {
 	if wrappingToken == "" {
 		return errors.New("Token must be provided in non-dev mode")
 	}
@@ -78,9 +84,9 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 	}
 
 	// fetch vault token with secret_id
-	resp, err = vaultClient.Logical().Write(login,
+	resp, err = vaultClient.Logical().Write(vaultConfig.Approle_login,
 		map[string]interface{}{
-			"role_id":   id,
+			"role_id":   vaultConfig.Approle_id,
 			"secret_id": secretID,
 		})
 	if err != nil {
@@ -109,6 +115,12 @@ func StartGoldfishWrapper(wrappingToken, login, id string) error {
 	}()
 
 	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
+
+	// start goroutines for loading config and renewing token
+	if err := LoadRuntimeConfig(vaultConfig.Runtime_config); err != nil {
+		return err
+	}
+
 	return nil
 }
 
