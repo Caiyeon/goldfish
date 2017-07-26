@@ -169,10 +169,8 @@
                 </table>
                 <p class="control">
                   <button class="button is-primary"
-                    v-bind:class="{
-                      'is-loading': vaultHealthLoading,
-                      'is-disabled': vaultHealthLoading
-                    }"
+                    v-bind:class="{ 'is-loading': vaultHealthLoading }"
+                    :disabled="vaultHealthLoading"
                     @click="getVaultHealth()">
                   Refresh
                   </button>
@@ -206,10 +204,8 @@
                 </table>
                 <p class="control">
                   <button class="button is-primary"
-                    v-bind:class="{
-                      'is-loading': goldfishHealthLoading,
-                      'is-disabled': goldfishHealthLoading
-                    }"
+                    v-bind:class="{ 'is-loading': goldfishHealthLoading }"
+                    :disabled="goldfishHealthLoading"
                     @click="getGoldfishHealth()">
                   Refresh
                   </button>
