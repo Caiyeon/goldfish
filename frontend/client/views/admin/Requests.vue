@@ -58,7 +58,7 @@
               </p>
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
-                  <input class="input" type="text"
+                  <input class="input" type="password"
                   placeholder="Enter an unseal token"
                   v-model="unsealToken"
                   @keyup.enter="approve()">
