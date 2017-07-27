@@ -268,7 +268,6 @@ export default {
   },
 
   mounted: function () {
-<<<<<<< HEAD
     // demo
     this.$message({
       message: 'Try logging in with "goldfish" as token',
@@ -277,11 +276,8 @@ export default {
       showCloseButton: true
     })
     // fetch vault cluster details
-    this.getHealth()
-=======
     this.getVaultHealth()
     this.getGoldfishHealth()
->>>>>>> 40f1946a891371d7e7ac538f5053e60fe9109e0f
   },
 
   computed: {
