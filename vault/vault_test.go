@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/caiyeon/goldfish/config"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/builtin/credential/approle"
 	"github.com/hashicorp/vault/builtin/credential/userpass"
@@ -192,16 +193,17 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(len(wrappingToken), ShouldEqual, 36)
 			fmt.Println("Started vault core with root token:", root)
 
-			// setup cmd line args
-			VaultAddress = addr
-			VaultSkipTLS = false
+			vaultConfig = config.VaultConfig{
+				Type:            "vault",
+				Address:         addr,
+				Runtime_config:  "secret/goldfish",
+				Approle_login:   "auth/approle/login",
+				Approle_id:      "goldfish",
+				Tls_skip_verify: false,
+			}
 
 			// function will output the token accessor
-			err := StartGoldfishWrapper(
-				wrappingToken,
-				"auth/approle/login",
-				"goldfish",
-			)
+			err := StartGoldfishWrapper(wrappingToken)
 			So(err, ShouldBeNil)
 
 			// test loading config from secret path
@@ -226,7 +228,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			// run-time config
 			Convey("Config should be loaded", func() {
 				c := GetConfig()
-				So(c, ShouldResemble, Config{
+				So(c, ShouldResemble, RuntimeConfig{
 					ServerTransitKey:  "goldfish",
 					UserTransitKey:    "usertransit",
 					TransitBackend:    "transit",

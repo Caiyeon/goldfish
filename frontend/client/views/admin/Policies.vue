@@ -145,7 +145,7 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/policy', {
+    this.$http.get('/v1/policy', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     })
     .then((response) => {
@@ -183,7 +183,7 @@ export default {
       this.policyRules = ''
       this.policyRulesModified = ''
       this.selectedPolicy = policyName
-      this.$http.get('/api/policy?policy=' + policyName, {
+      this.$http.get('/v1/policy?policy=' + policyName, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.policyRules = response.data.result
@@ -205,7 +205,7 @@ export default {
       // crawl through each policy
       for (var i = 0; i < this.policies.length; i++) {
         let policyName = this.policies[i]
-        this.$http.get('/api/policy?policy=' + policyName, {
+        this.$http.get('/v1/policy?policy=' + policyName, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           var searchString = this.search.regex ? this.search.str : this.makeRegex(this.search.str)
@@ -224,7 +224,7 @@ export default {
     },
 
     addPolicyRequest: function () {
-      this.$http.post('/api/policy/request?policy=' + this.selectedPolicy,
+      this.$http.post('/v1/policy/request?policy=' + this.selectedPolicy,
       querystring.stringify({ rules: this.policyRulesModified }), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })

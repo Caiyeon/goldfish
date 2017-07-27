@@ -6,6 +6,33 @@
         <!-- Left side -->
         <article class="tile is-parent is-5 is-vertical">
 
+          <!-- Bootstrap tile -->
+          <article v-if="goldfishHealthData && goldfishHealthData['bootstrapped'] === false"
+            class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Welcome!</h1>
+
+            <div class="box is-parent is-6">
+              <label class="label">Setting up Goldfish</label>
+              <div class="field has-addons">
+                <div class="control">
+                  <input class="input" type="text" v-model="secretID"
+                  placeholder="Insert wrapping token">
+                  <p class="help is-info">
+                    vault write -f -wrap-ttl=5m auth/approle/role/goldfish/secret-id
+                  </p>
+                </div>
+                <div class="control">
+                  <button class="button is-info"
+                  v-bind:class="{ 'is-loading': bootstrapLoading }"
+                  :disabled="secretID === ''"
+                  @click="bootstrapGoldfish()">
+                    Swim!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
           <!-- Login tile -->
           <article class="tile is-child is-marginless is-paddingless">
             <h1 class="title">Vault Login</h1>
@@ -113,7 +140,12 @@
                       <td>
                         {{ key }}
                       </td>
-                      <td>
+                      <td v-if="key === 'policies'">
+                        <span v-for="policy in session['policies']" class="tag is-info">
+                          {{policy}}
+                        </span>
+                      </td>
+                      <td v-else>
                         {{ session[key] }}
                       </td>
                     </tr>
@@ -152,30 +184,62 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="key in healthKeys">
+                    <tr v-for="key in Object.keys(vaultHealthData)">
                       <td>
                         {{ key }}
                       </td>
                       <td>
-                        {{ healthData[key] }}
+                        {{ vaultHealthData[key] }}
                       </td>
                     </tr>
                   </tbody>
                 </table>
                 <p class="control">
                   <button class="button is-primary"
-                    v-bind:class="{
-                      'is-loading': healthLoading,
-                      'is-disabled': healthLoading
-                    }"
-                    @click="getHealth()">
+                    v-bind:class="{ 'is-loading': vaultHealthLoading }"
+                    :disabled="vaultHealthLoading"
+                    @click="getVaultHealth()">
                   Refresh
-                </button>
-              </p>
+                  </button>
+                </p>
               </div>
             </div>
           </article>
 
+          <!-- Goldfish Health tile -->
+          <article class="tile is-child is-marginless is-paddingless">
+            <h1 class="title">Goldfish Health</h1>
+            <div class="box is-parent is-6">
+              <div class="table-responsive">
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th>Key</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="key in Object.keys(goldfishHealthData)">
+                      <td>
+                        {{ key }}
+                      </td>
+                      <td>
+                        {{ goldfishHealthData[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p class="control">
+                  <button class="button is-primary"
+                    v-bind:class="{ 'is-loading': goldfishHealthLoading }"
+                    :disabled="goldfishHealthLoading"
+                    @click="getGoldfishHealth()">
+                  Refresh
+                  </button>
+                </p>
+              </div>
+            </div>
+          </article>
         <!-- Right side (end) -->
         </article>
 
@@ -194,12 +258,17 @@ export default {
       type: 'Token',
       ID: '',
       password: '',
-      healthData: {},
-      healthLoading: false
+      vaultHealthData: {},
+      vaultHealthLoading: false,
+      goldfishHealthData: {},
+      goldfishHealthLoading: false,
+      secretID: '',
+      bootstrapLoading: false
     }
   },
 
   mounted: function () {
+<<<<<<< HEAD
     // demo
     this.$message({
       message: 'Try logging in with "goldfish" as token',
@@ -209,14 +278,15 @@ export default {
     })
     // fetch vault cluster details
     this.getHealth()
+=======
+    this.getVaultHealth()
+    this.getGoldfishHealth()
+>>>>>>> 40f1946a891371d7e7ac538f5053e60fe9109e0f
   },
 
   computed: {
     session: function () {
       return this.$store.getters.session
-    },
-    healthKeys: function () {
-      return Object.keys(this.healthData)
     },
     renewable: function () {
       return (this.session && this.session['renewable'])
@@ -227,22 +297,67 @@ export default {
   },
 
   methods: {
-    getHealth: function () {
-      this.healthLoading = true
-      this.$http.get('/api/health')
+    bootstrapGoldfish: function () {
+      this.bootstrapLoading = true
+      this.$http.post('/v1/bootstrap', {
+        wrapping_token: this.secretID
+      })
       .then((response) => {
-        this.healthData = JSON.parse(response.data.result)
-        this.healthData['server_time_utc'] = moment.utc(moment.unix(this.healthData['server_time_utc'])).format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
-        this.healthLoading = false
+        this.secretID = ''
+        this.bootstrapLoading = false
+        console.log(response.data.result)
+        // reload health so that setup tiles can be swapped to login tiles
+        this.getGoldfishHealth()
+      })
+      .catch((error) => {
+        this.secretID = ''
+        this.bootstrapLoading = false
+        this.$onError(error)
+      })
+    },
+
+    getVaultHealth: function () {
+      this.vaultHealthLoading = true
+      this.$http.get('/v1/vaulthealth')
+      .then((response) => {
+        this.vaultHealthData = JSON.parse(response.data.result)
+        this.vaultHealthData['server_time_utc'] = moment.utc(
+          moment.unix(this.vaultHealthData['server_time_utc']))
+          .format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
+        this.vaultHealthLoading = false
       })
       .catch((error) => {
         this.$onError(error)
-        this.healthLoading = false
+        this.vaultHealthLoading = false
+      })
+    },
+
+    getGoldfishHealth: function () {
+      this.goldfishHealthLoading = true
+      this.$http.get('/v1/health')
+      .then((response) => {
+        this.goldfishHealthData = response.data
+        this.goldfishHealthData['deployment_time_utc'] = moment.utc(
+          moment.unix(this.goldfishHealthData['deployment_time_utc']))
+          .format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'
+        this.goldfishHealthLoading = false
+      })
+      .catch((error) => {
+        if (error.response.data.error === 'Vault:  permission denied') {
+          this.$notify({
+            title: 'Error',
+            message: 'Goldfish server could not authenticate against vault',
+            type: 'danger'
+          })
+        } else {
+          this.$onError(error)
+        }
+        this.goldfishHealthLoading = false
       })
     },
 
     login: function () {
-      this.$http.post('/api/login', {
+      this.$http.post('/v1/login', {
         Type: this.type.toLowerCase(),
         id: this.ID,
         Password: this.password
@@ -275,7 +390,7 @@ export default {
         // notify user of generated client-token
         if (this.type === 'Userpass' || this.type === 'LDAP') {
           this.$message({
-            message: 'Your access token is: ' + response.data.data['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
+            message: 'Your access token is: ' + response.data.result['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',
             duration: 0,
             showCloseButton: true
@@ -302,7 +417,7 @@ export default {
     },
 
     renewLogin: function () {
-      this.$http.post('/api/login/renew-self', {}, {
+      this.$http.post('/v1/login/renew-self', {}, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

@@ -58,7 +58,7 @@
               </p>
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
-                  <input class="input" type="text"
+                  <input class="input" type="password"
                   placeholder="Enter an unseal token"
                   v-model="unsealToken"
                   @keyup.enter="approve()">
@@ -201,7 +201,7 @@ export default {
     },
 
     searchURL: function () {
-      var url = '/api/policy/request?type=' + this.searchType
+      var url = '/v1/policy/request?type=' + this.searchType
       if (this.searchType === 'changeid') {
         url += '&id=' + this.searchString
       } else if (this.searchType === 'commit') {
@@ -211,7 +211,7 @@ export default {
     },
 
     updateURL: function () {
-      var url = '/api/policy/request/update?type=' + this.searchType
+      var url = '/v1/policy/request/update?type=' + this.searchType
       if (this.searchType === 'changeid') {
         url += '&id=' + this.searchString
       } else if (this.searchType === 'commit') {
@@ -282,7 +282,7 @@ export default {
     },
 
     reject: function () {
-      this.$http.delete('/api/policy/request/' + this.searchString, {
+      this.$http.delete('/v1/policy/request/' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

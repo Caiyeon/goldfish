@@ -299,7 +299,7 @@
           <div v-if="selectedRole && selectedRoleDetails" class="field">
             <label class="label">Selected role: {{selectedRole}}</label>
             <article class="message is-info">
-              <div class="message-body" style="white-space: pre;">{{JSON.stringify(selectedRoleDetails, null, '\t')}}</div>
+              <pre v-highlightjs="JSON.stringify(createdToken, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
@@ -440,7 +440,7 @@ export default {
     this.availablePolicies = this.session['policies']
 
     // check if roles are available to logged in user
-    this.$http.get('/api/token/listroles', {
+    this.$http.get('/v1/token/listroles', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     }).then((response) => {
       if (response.data.result !== null) {
@@ -460,7 +460,7 @@ export default {
 
     // if root policy, fetch all available policies from server
     if (this.availablePolicies.indexOf('root') > -1) {
-      this.$http.get('/api/policy', {
+      this.$http.get('/v1/policy', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.availablePolicies = response.data.result
@@ -524,7 +524,7 @@ export default {
       }
 
       this.createdToken = null
-      this.$http.post('/api/token/create?' + this.wrapParam, this.payloadJSON, {
+      this.$http.post('/v1/token/create?' + this.wrapParam, this.payloadJSON, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
@@ -543,7 +543,7 @@ export default {
     loadRoleDetails: function (rolename) {
       this.selectedRoleLoading = true
       this.selectedRoleDetails = ''
-      this.$http.get('/api/token/role?rolename=' + rolename, {
+      this.$http.get('/v1/token/role?rolename=' + rolename, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {

@@ -101,7 +101,7 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/mount', {
+    this.$http.get('/v1/mount', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     })
     .then((response) => {
@@ -126,7 +126,7 @@ export default {
   methods: {
     getMountConfig: function (index) {
       this.selectedIndex = index
-      this.$http.get('/api/mount?mount=' + encodeURIComponent(this.mounts[index].path.slice(0, -1)), {
+      this.$http.get('/v1/mount?mount=' + encodeURIComponent(this.mounts[index].path.slice(0, -1)), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
@@ -139,7 +139,7 @@ export default {
     },
 
     postMountConfig: function () {
-      var address = '/api/mount?mount=' + encodeURIComponent(this.mounts[this.selectedIndex].path.slice(0, -1))
+      var address = '/v1/mount?mount=' + encodeURIComponent(this.mounts[this.selectedIndex].path.slice(0, -1))
       try {
         var parsed = JSON.parse(this.mountConfigModified)
       } catch (e) {

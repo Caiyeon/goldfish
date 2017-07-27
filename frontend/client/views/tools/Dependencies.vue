@@ -290,7 +290,7 @@ export default {
       this.selectedPolicy = ''
 
       // fetch list of policies
-      this.$http.get('/api/policy', {
+      this.$http.get('/v1/policy', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.policies = response.data.result
@@ -312,7 +312,7 @@ export default {
       this.selectedMount = ''
 
       // fetch list of mounts
-      this.$http.get('/api/mount', {
+      this.$http.get('/v1/mount', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.mounts = Object.keys(response.data.result)
@@ -338,7 +338,7 @@ export default {
       let policy = this.selectedPolicy
 
       // fetch a list of all accessors
-      this.$http.get('/api/token/accessors', {
+      this.$http.get('/v1/token/accessors', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         let accessors = response.data.result
@@ -346,7 +346,7 @@ export default {
 
         for (var i = 0; i < Math.ceil(accessors.length / 300); i++) {
           // construct accessor string delimited by comma, and send search request
-          this.$http.post('/api/token/lookup-accessor', {
+          this.$http.post('/v1/token/lookup-accessor', {
             Accessors: accessors.slice(i * 300, (i + 1) * 300).join(',')
           }, {
             headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -385,7 +385,7 @@ export default {
       this.results.push(result)
 
       // fetch all users and filter by policy
-      this.$http.get('/api/users?type=userpass', {
+      this.$http.get('/v1/userpass/users', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         let users = response.data.result
@@ -414,7 +414,7 @@ export default {
       let policy = this.selectedPolicy
 
       // fetch all users and filter by policy
-      this.$http.get('/api/token/listroles', {
+      this.$http.get('/v1/token/listroles', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         // if there are no roles found
@@ -425,7 +425,7 @@ export default {
           result.Loading = response.data.result.length
           for (var i = 0; i < response.data.result.length; i++) {
             let rolename = response.data.result[i]
-            this.$http.get('/api/token/role?rolename=' + rolename, {
+            this.$http.get('/v1/token/role?rolename=' + rolename, {
               headers: {'X-Vault-Token': this.session ? this.session.token : ''}
             }).then((response) => {
               if (response.data.result && response.data.result['allowed_policies'].includes(policy)) {
@@ -457,7 +457,7 @@ export default {
       this.results.push(result)
 
       // fetch all users and filter by policy
-      this.$http.get('/api/users?type=approle', {
+      this.$http.get('/v1/approle/roles', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         let users = response.data.result
@@ -486,14 +486,14 @@ export default {
       this.results.push(result)
 
       // fetch all policies
-      this.$http.get('/api/policy', {
+      this.$http.get('/v1/policy', {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         result.Loading = response.data.result.length
         // for each policy, check rules for mount
         for (var i = 0; i < response.data.result.length; i++) {
           let policyname = response.data.result[i]
-          this.$http.get('/api/policy?policy=' + policyname, {
+          this.$http.get('/v1/policy?policy=' + policyname, {
             headers: {'X-Vault-Token': this.session ? this.session.token : ''}
           }).then((response) => {
             // prefix with quote marks to ensure it's the mount that is matched

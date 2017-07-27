@@ -127,7 +127,7 @@ export default {
   },
 
   mounted: function () {
-    this.$http.get('/api/transit', {
+    this.$http.get('/v1/transit', {
       headers: {'X-Vault-Token': this.session ? this.session.token : ''}
     }).then((response) => {
       this.userTransitKey = response.headers['usertransitkey']
@@ -143,7 +143,7 @@ export default {
         return
       }
 
-      this.$http.post('/api/transit/encrypt', querystring.stringify({
+      this.$http.post('/v1/transit/encrypt', querystring.stringify({
         plaintext: this.plaintext,
         key: this.userTransitKey
       }), {
@@ -170,7 +170,7 @@ export default {
         return
       }
 
-      this.$http.post('/api/transit/decrypt', querystring.stringify({
+      this.$http.post('/v1/transit/decrypt', querystring.stringify({
         cipher: this.cipher,
         key: this.userTransitKey
       }), {

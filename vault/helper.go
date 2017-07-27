@@ -10,7 +10,7 @@ import (
 )
 
 func VaultHealth() (string, error) {
-	resp, err := http.Get(VaultAddress + "/v1/sys/health")
+	resp, err := http.Get(vaultConfig.Address + "/v1/sys/health")
 	if err != nil {
 		return "", err
 	}
@@ -131,6 +131,20 @@ func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	resp, err := client.Logical().Unwrap(wrappingToken)
 	if err != nil {
 		return nil, errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+	}
+	return resp.Data, nil
+}
+
+func LookupSelf() (map[string]interface{}, error) {
+	client, err := NewVaultClient()
+	if err != nil {
+		return nil, err
+	}
+	client.SetToken(vaultToken)
+
+	resp, err := vaultClient.Logical().Read("/auth/token/lookup-self")
+	if err != nil {
+		return nil, err
 	}
 	return resp.Data, nil
 }

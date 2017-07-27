@@ -32,7 +32,7 @@ test:
           cd ..
           sh build.sh
           mv goldfish-linux-amd64 $CIRCLE_ARTIFACTS
-          mv goldfish-windows-amd64 $CIRCLE_ARTIFACTS
+          mv goldfish-windows-amd64.exe $CIRCLE_ARTIFACTS
         fi
       :
           parallel: true # make full use of 2 containers

@@ -191,7 +191,7 @@ export default {
         return
       }
 
-      this.$http.post('/api/wrapping/wrap', querystring.stringify({
+      this.$http.post('/v1/wrapping/wrap', querystring.stringify({
         wrapttl: this.wrap_ttl,
         data: JSON.stringify(this.packData())
       }), {
@@ -219,7 +219,7 @@ export default {
       this.tableData = []
 
       // request to unwrap
-      this.$http.post('/api/wrapping/unwrap', querystring.stringify({
+      this.$http.post('/v1/wrapping/unwrap', querystring.stringify({
         wrappingToken: this.currToken
       }), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
