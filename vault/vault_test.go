@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/builtin/credential/approle"
 	"github.com/hashicorp/vault/builtin/credential/userpass"
+	"github.com/hashicorp/vault/builtin/credential/ldap"
 	"github.com/hashicorp/vault/builtin/logical/transit"
 	"github.com/hashicorp/vault/command"
 	"github.com/hashicorp/vault/helper/logformat"
@@ -39,6 +40,7 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			CredentialBackends: map[string]logical.Factory{
 				"approle":  approle.Factory,
 				"userpass": userpass.Factory,
+				"ldap": ldap.Factory,
 			},
 			DisableMlock: true,
 			Seal:         nil,
@@ -176,6 +178,44 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			"-address", addr,
 			"auth/token/roles/testrole",
 			"allowed_roles=abc",
+		})
+		So(code, ShouldEqual, 0)
+
+		// mount ldap auth
+		code = (&command.AuthEnableCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"ldap",
+		})
+		So(code, ShouldEqual, 0)
+
+		// configure ldap auth
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/config",
+			"url=ldap://ldap.forumsys.com",
+			"userattr=uid",
+			"userdn=\"dc=example,dc=com\"",
+			"groupdn=\"dc=example,dc=com\"",
+			"binddn=\"cn=read-only-admin,dc=example,dc=com\"",
+		})
+		So(code, ShouldEqual, 0)
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/groups/scientists",
+			"policies=foo,bar",
+		})
+		So(code, ShouldEqual, 0)
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/groups/engineers",
+			"policies=foobar",
+		})
+		So(code, ShouldEqual, 0)
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/users/tesla",
+			"policies=zoobar",
+			"groups=engineers",
 		})
 		So(code, ShouldEqual, 0)
 
@@ -511,6 +551,29 @@ func TestGoldfishWrapper(t *testing.T) {
 				resp, err = (&AuthInfo{ID: "testuser", Pass: "foobar", Type: "userpass"}).Login()
 				So(err, ShouldNotBeNil)
 				So(resp, ShouldBeNil)
+
+				resp, err = (&AuthInfo{ID: "tesla", Pass: "password", Type: "ldap"}).Login()
+				So(err, ShouldNotBeNil)
+				So(resp, ShouldBeNil)
+			})
+
+			// ldap
+			Convey("Listing LDAP groups and users", func() {
+				resp, err := rootAuth.ListLDAPGroups()
+				So(err, ShouldBeNil)
+				So(resp, ShouldResemble, map[string][]string{
+					"engineers": []string{"default", "foobar"},
+					"scientists": []string{"bar", "default", "foo"},
+				})
+
+				resp2, err := rootAuth.ListLDAPUsers()
+				So(err, ShouldBeNil)
+				So(resp2, ShouldResemble, map[string]*LDAPUser{
+					"tesla": &LDAPUser{
+						Policies: []string{"default", "zoobar"},
+						Groups: []string{"engineers"},
+					},
+				})
 			})
 
 		})) // end prepared vault convey
