@@ -158,6 +158,9 @@ func main() {
 	e.GET("/v1/approle/roles", handlers.GetApproleRoles())
 	e.POST("/v1/approle/delete", handlers.DeleteApproleRole())
 
+	e.GET("/v1/ldap/groups", handlers.GetLDAPGroups())
+	e.GET("/v1/ldap/users", handlers.GetLDAPUsers())
+
 	e.GET("/v1/policy", handlers.GetPolicy())
 	e.DELETE("/v1/policy", handlers.DeletePolicy())
 
