@@ -9,17 +9,25 @@
           <div class="tabs is-medium is-boxed is-fullwidth">
             <ul>
               <li v-bind:class="tabName === 'token' ? 'is-active' : ''"
-                  v-on:click="switchTab(0)"
-                  :disabled="loading">
-                  <a>Tokens</a></li>
+                v-on:click="switchTab(0)"
+                disabled>
+                <a>Tokens</a>
+              </li>
               <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''"
-                  v-on:click="switchTab(1)"
-                  :disabled="loading">
-                  <a>Userpass</a></li>
+                v-on:click="switchTab(1)"
+                :disabled="loading">
+                <a>Userpass</a>
+              </li>
               <li v-bind:class="tabName === 'approle' ? 'is-active' : ''"
-                  v-on:click="switchTab(2)"
-                  :disabled="loading">
-                  <a>Approle</a></li>
+                v-on:click="switchTab(2)"
+                :disabled="loading">
+                <a>Approle</a>
+              </li>
+              <li v-bind:class="tabName === 'ldap' ? 'is-active' : ''"
+                v-on:click="switchTab(3)"
+                :disabled="loading">
+                <a>LDAP</a>
+              </li>
               <!-- <li disabled><a>Certificates</a></li> -->
             </ul>
           </div>
@@ -249,8 +257,69 @@
             </table>
           </div>
 
-          <!-- Certificates tab -->
-          <!-- To be implemented -->
+          <!-- LDAP tab -->
+          <div v-if="tabName === 'ldap'" class="table-responsive">
+
+            <nav class="level">
+              <div class="level-item has-text-centered">
+                <div>
+                  <p class="title is-4">Groups</p>
+                </div>
+              </div>
+              <div class="level-item has-text-centered">
+                <div>
+                  <p class="title is-4">Users</p>
+                </div>
+              </div>
+            </nav>
+
+            <div class="columns">
+              <div class="column">
+
+                <!-- LDAP Groups table-->
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <!-- If entry doesn't have 'Groups' field, it's a LDAP group -->
+                      <th v-for="key in tableColumns" v-if="key != 'Groups'">
+                        {{ key }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Ignore any entries with 'Groups' field -->
+                    <tr v-for="(entry, index) in tableData" v-if="!entry.hasOwnProperty('Groups')">
+                      <td v-for="key in tableColumns" v-if="key != 'Groups'">
+                        {{ entry[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+              </div>
+              <div class="column">
+
+                <table class="table is-striped is-narrow">
+                  <thead>
+                    <tr>
+                      <th v-for="key in tableColumns">
+                        {{ key }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- If the entry has 'Groups' field, it's an LDAP user -->
+                    <tr v-for="(entry, index) in tableData" v-if="entry.hasOwnProperty('Groups')">
+                      <td v-for="key in tableColumns">
+                        {{ entry[key] }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+              </div>
+            </div>
+          </div>
 
         </article>
       </div>
@@ -267,7 +336,7 @@
 import Modal from './modals/InfoModal'
 import ConfirmModal from './modals/ConfirmModal'
 
-var TabNames = ['token', 'userpass', 'approle']
+var TabNames = ['token', 'userpass', 'approle', 'ldap']
 
 export default {
   components: {
@@ -285,7 +354,7 @@ export default {
       currentPage: 1,
       lastPage: 1,
       tokenCount: 0,
-      loading: false,
+      loading: true,
       // when adding properties here,
       // be careful with reactivity (overwritten by switchTab())
       search: {
@@ -338,6 +407,13 @@ export default {
             'Secret_id_num_uses'
           ]
         }
+        case 'ldap': {
+          return [
+            'Name',
+            'Policies',
+            'Groups'
+          ]
+        }
       }
     },
 
@@ -370,10 +446,6 @@ export default {
       } else {
         return [this.currentPage - 1, this.currentPage, this.currentPage + 1]
       }
-    },
-
-    searchRegex: function () {
-      return this.search.regex
     }
   },
 
@@ -427,6 +499,31 @@ export default {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           this.tableData = response.data.result
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+
+      // listing ldap groups/users
+      } else if (this.tabName === 'ldap') {
+        // both ldap groups and ldap users will be in one array
+        this.tableData = []
+
+        // fetch ldap groups
+        this.$http.get('/v1/ldap/groups', {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.tableData = this.tableData.concat(response.data.result)
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+
+        // fetch ldap users
+        this.$http.get('/v1/ldap/users', {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          this.tableData = this.tableData.concat(response.data.result)
         })
         .catch((error) => {
           this.$onError(error)
