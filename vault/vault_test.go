@@ -561,15 +561,22 @@ func TestGoldfishWrapper(t *testing.T) {
 			Convey("Listing LDAP groups and users", func() {
 				resp, err := rootAuth.ListLDAPGroups()
 				So(err, ShouldBeNil)
-				So(resp, ShouldResemble, map[string][]string{
-					"engineers": []string{"default", "foobar"},
-					"scientists": []string{"bar", "default", "foo"},
+				So(resp, ShouldResemble, []LDAPGroup{
+					LDAPGroup{
+						Name: "engineers",
+						Policies: []string{"default", "foobar"},
+					},
+					LDAPGroup{
+						Name: "scientists",
+						Policies: []string{"bar", "default", "foo"},
+					},
 				})
 
 				resp2, err := rootAuth.ListLDAPUsers()
 				So(err, ShouldBeNil)
-				So(resp2, ShouldResemble, map[string]*LDAPUser{
-					"tesla": &LDAPUser{
+				So(resp2, ShouldResemble, []LDAPUser{
+					LDAPUser{
+						Name: "tesla",
 						Policies: []string{"default", "zoobar"},
 						Groups: []string{"engineers"},
 					},

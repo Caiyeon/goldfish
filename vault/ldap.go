@@ -5,12 +5,18 @@ import (
 	"strings"
 )
 
+type LDAPGroup struct {
+	Name     string
+	Policies []string
+}
+
 type LDAPUser struct {
+	Name     string
 	Policies []string
 	Groups   []string
 }
 
-func (auth AuthInfo) ListLDAPGroups() (map[string][]string, error) {
+func (auth AuthInfo) ListLDAPGroups() ([]LDAPGroup, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -21,23 +27,31 @@ func (auth AuthInfo) ListLDAPGroups() (map[string][]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups, ok := resp.Data["keys"].([]interface{})
+	raw, ok := resp.Data["keys"].([]interface{})
 	if !ok {
 		return nil, errors.New("Failed to fetch LDAP group names")
 	}
 
-	results := make(map[string][]string)
-	for _, g := range groups {
-		group, ok := g.(string)
-		if !ok {
-			continue
+	// ignore any group names that somehow can't be type asserted to string
+	var groups []string
+	for _, each := range raw {
+		if group, ok := each.(string); ok {
+			groups = append(groups, group)
 		}
-		results[group] = []string{}
+	}
 
+	results := make([]LDAPGroup, len(groups))
+	for i, group := range groups {
+		results[i] = LDAPGroup{
+			Name: group,
+		}
+		// fetch group's policies
 		resp, err := logical.Read("auth/ldap/groups/" + group)
 		if err == nil && resp != nil {
 			if policies, ok := resp.Data["policies"]; ok {
-				results[group] = strings.Split(policies.(string), ",")
+				if p, ok := policies.(string); ok {
+					results[i].Policies = strings.Split(p, ",")
+				}
 			}
 		}
 	}
@@ -45,7 +59,7 @@ func (auth AuthInfo) ListLDAPGroups() (map[string][]string, error) {
 	return results, nil
 }
 
-func (auth AuthInfo) ListLDAPUsers() (map[string]*LDAPUser, error) {
+func (auth AuthInfo) ListLDAPUsers() ([]LDAPUser, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -56,31 +70,37 @@ func (auth AuthInfo) ListLDAPUsers() (map[string]*LDAPUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	users, ok := resp.Data["keys"].([]interface{})
+	raw, ok := resp.Data["keys"].([]interface{})
 	if !ok {
 		return nil, errors.New("Failed to fetch LDAP usernames")
 	}
 
-	results := make(map[string]*LDAPUser)
-	for _, u := range users {
-		user, ok := u.(string)
-		if !ok {
-			continue
+	// ignore any user names that somehow can't be type asserted to string
+	var users []string
+	for _, each := range raw {
+		if user, ok := each.(string); ok {
+			users = append(users, user)
 		}
-		results[user] = &LDAPUser{}
+	}
 
+	results := make([]LDAPUser, len(users))
+	for i, user := range users {
+		results[i] = LDAPUser{
+			Name: user,
+		}
+		// fetch user's policies and groups
 		resp, err := logical.Read("auth/ldap/users/" + user)
 		if err != nil || resp == nil {
 			continue
 		}
 		if raw, ok := resp.Data["policies"]; ok {
 			if policies, ok := raw.(string); ok {
-				results[user].Policies = strings.Split(policies, ",")
+				results[i].Policies = strings.Split(policies, ",")
 			}
 		}
 		if raw, ok := resp.Data["groups"]; ok {
 			if groups, ok := raw.(string); ok {
-				results[user].Groups = strings.Split(groups, ",")
+				results[i].Groups = strings.Split(groups, ",")
 			}
 		}
 	}
