@@ -354,7 +354,7 @@ export default {
       currentPage: 1,
       lastPage: 1,
       tokenCount: 0,
-      loading: true,
+      loading: false,
       // when adding properties here,
       // be careful with reactivity (overwritten by switchTab())
       search: {
@@ -457,6 +457,12 @@ export default {
 
   methods: {
     switchTab: function (index) {
+      // switching during loading is disabled
+      if (this.loading) {
+        return
+      }
+      this.loading = true
+
       // on swap, clear data and load new column names
       this.tableData = []
       this.tabName = TabNames[index]
@@ -476,9 +482,10 @@ export default {
         }).then((response) => {
           this.accessors = response.data.result
           this.lastPage = Math.ceil(this.accessors.length / 300)
-          this.loadPage(1)
+          this.loadPage(1) // loadPage will turn loading to false
         })
         .catch((error) => {
+          this.loading = false
           this.$onError(error)
         })
 
@@ -487,9 +494,11 @@ export default {
         this.$http.get('/v1/userpass/users', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
+          this.loading = false
           this.tableData = response.data.result
         })
         .catch((error) => {
+          this.loading = false
           this.$onError(error)
         })
 
@@ -498,9 +507,11 @@ export default {
         this.$http.get('/v1/approle/roles', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
+          this.loading = false
           this.tableData = response.data.result
         })
         .catch((error) => {
+          this.loading = false
           this.$onError(error)
         })
 
@@ -513,9 +524,11 @@ export default {
         this.$http.get('/v1/ldap/groups', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
+          this.loading = false
           this.tableData = this.tableData.concat(response.data.result)
         })
         .catch((error) => {
+          this.loading = false
           this.$onError(error)
         })
 
@@ -523,14 +536,17 @@ export default {
         this.$http.get('/v1/ldap/users', {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
+          this.loading = false
           this.tableData = this.tableData.concat(response.data.result)
         })
         .catch((error) => {
+          this.loading = false
           this.$onError(error)
         })
 
       // this should not be reachable through the UI by normal means
       } else {
+        this.loading = false
         this.$notify({
           title: 'Invalid',
           message: 'Unsupported tab name',
