@@ -30,12 +30,10 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 }
 
 func (auth *AuthInfo) UnwrapData(wrappingToken string) (map[string]interface{}, error) {
-	// unwrap uses the manual client creation in case auth's ID is empty
-	client, err := NewVaultClient()
+	client, err := auth.Client()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(auth.ID)
 
 	// if auth is empty, unwrapping is still allowed. It just won't be vault audited
 	if auth.ID == "" {

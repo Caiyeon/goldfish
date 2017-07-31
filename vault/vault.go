@@ -49,7 +49,7 @@ func NewVaultClient() (*api.Client, error) {
 }
 
 func NewGoldfishVaultClient() (client *api.Client, err error) {
-	if client, err = NewVaultClient; err == nil {
+	if client, err = NewVaultClient(); err == nil {
 		client.SetToken(vaultToken)
 	}
 	return client, err

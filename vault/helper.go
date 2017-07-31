@@ -60,7 +60,7 @@ func GenerateRootCancel() error {
 func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, error) {
 	client, err := NewGoldfishVaultClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return client.Logical().Write("cubbyhole/"+name, data)
 }
@@ -68,7 +68,7 @@ func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, er
 func ReadFromCubbyhole(name string) (*api.Secret, error) {
 	client, err := NewGoldfishVaultClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return client.Logical().Read("cubbyhole/" + name)
 }
@@ -76,7 +76,7 @@ func ReadFromCubbyhole(name string) (*api.Secret, error) {
 func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 	client, err := NewGoldfishVaultClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return client.Logical().Delete("cubbyhole/" + name)
 }
@@ -100,7 +100,7 @@ func renewServerToken() error {
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
 	client, err := NewGoldfishVaultClient()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	client.SetWrappingLookupFunc(func(operation, path string) string {
@@ -117,7 +117,7 @@ func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
 func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 	client, err := NewGoldfishVaultClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// make a raw unwrap call. This will use the token as a header
