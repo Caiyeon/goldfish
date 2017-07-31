@@ -84,6 +84,7 @@
                       class="input is-small"
                       type="text"
                       placeholder="Add a key to wrap"
+                      ref="newKey"
                       v-model="newKey"
                       v-bind:class="[
                       newKey === '' ? '' : 'is-success',
@@ -289,6 +290,9 @@ export default {
       // reset so that a new pair can be inserted
       this.newKey = ''
       this.newValue = ''
+
+      // reset focus to key input
+      this.$refs.newKey.focus()
     },
 
     doneEdit: function (key, index) {
