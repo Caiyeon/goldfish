@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"runtime"
 	"strings"
 
 	"github.com/hashicorp/hcl"
