@@ -6,13 +6,10 @@ import (
 )
 
 // constructs a client with server's vault address and client access token
-func (auth AuthInfo) Client() (*api.Client, error) {
-	client, err := NewVaultClient()
-	if err != nil {
-		return nil, err
+func (auth AuthInfo) Client() (client *api.Client, err error) {
+	if client, err = NewVaultClient(); err == nil {
+		client.SetToken(auth.ID)
 	}
-	client.SetToken(auth.ID)
-	_, err = client.Auth().Token().LookupSelf()
 	return client, err
 }
 

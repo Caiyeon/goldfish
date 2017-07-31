@@ -13,6 +13,7 @@ import (
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
+	"github.com/hashicorp/vault/helper/mlock"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -62,14 +63,20 @@ func main() {
 	// if dev mode, run a localhost dev vault instance
 	if devMode {
 		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
-		fmt.Println("wrapping token: " + wrappingToken)
+		log.Println("[INFO ]: Dev mode wrapping token: " + wrappingToken)
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
 	}
-
 	if err != nil {
 		panic(err)
 	}
+
+	if !cfg.Listener.Disable_mlock {
+		if err := mlock.LockMemory(); err != nil {
+			log.Fatalf(mlockError, err.Error())
+		}
+	}
+	
 	vault.SetConfig(cfg.Vault)
 
 	// if wrapping token is provided, bootstrap goldfish immediately
@@ -158,6 +165,9 @@ func main() {
 	e.GET("/v1/approle/roles", handlers.GetApproleRoles())
 	e.POST("/v1/approle/delete", handlers.DeleteApproleRole())
 
+	e.GET("/v1/ldap/groups", handlers.GetLDAPGroups())
+	e.GET("/v1/ldap/users", handlers.GetLDAPUsers())
+
 	e.GET("/v1/policy", handlers.GetPolicy())
 	e.DELETE("/v1/policy", handlers.DeletePolicy())
 
@@ -228,3 +238,16 @@ Goldfish successfully bootstrapped to vault
 
 
 `
+
+const mlockError = `
+Failed to use mlock to prevent swap usage: %s
+
+Goldfish uses mlock similar to Vault. See here for details: 
+https://www.vaultproject.io/docs/configuration/index.html#disable_mlock
+
+To enable mlock without launching goldfish as root:
+sudo setcap cap_ipc_lock=+ep $(readlink -f $(which vault))
+
+To disable mlock entirely, set disable_mlock to "1" in config file
+`
+

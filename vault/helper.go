@@ -58,38 +58,34 @@ func GenerateRootCancel() error {
 }
 
 func WriteToCubbyhole(name string, data map[string]interface{}) (interface{}, error) {
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(vaultToken)
-	return vaultClient.Logical().Write("cubbyhole/"+name, data)
+	return client.Logical().Write("cubbyhole/"+name, data)
 }
 
 func ReadFromCubbyhole(name string) (*api.Secret, error) {
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(vaultToken)
-	return vaultClient.Logical().Read("cubbyhole/" + name)
+	return client.Logical().Read("cubbyhole/" + name)
 }
 
 func DeleteFromCubbyhole(name string) (*api.Secret, error) {
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(vaultToken)
-	return vaultClient.Logical().Delete("cubbyhole/" + name)
+	return client.Logical().Delete("cubbyhole/" + name)
 }
 
 func renewServerToken() error {
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return err
 	}
-	client.SetToken(vaultToken)
 	resp, err := client.Auth().Token().RenewSelf(0)
 	if err != nil {
 		return err
@@ -102,11 +98,10 @@ func renewServerToken() error {
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return "", err
 	}
-	client.SetToken(vaultToken)
 
 	client.SetWrappingLookupFunc(func(operation, path string) string {
 		return wrapttl
@@ -120,12 +115,10 @@ func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
 }
 
 func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
-	// set up vault client
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(vaultToken)
 
 	// make a raw unwrap call. This will use the token as a header
 	resp, err := client.Logical().Unwrap(wrappingToken)
@@ -136,13 +129,12 @@ func UnwrapData(wrappingToken string) (map[string]interface{}, error) {
 }
 
 func LookupSelf() (map[string]interface{}, error) {
-	client, err := NewVaultClient()
+	client, err := NewGoldfishVaultClient()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(vaultToken)
 
-	resp, err := vaultClient.Logical().Read("/auth/token/lookup-self")
+	resp, err := client.Logical().Read("/auth/token/lookup-self")
 	if err != nil {
 		return nil, err
 	}

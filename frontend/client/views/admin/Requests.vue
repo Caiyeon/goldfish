@@ -276,7 +276,9 @@ export default {
       })
       .catch((error) => {
         this.unsealToken = ''
-        this.progress = 0
+        if (error.response.data.error.includes('Progress has been reset')) {
+          this.progress = 0
+        }
         this.$onError(error)
       })
     },
