@@ -71,12 +71,12 @@ func main() {
 		panic(err)
 	}
 
-	if !cfg.Listener.Disable_mlock {
+	if !cfg.DisableMlock {
 		if err := mlock.LockMemory(); err != nil {
 			log.Fatalf(mlockError, err.Error())
 		}
 	}
-	
+
 	vault.SetConfig(cfg.Vault)
 
 	// if wrapping token is provided, bootstrap goldfish immediately
@@ -103,6 +103,14 @@ func main() {
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
 		Level: 5,
 	}))
+
+	// prevent caching by client (e.g. Safari)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+	    return func(c echo.Context) error {
+	        c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	        return next(c)
+	    }
+	})
 
 	// unless explicitly disabled, some extra https configurations need to be set
 	if !cfg.Listener.Tls_disable {
@@ -209,7 +217,7 @@ func main() {
 	}
 }
 
-const versionString = "Goldfish version: v0.6.0-dev"
+const versionString = "Goldfish version: v0.6.0-rc1"
 
 const devInitString = `
 
@@ -242,12 +250,11 @@ Goldfish successfully bootstrapped to vault
 const mlockError = `
 Failed to use mlock to prevent swap usage: %s
 
-Goldfish uses mlock similar to Vault. See here for details: 
+Goldfish uses mlock similar to Vault. See here for details:
 https://www.vaultproject.io/docs/configuration/index.html#disable_mlock
 
 To enable mlock without launching goldfish as root:
-sudo setcap cap_ipc_lock=+ep $(readlink -f $(which vault))
+sudo setcap cap_ipc_lock=+ep $(readlink -f $(which goldfish))
 
 To disable mlock entirely, set disable_mlock to "1" in config file
 `
-

@@ -15,10 +15,6 @@ listener "tcp" {
 	# Set this to 1 to disable HTTPS for goldfish listener
 	# Leave this empty or equal to 0 unless you know exactly what you're doing
 	tls_disable   = 1
-
-	# [Optional] [Default: 0] [Allowed values: 0, 1]
- 	# Set to 1 to disable mlock. Implementation is similar to vault - see vault docs for details
- 	disable_mlock = 0
 }
 
 # [Required] vault defines how goldfish should bootstrap to vault
@@ -44,3 +40,7 @@ vault {
 	# You can omit this if you already customized the approle ID to be 'goldfish'
 	approle_id      = "goldfish"
 }
+
+# [Optional] [Default: 0] [Allowed values: 0, 1]
+# Set to 1 to disable mlock. Implementation is similar to vault - see vault docs for details
+disable_mlock = 1

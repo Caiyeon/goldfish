@@ -64,13 +64,13 @@ func UnwrapHandler() echo.HandlerFunc {
 		}
 
 		// fetch results
-		data, err := auth.UnwrapData(wrappingToken)
+		resp, err := auth.UnwrapData(wrappingToken)
 		if err != nil {
 			return parseError(c, err)
 		}
 
 		return c.JSON(http.StatusOK, H{
-			"result": data,
+			"result": resp,
 		})
 	}
 }

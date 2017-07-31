@@ -339,8 +339,12 @@ func TestGoldfishWrapper(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(wrapToken, ShouldNotBeBlank)
 
-					data, err := rootAuth.UnwrapData(wrapToken)
+					// empty auth should still be able to unwrap
+					emptyAuth := AuthInfo{}
+					resp, err := emptyAuth.UnwrapData(wrapToken)
 					So(err, ShouldBeNil)
+
+					data := resp.Data
 					So(data, ShouldContainKey, "abc")
 					So(data["abc"].(string), ShouldEqual, "def")
 					So(data["ghi"].(string), ShouldEqual, "jkl")
@@ -373,9 +377,11 @@ func TestGoldfishWrapper(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(resp.WrapInfo.Token), ShouldEqual, 36)
 
-					// SoonTM
-					// Convey("Unwrapping", func() {})
-					// Convey("Unwrapping without auth", func() {})
+					// empty auth should still be able to unwrap
+					emptyAuth := AuthInfo{}
+					resp, err = emptyAuth.UnwrapData(resp.WrapInfo.Token)
+					So(err, ShouldBeNil)
+					So(len(resp.Auth.ClientToken), ShouldEqual, 36)
 				})
 
 				Convey("Token lookup self, renew self, and revoke self", func() {
