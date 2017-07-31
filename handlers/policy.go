@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/caiyeon/goldfish/github"
 	"github.com/caiyeon/goldfish/slack"
@@ -26,6 +27,8 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
 )
+
+var reqsMutex = &sync.Mutex{}
 
 type PolicyRequest struct {
 	Policy        string
@@ -169,11 +172,13 @@ func AddPolicyRequest() echo.HandlerFunc {
 		}
 		hash := strconv.FormatUint(hash_uint64, 16)
 
-		// write to cubbyhole with details
+		// write to cubbyhole with details (lock is required)
+		reqsMutex.Lock()
 		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(request))
 		if err != nil {
 			return parseError(c, err)
 		}
+		reqsMutex.Unlock()
 
 		// if config has a slack webhook, send the hash (aka change ID) to the channel
 		conf := vault.GetConfig()
@@ -431,6 +436,10 @@ func UpdatePolicyRequest() echo.HandlerFunc {
 }
 
 func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash string, unsealKey string) error {
+	// full lock is required to prevent a race condition in providing unseal keys
+	reqsMutex.Lock()
+	defer reqsMutex.Unlock()
+
 	// fetch change from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
@@ -617,6 +626,10 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 }
 
 func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash string, unsealKey string) error {
+	// full lock is required to prevent a race condition in providing unseal keys
+	reqsMutex.Lock()
+	defer reqsMutex.Unlock()
+
 	// fetch difference in policies
 	changes, err := compareGithubVault(auth, hash)
 	if err != nil {
@@ -760,6 +773,10 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 // Anyone that is able to read the policy is able to delete change requests for that policy
 func DeletePolicyRequest() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// full lock is required to prevent a race condition in providing unseal keys
+		reqsMutex.Lock()
+		defer reqsMutex.Unlock()
+
 		// fetch auth from header or cookie
 		auth := getSession(c)
 		if auth == nil {
