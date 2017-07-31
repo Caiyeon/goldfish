@@ -13,6 +13,7 @@ import (
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
 	"github.com/caiyeon/goldfish/vault"
+	"github.com/hashicorp/vault/helper/mlock"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -66,10 +67,16 @@ func main() {
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
 	}
-
 	if err != nil {
 		panic(err)
 	}
+
+	if !cfg.Listener.Disable_mlock {
+		if err := mlock.LockMemory(); err != nil {
+			log.Fatalf(mlockError, err.Error())
+		}
+	}
+	
 	vault.SetConfig(cfg.Vault)
 
 	// if wrapping token is provided, bootstrap goldfish immediately
@@ -231,3 +238,16 @@ Goldfish successfully bootstrapped to vault
 
 
 `
+
+const mlockError = `
+Failed to use mlock to prevent swap usage: %s
+
+Goldfish uses mlock similar to Vault. See here for details: 
+https://www.vaultproject.io/docs/configuration/index.html#disable_mlock
+
+To enable mlock without launching goldfish as root:
+sudo setcap cap_ipc_lock=+ep $(readlink -f $(which vault))
+
+To disable mlock entirely, set disable_mlock to "1" in config file
+`
+
