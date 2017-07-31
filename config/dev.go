@@ -195,6 +195,46 @@ func setupVault(addr, rootToken string) error {
 		return err
 	}
 
+	// mount ldap auth
+	if err := client.Sys().EnableAuthWithOptions("ldap", &api.EnableAuthOptions{
+		Type: "ldap",
+	}); err != nil {
+		return err
+	}
+
+	// Online LDAP test server
+	// http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
+	// this code is very similar to vault's ldap backend unit test
+	if _, err := client.Logical().Write("auth/ldap/config", map[string]interface{}{
+		"url":      "ldap://ldap.forumsys.com",
+		"userattr": "uid",
+		"userdn":   "dc=example,dc=com",
+		"groupdn":  "dc=example,dc=com",
+		"binddn":   "cn=read-only-admin,dc=example,dc=com",
+	}); err != nil {
+		return err
+	}
+
+	// map some groups to policies (that don't exist)
+	if _, err := client.Logical().Write("auth/ldap/groups/scientists", map[string]interface{}{
+		"policies": "foo,bar",
+	}); err != nil {
+		return err
+	}
+	if _, err := client.Logical().Write("auth/ldap/groups/engineers", map[string]interface{}{
+		"policies": "foobar",
+	}); err != nil {
+		return err
+	}
+
+	// map user 'tesla' to a special policy on top of its group policy
+	if _, err := client.Logical().Write("auth/ldap/users/tesla", map[string]interface{}{
+		"groups":   "engineers",
+		"policies": "zoobar",
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

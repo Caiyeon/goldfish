@@ -6,9 +6,36 @@
         <!-- Left side -->
         <article class="tile is-parent is-5 is-vertical">
 
+          <!-- Bootstrap tile -->
+          <article v-if="goldfishHealthData && goldfishHealthData['bootstrapped'] === false"
+            class="tile is-child is-marginless is-paddingless">
+            <h2 class="title is-3">Welcome!</h2>
+
+            <div class="box is-parent is-6">
+              <label class="label">Setting up Goldfish</label>
+              <div class="field has-addons">
+                <div class="control">
+                  <input class="input" type="text" v-model="secretID"
+                  placeholder="Insert wrapping token">
+                  <p class="help is-info">
+                    vault write -f -wrap-ttl=5m auth/approle/role/goldfish/secret-id
+                  </p>
+                </div>
+                <div class="control">
+                  <button class="button is-info"
+                  v-bind:class="{ 'is-loading': bootstrapLoading }"
+                  :disabled="secretID === ''"
+                  @click="bootstrapGoldfish()">
+                    Swim!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
           <!-- Login tile -->
           <article class="tile is-child is-marginless is-paddingless">
-            <h1 class="title">Vault Login</h1>
+            <h2 class="subtitle is-4">Vault Login</h2>
             <div class="box is-parent is-6" @keyup.enter="login">
 
               <div class="field">
@@ -98,42 +125,42 @@
 
           <!-- Current session tile -->
           <article class="tile is-child is-marginless is-paddingless">
-            <h1 class="title">Current Session</h1>
+            <h2 class="subtitle is-4">Current Session</h2>
             <div class="box is-parent is-6">
-              <div class="table-responsive">
-                <table class="table is-striped is-narrow">
-                  <thead>
-                    <tr>
-                      <th>Key</th>
-                      <th>Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="key in sessionKeys" v-if="key != 'token'">
-                      <td>
-                        {{ key }}
-                      </td>
-                      <td v-if="key === 'policies'">
-                        <span v-for="policy in session['policies']" class="tag is-info">
+              <table class="table is-fullwidth is-striped is-narrow">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="key in sessionKeys" v-if="key != 'token'">
+                    <td>
+                      {{ key }}
+                    </td>
+                    <td v-if="key === 'policies'">
+                      <div class="tags">
+                        <span v-for="policy in session['policies']" class="tag is-rounded is-info">
                           {{policy}}
                         </span>
-                      </td>
-                      <td v-else>
-                        {{ session[key] }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p v-if="session !== null" class="control">
-                  <button class="button is-warning" @click="logout()">
-                    Logout
-                  </button>
-                  <button v-if="renewable" class="button is-primary"
-                  @click="renewLogin()">
-                    Renew
-                  </button>
-                </p>
-              </div>
+                      </div>
+                    </td>
+                    <td v-else>
+                      {{ session[key] }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p v-if="session !== null" class="control">
+                <button class="button is-warning" @click="logout()">
+                  Logout
+                </button>
+                <button v-if="renewable" class="button is-primary"
+                @click="renewLogin()">
+                  Renew
+                </button>
+              </p>
             </div>
           </article>
 
@@ -146,75 +173,67 @@
 
           <!-- Vault Health Tile -->
           <article class="tile is-child is-marginless is-paddingless">
-            <h1 class="title">Vault Health</h1>
+            <h2 class="subtitle is-4">Vault Health</h2>
             <div class="box is-parent is-6">
-              <div class="table-responsive">
-                <table class="table is-striped is-narrow">
-                  <thead>
-                    <tr>
-                      <th>Key</th>
-                      <th>Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="key in Object.keys(vaultHealthData)">
-                      <td>
-                        {{ key }}
-                      </td>
-                      <td>
-                        {{ vaultHealthData[key] }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p class="control">
-                  <button class="button is-primary"
-                    v-bind:class="{
-                      'is-loading': vaultHealthLoading,
-                      'is-disabled': vaultHealthLoading
-                    }"
-                    @click="getVaultHealth()">
-                  Refresh
-                  </button>
-                </p>
-              </div>
+              <table class="table is-fullwidth is-striped is-narrow">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="key in Object.keys(vaultHealthData)">
+                    <td>
+                      {{ key }}
+                    </td>
+                    <td>
+                      {{ vaultHealthData[key] }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="control">
+                <button class="button is-primary"
+                  v-bind:class="{ 'is-loading': vaultHealthLoading }"
+                  :disabled="vaultHealthLoading"
+                  @click="getVaultHealth()">
+                Refresh
+                </button>
+              </p>
             </div>
           </article>
 
           <!-- Goldfish Health tile -->
           <article class="tile is-child is-marginless is-paddingless">
-            <h1 class="title">Goldfish Health</h1>
+            <h2 class="subtitle is-4">Goldfish Health</h2>
             <div class="box is-parent is-6">
-              <div class="table-responsive">
-                <table class="table is-striped is-narrow">
-                  <thead>
-                    <tr>
-                      <th>Key</th>
-                      <th>Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="key in Object.keys(goldfishHealthData)">
-                      <td>
-                        {{ key }}
-                      </td>
-                      <td>
-                        {{ goldfishHealthData[key] }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p class="control">
-                  <button class="button is-primary"
-                    v-bind:class="{
-                      'is-loading': goldfishHealthLoading,
-                      'is-disabled': goldfishHealthLoading
-                    }"
-                    @click="getGoldfishHealth()">
-                  Refresh
-                  </button>
-                </p>
-              </div>
+              <table class="table is-fullwidth is-striped is-narrow">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="key in Object.keys(goldfishHealthData)">
+                    <td>
+                      {{ key }}
+                    </td>
+                    <td>
+                      {{ goldfishHealthData[key] }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="control">
+                <button class="button is-primary"
+                  v-bind:class="{ 'is-loading': goldfishHealthLoading }"
+                  :disabled="goldfishHealthLoading"
+                  @click="getGoldfishHealth()">
+                Refresh
+                </button>
+              </p>
             </div>
           </article>
         <!-- Right side (end) -->
@@ -238,7 +257,9 @@ export default {
       vaultHealthData: {},
       vaultHealthLoading: false,
       goldfishHealthData: {},
-      goldfishHealthLoading: false
+      goldfishHealthLoading: false,
+      secretID: '',
+      bootstrapLoading: false
     }
   },
 
@@ -260,6 +281,25 @@ export default {
   },
 
   methods: {
+    bootstrapGoldfish: function () {
+      this.bootstrapLoading = true
+      this.$http.post('/v1/bootstrap', {
+        wrapping_token: this.secretID
+      })
+      .then((response) => {
+        this.secretID = ''
+        this.bootstrapLoading = false
+        console.log(response.data.result)
+        // reload health so that setup tiles can be swapped to login tiles
+        this.getGoldfishHealth()
+      })
+      .catch((error) => {
+        this.secretID = ''
+        this.bootstrapLoading = false
+        this.$onError(error)
+      })
+    },
+
     getVaultHealth: function () {
       this.vaultHealthLoading = true
       this.$http.get('/v1/vaulthealth')

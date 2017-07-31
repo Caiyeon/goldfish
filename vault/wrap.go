@@ -10,7 +10,6 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	client.SetToken(vaultToken)
 
 	// unmarshal raw string into a map
 	var data map[string]interface{}
@@ -31,11 +30,10 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 }
 
 func (auth *AuthInfo) UnwrapData(wrappingToken string) (map[string]interface{}, error) {
-	client, err := NewVaultClient()
+	client, err := auth.Client()
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(auth.ID)
 
 	// if auth is empty, unwrapping is still allowed. It just won't be vault audited
 	if auth.ID == "" {

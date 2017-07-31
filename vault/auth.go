@@ -24,10 +24,15 @@ func (auth AuthInfo) RevokeSelf() error {
 
 // encrypt auth details with transit backend
 func (auth *AuthInfo) EncryptAuth() error {
+	client, err := NewGoldfishVaultClient()
+	if err != nil {
+		return err
+	}
+
 	c := GetConfig()
 
-	resp, err := vaultClient.Logical().Write(
-		c.TransitBackend+"/encrypt/"+c.ServerTransitKey,
+	resp, err := client.Logical().Write(
+		c.TransitBackend + "/encrypt/" + c.ServerTransitKey,
 		map[string]interface{}{
 			"plaintext": base64.StdEncoding.EncodeToString([]byte(auth.ID)),
 		})
@@ -46,10 +51,15 @@ func (auth *AuthInfo) EncryptAuth() error {
 
 // decrypt auth details with transit backend
 func (auth *AuthInfo) DecryptAuth() error {
+	client, err := NewGoldfishVaultClient()
+	if err != nil {
+		return err
+	}
+
 	c := GetConfig()
 
-	resp, err := vaultClient.Logical().Write(
-		c.TransitBackend+"/decrypt/"+c.ServerTransitKey,
+	resp, err := client.Logical().Write(
+		c.TransitBackend + "/decrypt/" + c.ServerTransitKey,
 		map[string]interface{}{
 			"ciphertext": auth.ID,
 		})

@@ -48,27 +48,78 @@ func VaultHealth() echo.HandlerFunc {
 
 func Health() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// check server token
-		resp, err := vault.LookupSelf()
-		if err != nil {
-			return parseError(c, err)
+		bootstrapped := vault.Bootstrapped()
+
+		deployment_time_utc := ""
+		if bootstrapped {
+			// check server token
+			resp, err := vault.LookupSelf()
+			if err != nil {
+				return parseError(c, err)
+			}
+			deployment_time_utc = string(resp["creation_time"].(json.Number))
 		}
 
 		// check transit encryption config
-		transitEnabled := "false"
-		if conf := vault.GetConfig(); conf.ServerTransitKey != "" {
-			transitEnabled = "true"
+		transitEnabled := vault.GetConfig().ServerTransitKey != ""
+
+		return c.JSON(http.StatusOK, H{
+			"bootstrapped":        bootstrapped,
+			"deployment_time_utc": deployment_time_utc,
+			"transit_encryption":  transitEnabled,
+		})
+	}
+}
+
+func Bootstrap() echo.HandlerFunc {
+	// scoped struct is fine, nothing else needs to know this
+	type wrapstruct struct {
+		Wrapping_token string
+	}
+
+	return func(c echo.Context) error {
+		// re-bootstrapping may come in the future, but isn't supported for now
+		if vault.Bootstrapped() {
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Already bootstrapped",
+			})
+		}
+
+		// bind body
+		wrap := new(wrapstruct)
+		if err := c.Bind(wrap); err != nil {
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Invalid format",
+			})
+		}
+		if wrap.Wrapping_token == "" {
+			return c.JSON(http.StatusBadRequest, H{
+				"error": "Empty wrapping token",
+			})
+		}
+
+		if err := vault.StartGoldfishWrapper(wrap.Wrapping_token); err != nil {
+			return c.JSON(http.StatusInternalServerError, H{
+				"error": err.Error(),
+			})
 		}
 
 		return c.JSON(http.StatusOK, H{
-			"deployment_time_utc": string(resp["creation_time"].(json.Number)),
-			"transit_encryption":  transitEnabled,
+			"result": "success",
 		})
 	}
 }
 
 func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// if vault wrapper is not initialized, errors for everyone!
+		if !vault.Bootstrapped() {
+			c.JSON(http.StatusForbidden, H{
+				"error": "Goldfish is not initialized!",
+			})
+			return nil
+		}
+
 		auth := new(vault.AuthInfo)
 		defer auth.Clear()
 
@@ -141,8 +192,16 @@ func RenewSelf() echo.HandlerFunc {
 	}
 }
 
-// reads header as an encrypted
+// constructs raw or decrypted authentication info
 func getSession(c echo.Context) *vault.AuthInfo {
+	// if vault wrapper is not initialized, errors for everyone!
+	if !vault.Bootstrapped() {
+		c.JSON(http.StatusForbidden, H{
+			"error": "Goldfish is not initialized!",
+		})
+		return nil
+	}
+
 	var auth = &vault.AuthInfo{
 		Type: "token",
 	}

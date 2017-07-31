@@ -24,101 +24,97 @@
           <article class="tile is-child box">
 
             <!-- data table -->
+            <table class="table is-fullwidth is-striped is-narrow">
 
-            <div class="table-responsive">
-              <table class="table is-striped is-narrow">
+              <!-- header -->
+              <thead>
+                <tr>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th width="1"></th>
+                </tr>
+              </thead>
+              <!-- body -->
+              <tbody>
+                <tr v-for="(entry, index) in tableData">
+                  <!-- Editable key field -->
+                  <td v-if="entry.isClicked">
+                    <p class="control">
+                      <input class="input is-small"
+                             type="text" placeholder="" v-model="entry.key"
+                             @keyup.enter="doneEdit(entry.key,index)"
+                      >
+                    </p>
+                  </td>
 
-                <!-- header -->
+                  <!-- View-only -->
+                  <td v-else @click="clicked(index)">
+                    {{ entry.key }}
+                  </td>
 
-                <thead>
-                  <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                    <th width="1"></th>
-                  </tr>
-                </thead>
-                <!-- body -->
-                <tbody>
-                  <tr v-for="(entry, index) in tableData">
-                    <!-- Editable key field -->
-                    <td v-if="entry.isClicked">
-                      <p class="control">
-                        <input class="input is-small"
-                               type="text" placeholder="" v-model="entry.key"
-                               @keyup.enter="doneEdit(entry.key,index)"
-                        >
-                      </p>
-                    </td>
+                  <!-- Editable value field -->
+                  <td v-if="entry.isClicked">
+                    <p class="control">
+                      <input class="input is-small" type="text" placeholder="" v-model="entry.value"
+                             @keyup.enter="doneEdit(entry.key,index)">
+                    </p>
+                  </td>
 
-                    <!-- View-only -->
-                    <td v-else @click="clicked(index)">
-                      {{ entry.key }}
-                    </td>
-
-                    <!-- Editable value field -->
-                    <td v-if="entry.isClicked">
-                      <p class="control">
-                        <input class="input is-small" type="text" placeholder="" v-model="entry.value"
-                               @keyup.enter="doneEdit(entry.key,index)">
-                      </p>
-                    </td>
-
-                    <!-- View-only -->
-                    <td v-else @click="clicked(index)">
-                      {{ entry.value }}
-                    </td>
+                  <!-- View-only -->
+                  <td v-else @click="clicked(index)">
+                    {{ entry.value }}
+                  </td>
 
 
-                    <td width="30">
-                      <a v-if="entry.isClicked" @click="deleteItem(index)">
-                        <span class="icon">
-                          <i class="fa fa-times-circle"></i>
-                        </span>
-                      </a>
-                    </td>
+                  <td width="30">
+                    <a v-if="entry.isClicked" @click="deleteItem(index)">
+                      <span class="icon">
+                        <i class="fa fa-times-circle"></i>
+                      </span>
+                    </a>
+                  </td>
 
-                  </tr>
+                </tr>
 
-                  <!-- new key value pair insertion row -->
-                  <tr @keyup.enter="addKeyValue()">
-                    <td>
-                      <p class="control">
-                        <input
-                        class="input is-small"
-                        type="text"
-                        placeholder="Add a key to wrap"
-                        v-model="newKey"
-                        v-bind:class="[
-                        newKey === '' ? '' : 'is-success',
-                        keyExists(newKey) ? 'is-danger' : '']"
-                        >
-                      </p>
-                    </td>
-                    <td>
+                <!-- new key value pair insertion row -->
+                <tr @keyup.enter="addKeyValue()">
+                  <td>
+                    <p class="control">
+                      <input
+                      class="input is-small"
+                      type="text"
+                      placeholder="Add a key to wrap"
+                      v-model="newKey"
+                      v-bind:class="[
+                      newKey === '' ? '' : 'is-success',
+                      keyExists(newKey) ? 'is-danger' : '']"
+                      >
+                    </p>
+                  </td>
+                  <td>
 
-                      <p class="control">
-                        <input
-                        class="input is-small"
-                        type="text"
-                        placeholder="Add a value to wrap"
-                        v-model="newValue"
-                        v-bind:class="[newValue === '' ? '' : 'is-success']"
-                        >
-                      </p>
-                    </td>
-                  </tr>
-                </tbody>
+                    <p class="control">
+                      <input
+                      class="input is-small"
+                      type="text"
+                      placeholder="Add a value to wrap"
+                      v-model="newValue"
+                      v-bind:class="[newValue === '' ? '' : 'is-success']"
+                      >
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
 
-                <!-- footer only shows beyond a certain amount of data -->
-                <tfoot v-show="tableData.length > 10">
-                  <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                    <th></th>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+              <!-- footer only shows beyond a certain amount of data -->
+              <tfoot v-show="tableData.length > 10">
+                <tr>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
 
             <nav class="level">
               <div class="level-left"></div>

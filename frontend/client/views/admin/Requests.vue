@@ -58,7 +58,7 @@
               </p>
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
-                  <input class="input" type="text"
+                  <input class="input" type="password"
                   placeholder="Enter an unseal token"
                   v-model="unsealToken"
                   @keyup.enter="approve()">
@@ -270,7 +270,9 @@ export default {
       })
       .catch((error) => {
         this.unsealToken = ''
-        this.progress = 0
+        if (error.response.data.error.includes('Progress has been reset')) {
+          this.progress = 0
+        }
         this.$onError(error)
       })
     },

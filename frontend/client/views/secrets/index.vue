@@ -73,16 +73,11 @@
               v-on:click="cancelEdit">
               Cancel Edit
             </a>
-
-            <!-- legend -->
-            <span class="tag is-primary is-unselectable is-pulled-right">Path</span>
-            <span class="tag is-info is-unselectable is-pulled-right">Secret</span>
-            <span class="tag is-success is-unselectable is-pulled-right">Key</span>
           </div>
 
           <!-- data table -->
-          <div v-if="!displayJSON" class="table-responsive">
-            <table class="table is-striped is-narrow">
+          <article v-if="!displayJSON">
+            <table class="table is-fullwidth is-striped is-narrow">
 
               <!-- headers -->
               <thead>
@@ -96,7 +91,7 @@
               <tbody>
                 <tr v-for="(entry, index) in tableData">
                   <td width="68">
-                    <span class="tag is-pulled-left" v-bind:class="type(index)">
+                    <span class="tag is-rounded is-pulled-left" v-bind:class="type(index)">
                       {{ entry.type }}
                     </span>
                   </td>
@@ -213,7 +208,7 @@
               </tfoot>
 
             </table>
-          </div>
+          </article>
 
           <article v-if="displayJSON" class="message is-primary">
             <div class="message-header">
@@ -377,13 +372,13 @@ export default {
     type: function (index) {
       switch (this.tableData[index].type) {
         case 'Secret':
-          return { 'tag': true, 'is-info': true }
+          return { 'tag': true, 'is-rounded': true, 'is-info': true }
         case 'Path':
-          return { 'tag': true, 'is-primary': true }
+          return { 'tag': true, 'is-rounded': true, 'is-primary': true }
         case 'Key':
-          return { 'tag': true, 'is-success': true }
+          return { 'tag': true, 'is-rounded': true, 'is-success': true }
         default:
-          return { 'tag': true, 'is-danger': true }
+          return { 'tag': true, 'is-rounded': true, 'is-danger': true }
       }
     },
 

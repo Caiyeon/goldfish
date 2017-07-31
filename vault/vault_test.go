@@ -6,9 +6,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/caiyeon/goldfish/config"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/builtin/credential/approle"
 	"github.com/hashicorp/vault/builtin/credential/userpass"
+	"github.com/hashicorp/vault/builtin/credential/ldap"
 	"github.com/hashicorp/vault/builtin/logical/transit"
 	"github.com/hashicorp/vault/command"
 	"github.com/hashicorp/vault/helper/logformat"
@@ -38,6 +40,7 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			CredentialBackends: map[string]logical.Factory{
 				"approle":  approle.Factory,
 				"userpass": userpass.Factory,
+				"ldap": ldap.Factory,
 			},
 			DisableMlock: true,
 			Seal:         nil,
@@ -178,6 +181,44 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 		})
 		So(code, ShouldEqual, 0)
 
+		// mount ldap auth
+		code = (&command.AuthEnableCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"ldap",
+		})
+		So(code, ShouldEqual, 0)
+
+		// configure ldap auth
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/config",
+			"url=ldap://ldap.forumsys.com",
+			"userattr=uid",
+			"userdn=\"dc=example,dc=com\"",
+			"groupdn=\"dc=example,dc=com\"",
+			"binddn=\"cn=read-only-admin,dc=example,dc=com\"",
+		})
+		So(code, ShouldEqual, 0)
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/groups/scientists",
+			"policies=foo,bar",
+		})
+		So(code, ShouldEqual, 0)
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/groups/engineers",
+			"policies=foobar",
+		})
+		So(code, ShouldEqual, 0)
+		code = (&command.WriteCommand{Meta: m}).Run([]string{
+			"-address", addr,
+			"auth/ldap/users/tesla",
+			"policies=zoobar",
+			"groups=engineers",
+		})
+		So(code, ShouldEqual, 0)
+
 		// return address, root token, and goldfish's token in a wrapping token
 		f(addr, result.RootToken, token)
 	}
@@ -192,16 +233,17 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(len(wrappingToken), ShouldEqual, 36)
 			fmt.Println("Started vault core with root token:", root)
 
-			// setup cmd line args
-			VaultAddress = addr
-			VaultSkipTLS = false
+			vaultConfig = config.VaultConfig{
+				Type:            "vault",
+				Address:         addr,
+				Runtime_config:  "secret/goldfish",
+				Approle_login:   "auth/approle/login",
+				Approle_id:      "goldfish",
+				Tls_skip_verify: false,
+			}
 
 			// function will output the token accessor
-			err := StartGoldfishWrapper(
-				wrappingToken,
-				"auth/approle/login",
-				"goldfish",
-			)
+			err := StartGoldfishWrapper(wrappingToken)
 			So(err, ShouldBeNil)
 
 			// test loading config from secret path
@@ -226,7 +268,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			// run-time config
 			Convey("Config should be loaded", func() {
 				c := GetConfig()
-				So(c, ShouldResemble, Config{
+				So(c, ShouldResemble, RuntimeConfig{
 					ServerTransitKey:  "goldfish",
 					UserTransitKey:    "usertransit",
 					TransitBackend:    "transit",
@@ -509,6 +551,36 @@ func TestGoldfishWrapper(t *testing.T) {
 				resp, err = (&AuthInfo{ID: "testuser", Pass: "foobar", Type: "userpass"}).Login()
 				So(err, ShouldNotBeNil)
 				So(resp, ShouldBeNil)
+
+				resp, err = (&AuthInfo{ID: "tesla", Pass: "password", Type: "ldap"}).Login()
+				So(err, ShouldNotBeNil)
+				So(resp, ShouldBeNil)
+			})
+
+			// ldap
+			Convey("Listing LDAP groups and users", func() {
+				resp, err := rootAuth.ListLDAPGroups()
+				So(err, ShouldBeNil)
+				So(resp, ShouldResemble, []LDAPGroup{
+					LDAPGroup{
+						Name: "engineers",
+						Policies: []string{"default", "foobar"},
+					},
+					LDAPGroup{
+						Name: "scientists",
+						Policies: []string{"bar", "default", "foo"},
+					},
+				})
+
+				resp2, err := rootAuth.ListLDAPUsers()
+				So(err, ShouldBeNil)
+				So(resp2, ShouldResemble, []LDAPUser{
+					LDAPUser{
+						Name: "tesla",
+						Policies: []string{"default", "zoobar"},
+						Groups: []string{"engineers"},
+					},
+				})
 			})
 
 		})) // end prepared vault convey

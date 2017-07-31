@@ -64,37 +64,35 @@
       <div class="tile is-parent is-marginless is-paddingless">
         <div class="tile is-parent is-child is-vertical is-5">
           <article class="tile is-child box">
-            <div class="table-responsive">
-              <table class="table is-striped is-narrow">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Policy Name</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(entry, index) in filteredPolicies">
-                    <td width="34">
-                      <span class="icon">
-                      <a @click="getPolicyRules(entry)">
-                        <i class="fa fa-info"></i>
-                      </a>
-                      </span>
-                    </td>
-                    <td>
-                      {{ entry }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <table class="table is-fullwidth is-striped is-narrow">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Policy Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(entry, index) in filteredPolicies">
+                  <td width="34">
+                    <span class="icon">
+                    <a @click="getPolicyRules(entry)">
+                      <i class="fa fa-info"></i>
+                    </a>
+                    </span>
+                  </td>
+                  <td>
+                    {{ entry }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </article>
         </div>
 
       <!-- Policy details -->
         <div class="tile is-parent is-vertical">
           <article class="tile is-child box">
-            <h4 class="title is-4">Policy Rules</h4>
+            <h4 class="subtitle is-4">Policy Rules</h4>
 
             <div class="field">
               <p class="control">

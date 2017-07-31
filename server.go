@@ -63,44 +63,30 @@ func main() {
 	// if dev mode, run a localhost dev vault instance
 	if devMode {
 		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
-		if err != nil {
-			panic(err)
-		}
+		log.Println("[INFO ]: Dev mode wrapping token: " + wrappingToken)
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
+	}
+	if err != nil {
+		panic(err)
+	}
 
-		if err != nil {
+	if !cfg.Listener.Disable_mlock {
+		if err := mlock.LockMemory(); err != nil {
+			log.Fatalf(mlockError, err.Error())
+		}
+	}
+	
+	vault.SetConfig(cfg.Vault)
+
+	// if wrapping token is provided, bootstrap goldfish immediately
+	if wrappingToken != "" {
+		if err := vault.StartGoldfishWrapper(wrappingToken); err != nil {
 			panic(err)
 		}
-
-		// Only in prod mode and only when mlock is not disabled
-		if !cfg.Listener.Disable_mlock {
-			// Ensure our memory usage is locked into physical RAM
-			if err = mlock.LockMemory(); err != nil {
-				log.Fatalf("Failed to lock memory: %s. Probably mlock syscall is not available. "+
-					"To leave memory unsafe set `disable_mlock` configuration option in config",
-					err)
-			}
-		}
 	}
 
-	// if API wrapper can't start, panic is justified
-	vault.VaultAddress = cfg.Vault.Address
-	vault.VaultSkipTLS = cfg.Vault.Tls_skip_verify
-	if err := vault.StartGoldfishWrapper(
-		wrappingToken,
-		cfg.Vault.Approle_login,
-		cfg.Vault.Approle_id,
-	); err != nil {
-		panic(err)
-	}
-
-	// load config from vault and start goroutines
-	if err := vault.LoadRuntimeConfig(cfg.Vault.Runtime_config); err != nil {
-		panic(err)
-	}
-
-	// if we got here, goldfish has hooked up to vault successfully
+	// display welcome message
 	if devMode {
 		fmt.Printf(devInitString)
 	}
@@ -161,6 +147,7 @@ func main() {
 	// API routing
 	e.GET("/v1/health", handlers.Health())
 	e.GET("/v1/vaulthealth", handlers.VaultHealth())
+	e.POST("/v1/bootstrap", handlers.Bootstrap())
 
 	e.POST("/v1/login", handlers.Login())
 	e.POST("/v1/login/renew-self", handlers.RenewSelf())
@@ -177,6 +164,9 @@ func main() {
 
 	e.GET("/v1/approle/roles", handlers.GetApproleRoles())
 	e.POST("/v1/approle/delete", handlers.DeleteApproleRole())
+
+	e.GET("/v1/ldap/groups", handlers.GetLDAPGroups())
+	e.GET("/v1/ldap/users", handlers.GetLDAPUsers())
 
 	e.GET("/v1/policy", handlers.GetPolicy())
 	e.DELETE("/v1/policy", handlers.DeletePolicy())
@@ -248,3 +238,16 @@ Goldfish successfully bootstrapped to vault
 
 
 `
+
+const mlockError = `
+Failed to use mlock to prevent swap usage: %s
+
+Goldfish uses mlock similar to Vault. See here for details: 
+https://www.vaultproject.io/docs/configuration/index.html#disable_mlock
+
+To enable mlock without launching goldfish as root:
+sudo setcap cap_ipc_lock=+ep $(readlink -f $(which vault))
+
+To disable mlock entirely, set disable_mlock to "1" in config file
+`
+
