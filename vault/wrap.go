@@ -3,6 +3,8 @@ package vault
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/hashicorp/vault/api"
 )
 
 func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
@@ -29,7 +31,7 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 	return resp.WrapInfo.Token, nil
 }
 
-func (auth *AuthInfo) UnwrapData(wrappingToken string) (map[string]interface{}, error) {
+func (auth *AuthInfo) UnwrapData(wrappingToken string) (*api.Secret, error) {
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -46,5 +48,5 @@ func (auth *AuthInfo) UnwrapData(wrappingToken string) (map[string]interface{}, 
 	if err != nil {
 		return nil, errors.New("Failed to unwrap provided token " + err.Error())
 	}
-	return resp.Data, nil
+	return resp, nil
 }

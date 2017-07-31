@@ -227,7 +227,7 @@ export default {
           message: 'Token unwrapped',
           type: 'success'
         })
-        this.unpackData(response.data.result)
+        this.unpackData(response.data.result.data || response.data.result.auth)
       })
       .catch((error) => {
         this.$onError(error)
