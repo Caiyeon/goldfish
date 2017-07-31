@@ -293,7 +293,7 @@ func TestConfigParser(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(shutdownCh, ShouldNotBeNil)
 		defer close(shutdownCh)
-		So(cfg, ShouldResemble, defaultParsedConfig)
+		So(cfg, ShouldResemble, devParsedConfig)
 		So(secretID, ShouldNotBeNil)
 
 		// validate health of vault
@@ -314,7 +314,7 @@ func TestConfigParser(t *testing.T) {
 	Convey("Loading valid custom config", t, func() {
 		cfg, err := LoadConfigFile("sample.hcl")
 		So(err, ShouldBeNil)
-		So(cfg, ShouldResemble, defaultParsedConfig)
+		So(cfg, ShouldResemble, sampleParsedConfig)
 	})
 
 	Convey("Loading invalid custom config - no file specified", t, func() {
@@ -360,4 +360,38 @@ var defaultParsedConfig = &Config {
 		Approle_login:  "auth/approle/login",
 		Approle_id:     "goldfish",
 	},
+	DisableMlock: false,
+}
+
+var devParsedConfig = &Config {
+	Listener: &ListenerConfig {
+		Type:        "tcp",
+		Address:     "127.0.0.1:8000",
+		Tls_disable: true,
+	},
+	Vault: &VaultConfig {
+		Type:           "vault",
+		Address:        "http://127.0.0.1:8200",
+		Runtime_config: "secret/goldfish",
+		Approle_login:  "auth/approle/login",
+		Approle_id:     "goldfish",
+	},
+	DisableMlock: true,
+}
+
+var sampleParsedConfig = &Config {
+	Listener: &ListenerConfig {
+		Type:        "tcp",
+		Address:     "127.0.0.1:8000",
+		Tls_disable: true,
+	},
+	Vault: &VaultConfig {
+		Type:           "vault",
+		Address:        "http://127.0.0.1:8200",
+		Runtime_config: "secret/goldfish",
+		Approle_login:  "auth/approle/login",
+		Approle_id:     "goldfish",
+	},
+	DisableMlock: false,
+	DisableMlockRaw: 0,
 }
