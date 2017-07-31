@@ -96,7 +96,10 @@ func ParseConfig(d string) (*Config, error) {
 	}
 
 	// make a new config and decode hcl
-	var result Config
+	result := Config{
+		Listener: &ListenerConfig{},
+		Vault:    &VaultConfig{},
+	}
 	if err := hcl.DecodeObject(&result, obj); err != nil {
 		return nil, err
 	}
