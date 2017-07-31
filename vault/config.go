@@ -47,7 +47,12 @@ func GetConfig() RuntimeConfig {
 }
 
 func loadConfigFromVault(path string) error {
-	resp, err := vaultClient.Logical().Read(path)
+	client, err := NewGoldfishVaultClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Logical().Read(path)
 	if err != nil {
 		return err
 	} else if resp == nil {
@@ -85,7 +90,7 @@ func loadConfigFromVault(path string) error {
 	// timestamp the change in vault, notifying operators that the config has been updated
 	// if timestamp can't be written, operation should be aborted
 	temp.LastUpdated = time.Now().Format(time.UnixDate)
-	_, err = vaultClient.Logical().Write(path, structs.Map(temp))
+	_, err = client.Logical().Write(path, structs.Map(temp))
 	if err != nil {
 		return errors.New("Goldfish could not write to runtime config path: " + err.Error())
 	}

@@ -10,7 +10,6 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	client.SetToken(vaultToken)
 
 	// unmarshal raw string into a map
 	var data map[string]interface{}
@@ -31,6 +30,7 @@ func (auth *AuthInfo) WrapData(wrapttl string, raw string) (string, error) {
 }
 
 func (auth *AuthInfo) UnwrapData(wrappingToken string) (map[string]interface{}, error) {
+	// unwrap uses the manual client creation in case auth's ID is empty
 	client, err := NewVaultClient()
 	if err != nil {
 		return nil, err

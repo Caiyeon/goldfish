@@ -18,7 +18,6 @@ type AuthInfo struct {
 var (
 	vaultConfig  config.VaultConfig
 	vaultToken   string
-	vaultClient  *api.Client
 	errorChannel = make(chan error, 1)
 )
 
@@ -49,6 +48,13 @@ func NewVaultClient() (*api.Client, error) {
 	return client, nil
 }
 
+func NewGoldfishVaultClient() (client *api.Client, err error) {
+	if client, err = NewVaultClient; err == nil {
+		client.SetToken(vaultToken)
+	}
+	return client, err
+}
+
 func StartGoldfishWrapper(wrappingToken string) error {
 	if wrappingToken == "" {
 		return errors.New("Token must be provided in non-dev mode")
@@ -58,11 +64,10 @@ func StartGoldfishWrapper(wrappingToken string) error {
 	if err != nil {
 		return err
 	}
-	vaultClient = client
 
 	// make a raw unwrap call. This will use the token as a header
-	vaultClient.SetToken(wrappingToken)
-	resp, err := vaultClient.Logical().Unwrap("")
+	client.SetToken(wrappingToken)
+	resp, err := client.Logical().Unwrap("")
 	if err != nil {
 		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
 	}
@@ -84,7 +89,7 @@ func StartGoldfishWrapper(wrappingToken string) error {
 	}
 
 	// fetch vault token with secret_id
-	resp, err = vaultClient.Logical().Write(vaultConfig.Approle_login,
+	resp, err = client.Logical().Write(vaultConfig.Approle_login,
 		map[string]interface{}{
 			"role_id":   vaultConfig.Approle_id,
 			"secret_id": secretID,
@@ -95,8 +100,8 @@ func StartGoldfishWrapper(wrappingToken string) error {
 
 	// verify that the secret_id is valid
 	vaultToken = resp.Auth.ClientToken
-	vaultClient.SetToken(resp.Auth.ClientToken)
-	if _, err := vaultClient.Auth().Token().LookupSelf(); err != nil {
+	client.SetToken(resp.Auth.ClientToken)
+	if _, err := client.Auth().Token().LookupSelf(); err != nil {
 		return err
 	}
 
