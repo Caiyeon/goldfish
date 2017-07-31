@@ -104,6 +104,14 @@ func main() {
 		Level: 5,
 	}))
 
+	// prevent caching by client (e.g. Safari)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+	    return func(c echo.Context) error {
+	        c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	        return next(c)
+	    }
+	})
+
 	// unless explicitly disabled, some extra https configurations need to be set
 	if !cfg.Listener.Tls_disable {
 		// add extra security headers
