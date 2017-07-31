@@ -224,10 +224,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 	}
 
 	if disableMlock, ok := m["disable_mlock"]; ok {
-		if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
-			// Mlock is only supported on Darwin and Linux
-			result.Listener.Disable_mlock = true
-		} else if disableMlock == "1" {
+		if disableMlock == "1" {
 			result.Listener.Disable_mlock = true
 		} else if disableMlock != "0" {
 			return fmt.Errorf("listener.%s: disable_mlock can be 0 or 1", key)
