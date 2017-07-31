@@ -1,5 +1,5 @@
 <template>
-  <nav class="level app-levelbar">
+  <nav class="level">
     <div class="level-left">
       <div class="level-item">
         <h3 class="subtitle is-5">
@@ -8,13 +8,17 @@
       </div>
     </div>
 
-    <nav class="breadcrumb is-right">
-      <ul>
-        <li v-for="(item, index) in list" v-bind:class="{ 'is-active': (index + 1 === list.length) }">
-          <router-link :to="item.path">{{item.name}}</router-link>
-        </li>
-      </ul>
-    </nav>
+    <div class="level-right is-hidden-mobile">
+      <div class="level-item">
+        <nav class="breadcrumb is-right">
+          <ul>
+            <li v-for="(item, index) in list" v-bind:class="{ 'is-active': (index + 1 === list.length) }">
+              <router-link :to="item.path">{{item.name}}</router-link>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
 
   </nav>
 </template>

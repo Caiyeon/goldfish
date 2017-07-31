@@ -4,50 +4,48 @@
 
       <div class="tile is-parent is-vertical is-6">
         <article class="tile is-child box">
-          <div class="table-responsive">
-            <table class="table is-striped is-narrow">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Path</th>
-                  <th>Def_TTL</th>
-                  <th>Max_TTL</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(mount, index) in mounts">
-                  <td width="68">
-                    <span class="tag is-danger is-pulled-left">
-                      {{ mount.type }}
-                    </span>
-                  </td>
-                  <td>
-                    <tooltip v-bind:label="mount.desc" placement="right" type="info" :rounded="true" >
-                      <a @click="getMountConfig(index)">
-                        {{ mount.path }}
-                      </a>
-                    </tooltip>
-                  </td>
-                  <td width="68">
-                    <span class="tag is-primary is-pulled-left">
-                      {{ mount.conf.default_lease_ttl === 0 ? 'Default' : mount.conf.default_lease_ttl }}
-                    </span>
-                  </td>
-                  <td width="68">
-                    <span class="tag is-primary is-pulled-left">
-                      {{ mount.conf.max_lease_ttl === 0 ? 'Default' : mount.conf.max_lease_ttl }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <table class="table is-fullwidth is-striped is-narrow">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Path</th>
+                <th>Def_TTL</th>
+                <th>Max_TTL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(mount, index) in mounts">
+                <td width="68">
+                  <span class="tag is-danger is-pulled-left">
+                    {{ mount.type }}
+                  </span>
+                </td>
+                <td>
+                  <tooltip v-bind:label="mount.desc" placement="right" type="info" :rounded="true" >
+                    <a @click="getMountConfig(index)">
+                      {{ mount.path }}
+                    </a>
+                  </tooltip>
+                </td>
+                <td width="68">
+                  <span class="tag is-primary is-pulled-left">
+                    {{ mount.conf.default_lease_ttl === 0 ? 'Default' : mount.conf.default_lease_ttl }}
+                  </span>
+                </td>
+                <td width="68">
+                  <span class="tag is-primary is-pulled-left">
+                    {{ mount.conf.max_lease_ttl === 0 ? 'Default' : mount.conf.max_lease_ttl }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </article>
       </div>
 
       <div class="tile is-parent is-vertical is-6">
         <article class="tile is-child box">
-          <h4 class="title is-4">Mount Config</h4>
+          <h4 class="subtitle is-4">Mount Config</h4>
 
           <div class="field">
             <p class="control">

@@ -33,7 +33,7 @@
           </div>
 
           <!-- Tokens tab -->
-          <div v-if="tabName === 'token'" class="tile is-parent table-responsive is-vertical">
+          <div v-if="tabName === 'token'" class="tile is-parent is-vertical">
 
             <!-- Token pages -->
             <nav class="pagination is-right">
@@ -151,7 +151,7 @@
             <label class="label"></label>
 
             <!-- Tokens table -->
-            <table class="table is-striped is-narrow">
+            <table class="table is-fullwidth is-striped is-narrow">
               <thead>
                 <tr>
                   <th></th>
@@ -186,8 +186,8 @@
           </div>
 
           <!-- Userpass tab -->
-          <div v-if="tabName === 'userpass'" class="table-responsive">
-            <table class="table is-striped is-narrow">
+          <div v-if="tabName === 'userpass'">
+            <table class="table is-fullwidth is-striped is-narrow">
               <thead>
                 <tr>
                   <th></th>
@@ -222,8 +222,8 @@
           </div>
 
           <!-- AppRole tab -->
-          <div v-if="tabName === 'approle'" class="table-responsive">
-            <table class="table is-striped is-narrow">
+          <div v-if="tabName === 'approle'">
+            <table class="table is-fullwidth is-striped is-narrow">
               <thead>
                 <tr>
                   <th></th>
@@ -258,7 +258,7 @@
           </div>
 
           <!-- LDAP tab -->
-          <div v-if="tabName === 'ldap'" class="table-responsive">
+          <div v-if="tabName === 'ldap'">
 
             <nav class="level">
               <div class="level-item has-text-centered">
@@ -277,7 +277,7 @@
               <div class="column">
 
                 <!-- LDAP Groups table-->
-                <table class="table is-striped is-narrow">
+                <table class="table is-fullwidth is-striped is-narrow">
                   <thead>
                     <tr>
                       <!-- If entry doesn't have 'Groups' field, it's a LDAP group -->
@@ -299,7 +299,7 @@
               </div>
               <div class="column">
 
-                <table class="table is-striped is-narrow">
+                <table class="table is-fullwidth is-striped is-narrow">
                   <thead>
                     <tr>
                       <th v-for="key in tableColumns">

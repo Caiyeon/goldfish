@@ -10,8 +10,8 @@
               <nav class="level-left">
                 <div class="level-item">
                   <p class="subtitle is-5">
-                    <strong>Goldfish is using transit key {{editing ? '' : userTransitKey}}</strong>
-                      <p v-if="editing" class="control">
+                    Goldfish is using transit key <strong>{{editing ? ' ' : userTransitKey}}</strong>
+                      &nbsp;<p v-if="editing" class="control">
                         <input class="input is-small"
                         type="text" placeholder="Enter transit key"
                         v-model="userTransitKey"
@@ -32,7 +32,7 @@
             <!-- encrypt tile -->
             <article class="tile is-parent is-6">
               <div class="tile is-child box">
-                <h3 class="title is-3">Encrypt</h3>
+                <h4 class="subtitle is-4">Encrypt</h4>
 
                 <div class="field">
                   <p class="control">
@@ -65,7 +65,7 @@
             <!-- decrypt tile -->
             <article class="tile is-parent is-6">
               <div class="tile is-child box">
-                <h3 class="title is-3">Decrypt</h3>
+                <h4 class="subtitle is-4">Decrypt</h4>
 
                 <div class="field">
                   <p class="control">
