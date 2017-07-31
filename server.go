@@ -71,12 +71,12 @@ func main() {
 		panic(err)
 	}
 
-	if !cfg.Listener.Disable_mlock {
+	if !cfg.DisableMlock {
 		if err := mlock.LockMemory(); err != nil {
 			log.Fatalf(mlockError, err.Error())
 		}
 	}
-	
+
 	vault.SetConfig(cfg.Vault)
 
 	// if wrapping token is provided, bootstrap goldfish immediately
@@ -242,12 +242,11 @@ Goldfish successfully bootstrapped to vault
 const mlockError = `
 Failed to use mlock to prevent swap usage: %s
 
-Goldfish uses mlock similar to Vault. See here for details: 
+Goldfish uses mlock similar to Vault. See here for details:
 https://www.vaultproject.io/docs/configuration/index.html#disable_mlock
 
 To enable mlock without launching goldfish as root:
-sudo setcap cap_ipc_lock=+ep $(readlink -f $(which vault))
+sudo setcap cap_ipc_lock=+ep $(readlink -f $(which goldfish))
 
 To disable mlock entirely, set disable_mlock to "1" in config file
 `
-

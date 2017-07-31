@@ -19,10 +19,6 @@ listener "tcp" {
 	# [Optional] [Default: 0] [Allowed values: 0, 1]
 	# If this is set to 1, goldfish will redirect port 80 to port 443
 	tls_autoredirect = 0
-
-	# [Optional] [Default: 0] [Allowed values: 0, 1]
-	# Set to 1 to disable mlock. Implementation is similar to vault - see vault docs for details
-	disable_mlock = 0
 }
 
 # [Required] vault defines how goldfish should bootstrap to vault
@@ -48,3 +44,7 @@ vault {
 	# You can omit this if you already customized the approle ID to be 'goldfish'
 	approle_id      = "goldfish"
 }
+
+# [Optional] [Default: 0] [Allowed values: 0, 1]
+# Set to 1 to disable mlock. Implementation is similar to vault - see vault docs for details
+disable_mlock = 0

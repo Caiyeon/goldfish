@@ -9,13 +9,16 @@ import (
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
+	"github.com/hashicorp/vault/helper/parseutil"
 )
 
 var ch = make(chan error)
 
 type Config struct {
-	Listener *ListenerConfig `hcl:"-"`
-	Vault    *VaultConfig    `hcl:"-"`
+	Listener        *ListenerConfig `hcl:"-"`
+	Vault           *VaultConfig    `hcl:"-"`
+	DisableMlock    bool            `hcl:"-"`
+	DisableMlockRaw interface{}     `hcl:"disable_mlock"`
 }
 
 type ListenerConfig struct {
@@ -25,7 +28,6 @@ type ListenerConfig struct {
 	Tls_cert_file    string
 	Tls_key_file     string
 	Tls_autoredirect bool
-	Disable_mlock    bool
 }
 
 type VaultConfig struct {
@@ -74,6 +76,7 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 			Approle_login:  "auth/approle/login",
 			Approle_id:     "goldfish",
 		},
+		DisableMlock: true,
 	}
 
 	// generate an approle secret ID
@@ -92,10 +95,8 @@ func ParseConfig(d string) (*Config, error) {
 		return nil, err
 	}
 
-	result := Config{
-		Listener: &ListenerConfig{},
-		Vault:    &VaultConfig{},
-	}
+	// make a new config and decode hcl
+	var result Config
 	if err := hcl.DecodeObject(&result, obj); err != nil {
 		return nil, err
 	}
@@ -106,10 +107,18 @@ func ParseConfig(d string) (*Config, error) {
 		return nil, errors.New("[ERROR]: Config file doesn't have a root object")
 	}
 
+	// perform checks on root config keys
+	if result.DisableMlockRaw != nil {
+		if result.DisableMlock, err = parseutil.ParseBool(result.DisableMlockRaw); err != nil {
+			return nil, err
+		}
+	}
+
 	// config root object should contain only this set of keys
 	valid := []string{
 		"listener",
 		"vault",
+		"disable_mlock",
 	}
 	if err := checkHCLKeys(list, valid); err != nil {
 		return nil, err
@@ -176,7 +185,6 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		"tls_cert_file",
 		"tls_key_file",
 		"tls_autoredirect",
-		"disable_mlock",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
@@ -219,14 +227,6 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 			result.Listener.Tls_autoredirect = true
 		} else if redirect != "0" {
 			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1", key)
-		}
-	}
-
-	if disableMlock, ok := m["disable_mlock"]; ok {
-		if disableMlock == "1" {
-			result.Listener.Disable_mlock = true
-		} else if disableMlock != "0" {
-			return fmt.Errorf("listener.%s: disable_mlock can be 0 or 1", key)
 		}
 	}
 
