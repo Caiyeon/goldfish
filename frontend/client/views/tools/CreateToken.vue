@@ -299,7 +299,7 @@
           <div v-if="selectedRole && selectedRoleDetails" class="field">
             <label class="label">Selected role: {{selectedRole}}</label>
             <article class="message is-info">
-              <pre v-highlightjs="JSON.stringify(createdToken, null, '    ')"><code class="javascript"></code></pre>
+              <pre v-highlightjs="JSON.stringify(selectedRoleDetails, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
