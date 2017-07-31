@@ -11,7 +11,7 @@
       <a :href="homepage">Live Demo</a>
     </p>
 
-    <p>Supports Vue 2.0 and Bulma 0.4!</p>
+    <p>Supports Vue 2.0 and Bulma 0.5!</p>
   </div>
 </template>
 
