@@ -287,10 +287,14 @@ export default {
         wrapping_token: this.secretID
       })
       .then((response) => {
+        this.$notify({
+          title: 'Success',
+          message: 'Goldfish successfully bootstrapped!',
+          type: 'success'
+        })
         this.secretID = ''
         this.bootstrapLoading = false
-        console.log(response.data.result)
-        // reload health so that setup tiles can be swapped to login tiles
+        // reload health so that the bootstrap tile can be toggled off by vue
         this.getGoldfishHealth()
       })
       .catch((error) => {
