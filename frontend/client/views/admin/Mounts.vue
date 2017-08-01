@@ -49,7 +49,10 @@
 
           <div class="field">
             <p class="control">
-              <textarea class="textarea" placeholder="Select a mount" v-model="mountConfigModified"></textarea>
+              <textarea class="textarea"
+              placeholder="Select a mount"
+              v-model="mountConfigModified"
+              rows="5"></textarea>
             </p>
           </div>
 

@@ -96,7 +96,10 @@
 
             <div class="field">
               <p class="control">
-                <textarea class="textarea" placeholder="Select a policy" v-model="policyRulesModified"></textarea>
+                <textarea class="textarea"
+                placeholder="Select a policy"
+                v-model="policyRulesModified"
+                rows="20"></textarea>
               </p>
             </div>
 
@@ -296,9 +299,5 @@ export default {
 
   .fa-info {
     color: lightskyblue;
-  }
-
-  .textarea {
-    height: 500px;
   }
 </style>

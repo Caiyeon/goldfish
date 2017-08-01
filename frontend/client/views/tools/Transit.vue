@@ -36,7 +36,10 @@
 
                 <div class="field">
                   <p class="control">
-                    <textarea v-model="plaintext" class="textarea" placeholder="Paste something here"></textarea>
+                    <textarea v-model="plaintext"
+                    class="textarea"
+                    placeholder="Paste something here"
+                    rows="10"></textarea>
                   </p>
                 </div>
 
@@ -69,7 +72,10 @@
 
                 <div class="field">
                   <p class="control">
-                    <textarea v-model="cipher" class="textarea" placeholder="Paste something here"></textarea>
+                    <textarea v-model="cipher"
+                    class="textarea"
+                    placeholder="Paste something here"
+                    rows="10"></textarea>
                   </p>
                 </div>
 
