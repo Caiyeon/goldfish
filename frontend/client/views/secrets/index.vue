@@ -343,6 +343,7 @@ export default {
 
       .catch((error) => {
         this.$onError(error)
+        this.tableData = []
       })
     },
 
