@@ -70,7 +70,13 @@ func (auth AuthInfo) RevokeTokenByAccessor(acc string) error {
 	return err
 }
 
-func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest, wrapttl string) (*api.Secret, error) {
+func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest, orphan bool,
+	rolename string, wrapttl string) (*api.Secret, error) {
+
+	if orphan && rolename != "" {
+		return nil, errors.New("Orphan and role are mutually exclusive parameters")
+	}
+
 	client, err := auth.Client()
 	if err != nil {
 		return nil, err
@@ -83,6 +89,11 @@ func (auth AuthInfo) CreateToken(opts *api.TokenCreateRequest, wrapttl string) (
 		})
 	}
 
+	if orphan {
+		return client.Auth().Token().CreateOrphan(opts)
+	} else if rolename != "" {
+		return client.Auth().Token().CreateWithRole(opts, rolename)
+	}
 	return client.Auth().Token().Create(opts)
 }
 

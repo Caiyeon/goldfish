@@ -110,7 +110,12 @@ func CreateToken() echo.HandlerFunc {
 			})
 		}
 
-		if resp, err := auth.CreateToken(request, c.QueryParam("wrap-ttl")); err != nil {
+		if resp, err := auth.CreateToken(
+			request,
+			c.QueryParam("orphan") == "true",
+			c.QueryParam("role"),
+			c.QueryParam("wrap-ttl"),
+		); err != nil {
 			return parseError(c, err)
 		} else {
 			return c.JSON(http.StatusOK, H{

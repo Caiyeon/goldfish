@@ -119,6 +119,22 @@
             </div>
           </div>
 
+          <!-- Orphan -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">
+                Orphan?
+              </label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <vb-switch type="info" :checked="bOrphan" v-model="bOrphan"></vb-switch>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- No-parent -->
           <div v-if="availablePolicies.indexOf('root') > -1" class="field is-horizontal">
             <div class="field-label is-normal">
@@ -266,6 +282,14 @@
         <div class="column is-6">
 
           <!-- Warnings -->
+          <div v-if="bOrphan && selectedRole" class="field">
+            <article class="message is-danger">
+              <div class="message-body">
+                <strong>Invalid: orphaned and role selections are mutually exclusive
+                  (vault API only allows one or the other)</strong>
+              </div>
+            </article>
+          </div>
           <div v-if="availableRoles === null" class="field">
             <article class="message is-warning">
               <div class="message-body">
@@ -345,6 +369,7 @@ export default {
       bRole: false,
       bWrapped: false,
       bMetadata: false,
+      bOrphan: false,
       ID: '',
       displayName: '',
       ttl: '',
@@ -419,11 +444,18 @@ export default {
       return payload
     },
 
-    wrapParam: function () {
+    createParams: function () {
+      var params = ''
       if (this.bWrapped) {
-        return 'wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
+        params = params + 'wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's&'
       }
-      return ''
+      if (this.bOrphan) {
+        params = params + 'orphan=true&'
+      }
+      if (this.bRole) {
+        params = params + 'role=' + encodeURIComponent(this.selectedRole) + '&'
+      }
+      return params
     }
   },
 
@@ -524,7 +556,7 @@ export default {
       }
 
       this.createdToken = null
-      this.$http.post('/v1/token/create?' + this.wrapParam, this.payloadJSON, {
+      this.$http.post('/v1/token/create?' + this.createParams, this.payloadJSON, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
