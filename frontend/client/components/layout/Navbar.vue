@@ -78,6 +78,13 @@
 
           <!-- rightside -->
           <div class="navbar-end">
+            <div class="navbar-item" v-if="updateAvailable">
+              <div class="tags has-addons">
+                <span class="tag is-primary">Update Available</span>
+                <span class="tag is-info">{{latestRelease.tag_name}}</span>
+              </div>
+            </div>
+
             <div class="navbar-item has-dropdown is-hoverable">
               <a class="navbar-link is-active">
                 Docs
@@ -136,7 +143,8 @@ export default {
     return {
       profileDropdown: false,
       position: ['center', 'bottom', 'center', 'top'],
-      now: moment()
+      now: moment(),
+      latestRelease: null
     }
   },
 
@@ -159,6 +167,15 @@ export default {
     } else {
       this.$store.commit('clearSession')
     }
+
+    // on load, check for latest stable release
+    this.$http.get('https://api.github.com/repos/caiyeon/goldfish/releases/latest')
+    .then((response) => {
+      this.latestRelease = response.data
+    })
+    .catch((error) => {
+      this.$onError(error)
+    })
   },
 
   computed: {
@@ -173,6 +190,24 @@ export default {
         return ''
       }
       return this.now.to(moment(this.session['token_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY'))
+    },
+
+    // parses current package info vs latest stable release to detect if an update is available
+    updateAvailable: function () {
+      if (this.latestRelease && this.latestRelease.tag_name) {
+        var currVersions = this.pkginfo.version.split('v').pop().split('-')[0].split('.')
+        var newVersions = this.latestRelease.tag_name.split('v').pop().split('-')[0].split('.')
+        if (newVersions[0] > currVersions[0]) {
+          return true
+        } else if (newVersions[0] === currVersions[0]) {
+          if (newVersions[1] > currVersions[1]) {
+            return true
+          } else if (newVersions[1] === currVersions[1] && newVersions[2] > currVersions[2]) {
+            return true
+          }
+        }
+      }
+      return false
     }
   },
 
