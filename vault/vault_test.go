@@ -9,8 +9,8 @@ import (
 	"github.com/caiyeon/goldfish/config"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/builtin/credential/approle"
-	"github.com/hashicorp/vault/builtin/credential/userpass"
 	"github.com/hashicorp/vault/builtin/credential/ldap"
+	"github.com/hashicorp/vault/builtin/credential/userpass"
 	"github.com/hashicorp/vault/builtin/logical/transit"
 	"github.com/hashicorp/vault/command"
 	"github.com/hashicorp/vault/helper/logformat"
@@ -40,7 +40,7 @@ func WithPreparedVault(t *testing.T, f func(addr, root, wrappingToken string)) f
 			CredentialBackends: map[string]logical.Factory{
 				"approle":  approle.Factory,
 				"userpass": userpass.Factory,
-				"ldap": ldap.Factory,
+				"ldap":     ldap.Factory,
 			},
 			DisableMlock: true,
 			Seal:         nil,
@@ -353,7 +353,7 @@ func TestGoldfishWrapper(t *testing.T) {
 
 			// tokens
 			Convey("Creating a token", func() {
-				resp, err := rootAuth.CreateToken(&api.TokenCreateRequest{}, "")
+				resp, err := rootAuth.CreateToken(&api.TokenCreateRequest{}, false, "", "")
 				So(err, ShouldBeNil)
 				So(len(resp.Auth.ClientToken), ShouldEqual, 36)
 
@@ -364,7 +364,7 @@ func TestGoldfishWrapper(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(accessors), ShouldEqual, 3)
 
-					_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, "")
+					_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, true, "", "")
 					So(err, ShouldBeNil)
 
 					accessorsAfter, err := rootAuth.GetTokenAccessors()
@@ -373,7 +373,7 @@ func TestGoldfishWrapper(t *testing.T) {
 				})
 
 				Convey("With a wrapped ttl", func() {
-					resp, err := rootAuth.CreateToken(&api.TokenCreateRequest{}, "300s")
+					resp, err := rootAuth.CreateToken(&api.TokenCreateRequest{}, false, "", "300s")
 					So(err, ShouldBeNil)
 					So(len(resp.WrapInfo.Token), ShouldEqual, 36)
 
@@ -569,11 +569,11 @@ func TestGoldfishWrapper(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(resp, ShouldResemble, []LDAPGroup{
 					LDAPGroup{
-						Name: "engineers",
+						Name:     "engineers",
 						Policies: []string{"default", "foobar"},
 					},
 					LDAPGroup{
-						Name: "scientists",
+						Name:     "scientists",
 						Policies: []string{"bar", "default", "foo"},
 					},
 				})
@@ -582,9 +582,9 @@ func TestGoldfishWrapper(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(resp2, ShouldResemble, []LDAPUser{
 					LDAPUser{
-						Name: "tesla",
+						Name:     "tesla",
 						Policies: []string{"default", "zoobar"},
-						Groups: []string{"engineers"},
+						Groups:   []string{"engineers"},
 					},
 				})
 			})
