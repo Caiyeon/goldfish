@@ -135,6 +135,13 @@ func setupVault(addr, rootToken string) error {
 		return err
 	}
 
+	// write a test role
+	if _, err := client.Logical().Write("auth/token/roles/testrole", map[string]interface{}{
+		"allowed_roles": "abc",
+	}); err != nil {
+		return err
+	}
+
 	// write sample bulletins
 	if _, err := client.Logical().Write("secret/bulletins/bulletina", map[string]interface{}{
 		"message": "hello world",
