@@ -2,7 +2,7 @@ package request
 
 import (
 	"testing"
-	"fmt"
+
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/vault"
 	. "github.com/smartystreets/goconvey/convey"
@@ -22,8 +22,6 @@ func TestRequestSystem(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("Unseal tokens: %q", unsealTokens)
 
 	Convey("Testing request system", t, func() {
 		// this will be imitating the client token
@@ -45,6 +43,19 @@ func TestRequestSystem(t *testing.T) {
 			polreq, ok := req.(*PolicyRequest)
 			So(ok, ShouldEqual, true)
 			So(polreq, ShouldNotBeEmpty)
+
+			// approve the request
+			err = req.Approve(hash, unsealTokens[0])
+			So(err, ShouldBeNil)
+			err = req.Approve(hash, unsealTokens[1])
+			So(err, ShouldBeNil)
+			err = req.Approve(hash, unsealTokens[2])
+			So(err, ShouldBeNil)
+
+			// confirm changes were made
+			rules, err := rootAuth.GetPolicy("abc")
+			So(err, ShouldBeNil)
+			So(rules, ShouldEqual, "# this is a sample policy rule")
 		})
 	})
 }
