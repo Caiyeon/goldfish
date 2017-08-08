@@ -86,8 +86,52 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 	}
 }
 
-// delete request, if user is authorized to read resource
-func Remove(auth *vault.AuthInfo, hash string) error {
+// if unseal is nonempty string, approve request with current auth
+// otherwise, add unseal to list of unseals to generate root token later
+func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
+	// fetch request from cubbyhole
+	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("Change ID not found")
+	}
+
+	// decode secret to a request
+	t := ""
+	if raw, ok := resp.Data["Type"]; ok {
+		t, ok = raw.(string)
+	}
+	if t == "" {
+		return errors.New("Invalid request type")
+	}
+
+	switch strings.ToLower(t) {
+	case "policy":
+		// decode secret into policy request
+		var req PolicyRequest
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return err
+		}
+		// verify hash
+		hash_uint64, err := hashstructure.Hash(req, nil)
+		if err != nil || strconv.FormatUint(hash_uint64, 16) != hash {
+			return errors.New("Hashes do not match")
+		}
+		// verify policy request is still valid
+		if err := req.Verify(auth); err != nil {
+			return err
+		}
+		return req.Approve(hash, unseal)
+
+	default:
+		return errors.New("Invalid request type: " + t)
+	}
+}
+
+// deletes request, if user is authorized to read resource
+func Reject(auth *vault.AuthInfo, hash string) error {
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
@@ -145,10 +189,12 @@ func generateRootToken(unsealKeys []string) (string, error) {
 			status, err = vault.GenerateRootUpdate(s, status.Nonce)
 			// an error likely means one of the unseals was not valid
 			if err != nil {
-				if err2 := vault.GenerateRootCancel(); err2 != nil {
-					return "", errors.New("Could not generate root token: " +
-						err.Error() + ", " + err2.Error())
+				errS := "Could not generate root token: " + err.Error()
+				// try to cancel the root generation
+				if err := vault.GenerateRootCancel(); err != nil {
+					errS += ". Attempted to cancel root generation, but: " + err.Error()
 				}
+				return "", errors.New(errS)
 			}
 		}
 	}
