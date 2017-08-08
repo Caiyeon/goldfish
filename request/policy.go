@@ -28,7 +28,7 @@ func (r PolicyRequest) IsRootOnly() bool {
 }
 
 // verifies user can read policy, and that it hasn't changed since proposal
-func (r *PolicyRequest) Verify(auth vault.AuthInfo) error {
+func (r *PolicyRequest) Verify(auth *vault.AuthInfo) error {
 	// verify new policy confirms to HCL formatting
 	if _, err := hcl.Parse(r.Proposed); err != nil {
 		return errors.New("Policy details cannot be parsed as HCL")
@@ -60,7 +60,7 @@ func (r *PolicyRequest) Verify(auth vault.AuthInfo) error {
 
 // constructs the request from limited fields and returns the hash
 // raw must contain two keys: 'policyname' and 'rules'
-func (r *PolicyRequest) Create(auth vault.AuthInfo, raw map[string]interface{}) (string, error) {
+func (r *PolicyRequest) Create(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 	// assert required fields
 	r.Type = "policy"
 	r.PolicyName = ""
@@ -115,7 +115,13 @@ func (r *PolicyRequest) Create(auth vault.AuthInfo, raw map[string]interface{}) 
 	if err != nil {
 		return "", err
 	}
-	return strconv.FormatUint(hash_uint64, 16), nil
+	hash := strconv.FormatUint(hash_uint64, 16)
+	if hash == "" {
+		return "", errors.New("Failed to hash request")
+	}
+
+	_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(r))
+	return hash, err
 }
 
 // provides an unseal token as an approval to a request
@@ -134,7 +140,7 @@ func (r *PolicyRequest) Approve(hash string, unsealKey string) error {
 	// if there aren't enough unseals yet, update progress
 	if r.Required > len(wrappingTokens) {
 		r.Progress = len(wrappingTokens)
-		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(r))
+		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(r))
 		return err
 	}
 
@@ -169,7 +175,7 @@ func (r *PolicyRequest) Approve(hash string, unsealKey string) error {
 }
 
 // purges the request entry and unseal tokens from goldfish's cubbyhole
-func (r *PolicyRequest) Reject(auth vault.AuthInfo, hash string) error {
+func (r *PolicyRequest) Reject(auth *vault.AuthInfo, hash string) error {
 	if _, err := vault.DeleteFromCubbyhole("unseal_wrapping_tokens/" + hash); err != nil {
 		return err
 	}

@@ -16,15 +16,15 @@ import (
 )
 
 type Request interface {
-	IsRootOnly()                   bool
-	Verify(vault.AuthInfo)         error
-	Approve(string, string)        error
-	Reject(vault.AuthInfo, string) error
-	Create(vault.AuthInfo, map[string]interface{}) (string, error)
+	IsRootOnly() bool
+	Verify(*vault.AuthInfo) error
+	Approve(string, string) error
+	Reject(*vault.AuthInfo, string) error
+	Create(*vault.AuthInfo, map[string]interface{}) (string, error)
 }
 
 // adds a request if user has authentication
-func Add(auth vault.AuthInfo, raw map[string]interface{}) (string, error) {
+func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 	t := ""
 	if typeRaw, ok := raw["Type"]; ok {
 		t, ok = typeRaw.(string)
@@ -44,7 +44,7 @@ func Add(auth vault.AuthInfo, raw map[string]interface{}) (string, error) {
 }
 
 // fetches a request if it exists, and if user has authentication
-func Get(auth vault.AuthInfo, hash string) (Request, error) {
+func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
@@ -87,7 +87,7 @@ func Get(auth vault.AuthInfo, hash string) (Request, error) {
 }
 
 // delete request, if user is authorized to read resource
-func Remove(auth vault.AuthInfo, hash string) error {
+func Remove(auth *vault.AuthInfo, hash string) error {
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
