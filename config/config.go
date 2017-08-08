@@ -50,14 +50,20 @@ func LoadConfigFile(path string) (*Config, error) {
 	return ParseConfig(string(d))
 }
 
-func LoadConfigDev() (*Config, chan struct{}, string, error) {
+func LoadConfigDev() (*Config, chan struct{}, []string, string, error) {
 	// start a vault dev instance
-	shutdownCh := initDevVaultCore()
+	unsealToken, shutdownCh := initDevVaultCore()
+
+	// multiple unseal tokens would more accurately represent a prod vault system
+	unsealTokens, err := rekeyDevVault(unsealToken, 5, 3)
+	if err != nil {
+		return nil, nil, nil, "", err
+	}
 
 	// setup local vault instance with required mounts
-	err := setupVault("http://127.0.0.1:8200", "goldfish")
+	err = setupVault("http://127.0.0.1:8200", "goldfish")
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, nil, "", err
 	}
 
 	// setup goldfish internal config
@@ -82,10 +88,10 @@ func LoadConfigDev() (*Config, chan struct{}, string, error) {
 	// generate an approle secret ID
 	secretID, err := generateWrappedSecretID(*result.Vault, "goldfish")
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, nil, "", err
 	}
 
-	return &result, shutdownCh, secretID, nil
+	return &result, shutdownCh, unsealTokens, secretID, nil
 }
 
 func ParseConfig(d string) (*Config, error) {

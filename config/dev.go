@@ -1,10 +1,14 @@
 package config
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
+	"strings"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -43,26 +47,6 @@ import (
 )
 
 func setupVault(addr, rootToken string) error {
-	ticker := time.NewTicker(time.Millisecond * 200)
-
-	// allow 5 seconds for vault to launch
-	go func() {
-		time.Sleep(time.Second * 5)
-		ticker.Stop()
-	}()
-
-	// if vault is ready before 5 seconds countdown, proceed immediately
-	var err error
-	for range ticker.C {
-		_, err = http.Get(addr + "/v1/sys/health")
-		if err == nil {
-			break
-		}
-	}
-	if err != nil {
-		return err
-	}
-
 	// initialize vault with required setup details
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
@@ -245,7 +229,15 @@ func setupVault(addr, rootToken string) error {
 	return nil
 }
 
-func initDevVaultCore() chan struct{} {
+func initDevVaultCore() (string, chan struct{}) {
+	// temporarily redirect stdout to capture unseal key
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic("error pipe: " + err.Error())
+	}
+	os.Stdout = w
+
 	ui := &cli.BasicUi{
 		Reader: os.Stdin,
 		Writer: os.Stdout,
@@ -297,7 +289,39 @@ func initDevVaultCore() chan struct{} {
 		"-dev-root-token-id=goldfish",
 	})
 
-	return shutdownCh
+	// allow 5 seconds for vault to launch. Check every 200 ms
+	ticker := time.NewTicker(time.Millisecond * 50)
+	go func() {
+		time.Sleep(time.Second * 5)
+		ticker.Stop()
+	}()
+
+	// if vault is ready before 5 seconds countdown, proceed immediately
+	for range ticker.C {
+		_, err = http.Get("http://127.0.0.1:8200" + "/v1/sys/health")
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		panic(err)
+	}
+
+	// extract unseal key from stdout
+	outC := make(chan string)
+	go func() {
+		var buf bytes.Buffer
+		var unseal string
+		io.Copy(&buf, r)
+		leftover := strings.Split(buf.String(), "Unseal Key: ")
+		fmt.Sscanf(leftover[1], "%s\n", &unseal)
+		outC <- unseal
+	}()
+
+	w.Close()
+	os.Stdout = old
+
+	return <-outC, shutdownCh
 }
 
 func generateWrappedSecretID(v VaultConfig, token string) (string, error) {
@@ -320,6 +344,30 @@ func generateWrappedSecretID(v VaultConfig, token string) (string, error) {
 	}
 
 	return resp.WrapInfo.Token, nil
+}
+
+func rekeyDevVault(unsealToken string, shares int, threshold int) ([]string, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+	if err := client.SetAddress("http://127.0.0.1:8200"); err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Sys().RekeyInit(&api.RekeyInitRequest{
+		SecretShares:    shares,
+		SecretThreshold: threshold,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resp2, err := client.Sys().RekeyUpdate(unsealToken, resp.Nonce)
+	if err != nil {
+		return nil, err
+	}
+	return resp2.Keys, nil
 }
 
 const goldfishPolicyRules = `# [mandatory]

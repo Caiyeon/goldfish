@@ -62,7 +62,7 @@ func main() {
 
 	// if dev mode, run a localhost dev vault instance
 	if devMode {
-		cfg, devVaultCh, wrappingToken, err = config.LoadConfigDev()
+		cfg, devVaultCh, _, wrappingToken, err = config.LoadConfigDev()
 		log.Println("[INFO ]: Dev mode wrapping token: " + wrappingToken)
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)

@@ -5,16 +5,14 @@ import (
 	"testing"
 
 	"github.com/caiyeon/goldfish/config"
-	"github.com/hashicorp/vault/api"
-
 	"github.com/gorilla/securecookie"
-
+	"github.com/hashicorp/vault/api"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGoldfishWrapper(t *testing.T) {
 	// start vault in dev mode
-	cfg, ch, wrappingToken, err := config.LoadConfigDev()
+	cfg, ch, _, wrappingToken, err := config.LoadConfigDev()
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +26,7 @@ func TestGoldfishWrapper(t *testing.T) {
 	}
 
 	// start unit tests
-	Convey("Launching goldfish with vault instance", t, func() {
+	Convey("Testing API wrapper", t, func() {
 		// this will be imitating the client token
 		rootAuth := &AuthInfo{ID: "goldfish", Type: "token"}
 
@@ -223,7 +221,11 @@ func TestGoldfishWrapper(t *testing.T) {
 
 			// supplying a fake unseal token
 			status, err = GenerateRootUpdate("YWJjZGVmZ2hpamtsbW5vcHFyc3Q=", status.Nonce)
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(status.Progress, ShouldEqual, 1)
+
+			// cancelling unseal process
+			So(GenerateRootCancel(), ShouldBeNil)
 
 			// cubbyhole operations
 			_, err = WriteToCubbyhole("testsecret", map[string]interface{}{
