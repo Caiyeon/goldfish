@@ -120,8 +120,7 @@ func (r *PolicyRequest) Create(auth *vault.AuthInfo, raw map[string]interface{})
 		return "", errors.New("Failed to hash request")
 	}
 
-	_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(r))
-	return hash, err
+	return hash, nil
 }
 
 // provides an unseal token as an approval to a request

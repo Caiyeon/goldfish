@@ -2020,6 +2020,12 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
+			"checksumSHA1": "4TEYFKrAUuwBMqExjQBsnf/CgjQ=",
+			"path": "golang.org/x/sync/syncmap",
+			"revision": "f52d1811a62927559de87708c8913c1650ce4f26",
+			"revisionTime": "2017-05-17T20:25:26Z"
+		},
+		{
 			"checksumSHA1": "xg0HvjpGmQznffhlfCfzE0hc/cw=",
 			"origin": "github.com/hashicorp/vault/vendor/golang.org/x/sys/unix",
 			"path": "golang.org/x/sys/unix",

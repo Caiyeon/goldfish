@@ -13,7 +13,14 @@ import (
 	"github.com/hashicorp/vault/helper/xor"
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
+	"github.com/fatih/structs"
+
+	"golang.org/x/sync/syncmap"
 )
+
+// operations on the same request should not interweave,
+// a map of string to string (hash) will prevent this race condition
+var lockMap syncmap.Map
 
 type Request interface {
 	IsRootOnly() bool
@@ -36,7 +43,22 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 	switch strings.ToLower(t) {
 	case "policy":
 		var req PolicyRequest
-		return req.Create(auth, raw)
+
+		// construct request fields
+		hash, err := req.Create(auth, raw)
+		if err != nil {
+			return "", err
+		}
+
+		// lock hash in map before writing to vault cubbyhole
+		_, loaded := lockMap.LoadOrStore(hash, true)
+		if loaded {
+			return "", errors.New("Someone else is currently editing this request")
+		}
+		defer lockMap.Delete(hash)
+
+		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(req))
+		return hash, err
 
 	default:
 		return "", errors.New("Unsupported request type")
@@ -45,6 +67,12 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 
 // fetches a request if it exists, and if user has authentication
 func Get(auth *vault.AuthInfo, hash string) (Request, error) {
+	_, loaded := lockMap.LoadOrStore(hash, true)
+	if loaded {
+		return nil, errors.New("Someone else is currently editing this request")
+	}
+	defer lockMap.Delete(hash)
+
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
@@ -89,6 +117,12 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 // if unseal is nonempty string, approve request with current auth
 // otherwise, add unseal to list of unseals to generate root token later
 func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
+	_, loaded := lockMap.LoadOrStore(hash, true)
+	if loaded {
+		return errors.New("Someone else is currently editing this request")
+	}
+	defer lockMap.Delete(hash)
+
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
@@ -132,6 +166,12 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 
 // deletes request, if user is authorized to read resource
 func Reject(auth *vault.AuthInfo, hash string) error {
+	_, loaded := lockMap.LoadOrStore(hash, true)
+	if loaded {
+		return errors.New("Someone else is currently editing this request")
+	}
+	defer lockMap.Delete(hash)
+
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
