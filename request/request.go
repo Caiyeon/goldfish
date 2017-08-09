@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/gorilla/securecookie"
@@ -21,6 +22,9 @@ import (
 // operations on the same request should not interweave,
 // a map of string to string (hash) will prevent this race condition
 var lockMap syncmap.Map
+
+// only one goroutine should perform vault root generation at a time
+var lockRoot sync.Mutex
 
 type Request interface {
 	IsRootOnly() bool
@@ -218,6 +222,9 @@ func IsRootOnly(req Request) bool {
 // attempts to generate a root token via unseal keys
 // will return error if another key generation process is underway
 func generateRootToken(unsealKeys []string) (string, error) {
+	lockRoot.Lock()
+	defer lockRoot.Unlock()
+
 	otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
 	status, err := vault.GenerateRootInit(otp)
 	if err != nil {
