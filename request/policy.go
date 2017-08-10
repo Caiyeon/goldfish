@@ -139,7 +139,7 @@ func (r *PolicyRequest) Approve(hash string, unsealKey string) error {
 	// if there aren't enough unseals yet, update progress
 	if r.Required > len(wrappingTokens) {
 		r.Progress = len(wrappingTokens)
-		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(r))
+		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(r))
 		return err
 	}
 

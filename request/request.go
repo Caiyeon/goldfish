@@ -9,12 +9,12 @@ import (
 	"sync"
 
 	"github.com/caiyeon/goldfish/vault"
+	"github.com/fatih/structs"
 	"github.com/gorilla/securecookie"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/xor"
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
-	"github.com/fatih/structs"
 
 	"golang.org/x/sync/syncmap"
 )
@@ -61,7 +61,7 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 		}
 		defer lockMap.Delete(hash)
 
-		_, err = vault.WriteToCubbyhole("requests/" + hash, structs.Map(req))
+		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(req))
 		return hash, err
 
 	default:

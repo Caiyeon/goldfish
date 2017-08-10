@@ -56,14 +56,14 @@ func TestRequestSystem(t *testing.T) {
 
 			// verify request body
 			So(req, ShouldResemble, &PolicyRequest{
-				Type: "policy",
-				PolicyName: "abc",
-				Previous: "",
-				Proposed: "# this is a sample policy rule",
-				Requester: "token",
+				Type:          "policy",
+				PolicyName:    "abc",
+				Previous:      "",
+				Proposed:      "# this is a sample policy rule",
+				Requester:     "token",
 				RequesterHash: rootAuthHash,
-				Required: 3,
-				Progress: 0,
+				Required:      3,
+				Progress:      0,
 			})
 
 			// approve the request
