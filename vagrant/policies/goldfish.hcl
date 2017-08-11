@@ -7,7 +7,10 @@ path "secret/goldfish*" {
 
 
 # [optional]
-# to enable transit encryption, see wiki for details
+# to enable transit encryption:
+# set 'ServerTransitKey' in runtime settings
+# and initialize the key: 'vault write -f transit/keys/goldfish'
+# see wiki for details
 path "transit/encrypt/goldfish" {
   capabilities = ["read", "update"]
 }
