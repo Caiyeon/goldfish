@@ -80,8 +80,8 @@
           <div class="navbar-end">
             <div class="navbar-item" v-if="updateAvailable">
               <div class="tags has-addons">
-                <span class="tag is-primary">Update Available</span>
-                <span class="tag is-info">{{latestRelease.tag_name}}</span>
+                <a class="tag is-primary" :href="latestRelease['html_url']" target="_blank">Update Available</a>
+                <a class="tag is-info" :href="latestRelease['html_url']" target="_blank">{{latestRelease.tag_name}}</a>
               </div>
             </div>
 
@@ -144,7 +144,7 @@ export default {
       profileDropdown: false,
       position: ['center', 'bottom', 'center', 'top'],
       now: moment(),
-      latestRelease: null
+      latestRelease: {}
     }
   },
 
