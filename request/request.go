@@ -65,13 +65,16 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(req))
 		return hash, err
 
+	case "github":
+		return "", errors.New("Github requests do not need to be added")
+
 	default:
 		return "", errors.New("Unsupported request type")
 	}
 }
 
 // fetches a request if it exists, and if user has authentication
-func Get(auth *vault.AuthInfo, hash string) (Request, error) {
+func Get(auth *vault.AuthInfo, t string, hash string) (Request, error) {
 	// lock hash in map before reading from vault cubbyhole
 	lockMap.Lock()
 	defer lockMap.Unlock()
@@ -81,28 +84,18 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 	lockHash[hash] = true
 	defer delete(lockHash, hash)
 
-	// fetch request from cubbyhole
-	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
-	if err != nil {
-		return nil, err
-	}
-	if resp == nil {
-		return nil, errors.New("Change ID not found")
-	}
-
-	// decode secret to a request
-	t := ""
-	if raw, ok := resp.Data["Type"]; ok {
-		t, ok = raw.(string)
-	}
-	if t == "" {
-		return nil, errors.New("Invalid request type")
-	}
-
 	switch strings.ToLower(t) {
 	case "policy":
-		// decode secret into policy request
 		var req PolicyRequest
+		// fetch request from cubbyhole, if it exists
+		resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+		if err != nil {
+			return nil, err
+		}
+		if resp == nil {
+			return nil, errors.New("Change ID not found")
+		}
+		// decode secret into policy request
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
 			return nil, err
 		}
@@ -116,6 +109,30 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 			return nil, err
 		}
 		return &req, nil
+
+	case "github":
+		// var req GithubRequest
+		// // fetch request from cubbyhole, if it exists
+		// resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// if resp == nil {
+		// 	// a nil resp could mean this github req hasn't been approved yet
+		// 	return req.Create(auth, map[string]interface{}{
+		// 		"CommitHash": hash,
+		// 	})
+		// }
+		// // decode secret into github request
+		// if err := mapstructure.Decode(resp.Data, &req); err != nil {
+		// 	return nil, err
+		// }
+		// // verify user has vault privilege to read the contained policies
+		// if err := req.Verify(auth); err != nil {
+		// 	return nil, err
+		// }
+		// return &req, nil
+		return nil, errors.New("Not implemented yet")
 
 	default:
 		return nil, errors.New("Invalid request type: " + t)
@@ -170,6 +187,19 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 		}
 		return req.Approve(hash, unseal)
 
+	case "github":
+		// // decode secret into github request
+		// var req GithubRequest
+		// if err :+ mapstructure.Decode(resp.Data, &req); err != nil {
+		// 	return err
+		// }
+		// // verify user has vault privleges to read contained policies
+		// if err := req.Verify(auth); err != nil {
+		// 	return err
+		// }
+		// return req.Approve(hash, unseal)
+		return errors.New("Not implemented yet")
+
 	default:
 		return errors.New("Invalid request type: " + t)
 	}
@@ -219,6 +249,19 @@ func Reject(auth *vault.AuthInfo, hash string) error {
 		}
 		// verify policy request is still valid
 		return req.Reject(auth, hash)
+
+	case "github":
+		// decode secret into github request
+		// var req GithubRequest
+		// if err :+ mapstructure.Decode(resp.Data, &req); err != nil {
+		// 	return err
+		// }
+		// // verify user has vault privleges to read contained policies
+		// if err := req.Verify(auth); err != nil {
+		// 	return err
+		// }
+		// return req.Reject(auth, hash)
+		return errors.New("Not implemented yet")
 
 	default:
 		return errors.New("Invalid request type: " + t)
