@@ -15,13 +15,12 @@ import (
 	"github.com/hashicorp/vault/helper/xor"
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
-
-	"golang.org/x/sync/syncmap"
 )
 
 // operations on the same request should not interweave,
-// a map of string to string (hash) will prevent this race condition
-var lockMap syncmap.Map
+// a map will prevent this race condition
+var lockMap sync.Mutex
+var lockHash = make(map[string]bool)
 
 // only one goroutine should perform vault root generation at a time
 var lockRoot sync.Mutex
@@ -55,11 +54,13 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 		}
 
 		// lock hash in map before writing to vault cubbyhole
-		_, loaded := lockMap.LoadOrStore(hash, true)
-		if loaded {
+		lockMap.Lock()
+		defer lockMap.Unlock()
+		if _, locked := lockHash[hash]; locked {
 			return "", errors.New("Someone else is currently editing this request")
 		}
-		defer lockMap.Delete(hash)
+		lockHash[hash] = true
+		defer delete(lockHash, hash)
 
 		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(req))
 		return hash, err
@@ -71,11 +72,14 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 
 // fetches a request if it exists, and if user has authentication
 func Get(auth *vault.AuthInfo, hash string) (Request, error) {
-	_, loaded := lockMap.LoadOrStore(hash, true)
-	if loaded {
+	// lock hash in map before reading from vault cubbyhole
+	lockMap.Lock()
+	defer lockMap.Unlock()
+	if _, locked := lockHash[hash]; locked {
 		return nil, errors.New("Someone else is currently editing this request")
 	}
-	defer lockMap.Delete(hash)
+	lockHash[hash] = true
+	defer delete(lockHash, hash)
 
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
@@ -121,11 +125,14 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 // if unseal is nonempty string, approve request with current auth
 // otherwise, add unseal to list of unseals to generate root token later
 func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
-	_, loaded := lockMap.LoadOrStore(hash, true)
-	if loaded {
+	// lock hash in map before writing to vault cubbyhole
+	lockMap.Lock()
+	defer lockMap.Unlock()
+	if _, locked := lockHash[hash]; locked {
 		return errors.New("Someone else is currently editing this request")
 	}
-	defer lockMap.Delete(hash)
+	lockHash[hash] = true
+	defer delete(lockHash, hash)
 
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
@@ -170,11 +177,14 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 
 // deletes request, if user is authorized to read resource
 func Reject(auth *vault.AuthInfo, hash string) error {
-	_, loaded := lockMap.LoadOrStore(hash, true)
-	if loaded {
+	// lock hash in map before writing to vault cubbyhole
+	lockMap.Lock()
+	defer lockMap.Unlock()
+	if _, locked := lockHash[hash]; locked {
 		return errors.New("Someone else is currently editing this request")
 	}
-	defer lockMap.Delete(hash)
+	lockHash[hash] = true
+	defer delete(lockHash, hash)
 
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
