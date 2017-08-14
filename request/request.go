@@ -35,8 +35,12 @@ type Request interface {
 // adds a request if user has authentication
 func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 	t := ""
-	if typeRaw, ok := raw["Type"]; ok {
-		t, ok = typeRaw.(string)
+	if typeRaw, ok := raw["Type"]; !ok {
+		if typeRaw, ok = raw["type"]; ok {
+			t, _ = typeRaw.(string)
+		}
+	} else {
+		t, _ = typeRaw.(string)
 	}
 	if t == "" {
 		return "", errors.New("Type field is empty")
@@ -158,8 +162,12 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 
 	// decode secret to a request
 	t := ""
-	if raw, ok := resp.Data["Type"]; ok {
-		t, ok = raw.(string)
+	if typeRaw, ok := resp.Data["Type"]; !ok {
+		if typeRaw, ok = resp.Data["type"]; ok {
+			t, _ = typeRaw.(string)
+		}
+	} else {
+		t, _ = typeRaw.(string)
 	}
 	if t == "" {
 		return errors.New("Invalid request type")
@@ -222,8 +230,12 @@ func Reject(auth *vault.AuthInfo, hash string) error {
 
 	// decode secret to a request
 	t := ""
-	if raw, ok := resp.Data["Type"]; ok {
-		t, ok = raw.(string)
+	if typeRaw, ok := resp.Data["Type"]; !ok {
+		if typeRaw, ok = resp.Data["type"]; ok {
+			t, _ = typeRaw.(string)
+		}
+	} else {
+		t, _ = typeRaw.(string)
 	}
 	if t == "" {
 		return errors.New("Invalid request type")
