@@ -27,6 +27,69 @@ func (r PolicyRequest) IsRootOnly() bool {
 	return true
 }
 
+// constructs the request from limited fields and returns the hash
+// raw must contain two keys: 'policyname' and 'rules'
+func CreatePolicyRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*PolicyRequest, string, error) {
+	r := &PolicyRequest{}
+	r.Type = "policy"
+	if temp, ok := raw["policyname"]; ok {
+		r.PolicyName, _ = temp.(string)
+	}
+	if r.PolicyName == "" {
+		return nil, "", errors.New("'policyname' is required")
+	}
+
+	if temp, ok := raw["rules"]; ok {
+		r.Proposed, _ = temp.(string)
+	}
+	if r.Proposed == "" {
+		return nil, "", errors.New("No changes proposed")
+	}
+	if _, err := hcl.Parse(r.Proposed); err != nil {
+		return nil, "", errors.New("Policy must be HCL formatted")
+	}
+
+	// collect requester's information
+	self, err := auth.LookupSelf()
+	if err != nil {
+		return nil, "", err
+	}
+	if self == nil {
+		return nil, "", errors.New("Could not confirm requester identity")
+	}
+	r.Requester = self.Data["display_name"].(string)
+	r.RequesterHash = fmt.Sprintf("%x", sha256.Sum256([]byte(r.Requester)))
+
+	// verify user has access to read policy
+	r.Previous, err = auth.GetPolicy(r.PolicyName)
+	if err != nil {
+		return nil, "", err
+	}
+	if r.Previous == r.Proposed {
+		return nil, "", errors.New("Request contains no changes to policy")
+	}
+
+	// collect vault sys info
+	status, err := vault.GenerateRootStatus()
+	if err != nil {
+		return nil, "", err
+	}
+	r.Required = status.Required
+	r.Progress = 0
+
+	// calculate hash
+	hash_uint64, err := hashstructure.Hash(r, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	hash := strconv.FormatUint(hash_uint64, 16)
+	if hash == "" {
+		return nil, "", errors.New("Failed to hash request")
+	}
+
+	return r, hash, nil
+}
+
 // verifies user can read policy, and that it hasn't changed since proposal
 func (r *PolicyRequest) Verify(auth *vault.AuthInfo) error {
 	// verify new policy confirms to HCL formatting
@@ -56,71 +119,6 @@ func (r *PolicyRequest) Verify(auth *vault.AuthInfo) error {
 	}
 
 	return nil
-}
-
-// constructs the request from limited fields and returns the hash
-// raw must contain two keys: 'policyname' and 'rules'
-func (r *PolicyRequest) Create(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
-	// assert required fields
-	r.Type = "policy"
-	r.PolicyName = ""
-	if temp, ok := raw["policyname"]; ok {
-		r.PolicyName, _ = temp.(string)
-	}
-	if r.PolicyName == "" {
-		return "", errors.New("'policyname' is required")
-	}
-
-	r.Proposed = ""
-	if temp, ok := raw["rules"]; ok {
-		r.Proposed, _ = temp.(string)
-	}
-	if r.Proposed == "" {
-		return "", errors.New("No changes proposed")
-	}
-	if _, err := hcl.Parse(r.Proposed); err != nil {
-		return "", errors.New("Policy must be HCL formatted")
-	}
-
-	// collect requester's information
-	self, err := auth.LookupSelf()
-	if err != nil {
-		return "", err
-	}
-	if self == nil {
-		return "", errors.New("Could not confirm requester identity")
-	}
-	r.Requester = self.Data["display_name"].(string)
-	r.RequesterHash = fmt.Sprintf("%x", sha256.Sum256([]byte(r.Requester)))
-
-	// verify user has access to read policy
-	r.Previous, err = auth.GetPolicy(r.PolicyName)
-	if err != nil {
-		return "", err
-	}
-	if r.Previous == r.Proposed {
-		return "", errors.New("Request contains no changes to policy")
-	}
-
-	// collect vault sys info
-	status, err := vault.GenerateRootStatus()
-	if err != nil {
-		return "", err
-	}
-	r.Required = status.Required
-	r.Progress = 0
-
-	// calculate and return hash
-	hash_uint64, err := hashstructure.Hash(r, nil)
-	if err != nil {
-		return "", err
-	}
-	hash := strconv.FormatUint(hash_uint64, 16)
-	if hash == "" {
-		return "", errors.New("Failed to hash request")
-	}
-
-	return hash, nil
 }
 
 // provides an unseal token as an approval to a request

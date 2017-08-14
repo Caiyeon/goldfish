@@ -30,7 +30,6 @@ type Request interface {
 	Verify(*vault.AuthInfo) error
 	Approve(string, string) error
 	Reject(*vault.AuthInfo, string) error
-	Create(*vault.AuthInfo, map[string]interface{}) (string, error)
 }
 
 // adds a request if user has authentication
@@ -45,10 +44,8 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 
 	switch strings.ToLower(t) {
 	case "policy":
-		var req PolicyRequest
-
 		// construct request fields
-		hash, err := req.Create(auth, raw)
+		req, hash, err := CreatePolicyRequest(auth, raw)
 		if err != nil {
 			return "", err
 		}
@@ -106,7 +103,7 @@ func Get(auth *vault.AuthInfo, t string, hash string) (Request, error) {
 		}
 		// verify policy request is still valid
 		if err := req.Verify(auth); err != nil {
-			return nil, err
+			return nil, errors.New(err.Error() + ", thus, request has been deleted")
 		}
 		return &req, nil
 
