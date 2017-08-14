@@ -89,7 +89,85 @@
             </div>
           </article>
 
+          <!-- Displaying a set of changes via github commit hash -->
+          <article v-if="request !== null && request['Type'] === 'github'">
+            <br>
+            <!-- Request general info -->
+            <article class="message is-primary">
+              <div class="message-body">
+                <strong>Request type: </strong>{{request.Type}}<br>
+                <strong>Github commit hash: </strong>{{request.CommitHash}}<br>
+                <strong>Number of policies affected: </strong>{{Object.keys(request.Changes).length}}<br>
+                <strong>Requester display name: </strong>{{request.Requester}}<br>
+                <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
+                <strong>Unseal progress: </strong>{{request.Progress}} out of {{request.Required}}
+                  <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
+              </div>
+            </article>
 
+            <!-- Approve/Reject -->
+            <div class="field is-grouped">
+              <p class="control">
+                <button class="button is-success" @click="bConfirm = true">Approve</button>
+              </p>
+              <p class="control">
+                <button v-if="!bReject" class="button is-warning" @click="bReject = true">Reject</button>
+                <button v-else class="button is-danger" @click="reject()">Confirm Reject</button>
+              </p>
+              <div v-if="bConfirm" class="field has-addons">
+                <p class="control">
+                  <input class="input" type="password"
+                  placeholder="Enter an unseal token"
+                  v-model="unsealToken"
+                  @keyup.enter="approve()">
+                </p>
+                <p class="control">
+                  <a class="button is-info" @click="approve()">
+                    Confirm
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <!-- Request details -->
+            <div v-for="(details, policy) in request.Changes" class="box">
+              <!-- policy name title and status tag -->
+              <nav class="level">
+                <div class="level-left">
+                  <div class="level-item">
+                    <div class="content is-marginless is-paddingless">
+                      <h3 class="is-marginless is-paddingless">{{policy}}</h3>
+                    </div>
+                  </div>
+                  <div class="level-item">
+                    <span v-if="details.Previous && details.Proposed" class="tag is-info">Will be changed!</span>
+                    <span v-if="details.Previous && !details.Proposed" class="tag is-danger">Will be deleted!</span>
+                    <span v-if="!details.Previous && details.Proposed" class="tag is-success">Will be created!</span>
+                  </div>
+                </div>
+              </nav>
+
+              <div class="columns">
+                <div v-if="details.Previous" class="column">
+                  <article class="message is-primary" :class="details.Proposed ? '' : 'is-danger'">
+                    <div class="message-header">
+                      Current policy rules
+                    </div>
+                    <pre v-highlightjs="details.Previous"><code class="ruby"></code></pre>
+                  </article>
+                </div>
+
+                <div v-if="details.Proposed" class="column">
+                  <article class="message is-info" :class="details.Previous ? '' : 'is-success'">
+                    <div class="message-header">
+                    Proposed policy rules
+                    </div>
+                    <pre v-highlightjs="details.Proposed"><code class="ruby"></code></pre>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </article>
 
         </article>
       </div>
@@ -183,7 +261,7 @@ export default {
           } else {
             this.$onError(error)
           }
-        } catch(e) {
+        } catch (e) {
           this.$onError(error)
         }
       })
