@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"strings"
 	"time"
 
 	"github.com/caiyeon/goldfish/config"
@@ -62,8 +63,10 @@ func main() {
 
 	// if dev mode, run a localhost dev vault instance
 	if devMode {
-		cfg, devVaultCh, _, wrappingToken, err = config.LoadConfigDev()
+		var unsealTokens []string
+		cfg, devVaultCh, unsealTokens, wrappingToken, err = config.LoadConfigDev()
 		log.Println("[INFO ]: Dev mode wrapping token: " + wrappingToken)
+		log.Println("[INFO ]: Dev mode unseal tokens:\n" + strings.Join(unsealTokens, "\n"))
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
 	}
