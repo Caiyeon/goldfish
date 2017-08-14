@@ -179,10 +179,10 @@ func main() {
 	e.GET("/v1/policy", handlers.GetPolicy())
 	e.DELETE("/v1/policy", handlers.DeletePolicy())
 
-	e.GET("/v1/policy/request", handlers.GetPolicyRequest())
-	e.POST("/v1/policy/request", handlers.AddPolicyRequest())
-	e.POST("/v1/policy/request/update", handlers.UpdatePolicyRequest())
-	e.DELETE("/v1/policy/request/:id", handlers.DeletePolicyRequest())
+	e.GET("/v1/policy/request", handlers.GetRequest())
+	e.POST("/v1/policy/request/add", handlers.AddRequest())
+	e.POST("/v1/policy/request/approve", handlers.ApproveRequest())
+	e.DELETE("/v1/policy/request/reject", handlers.RejectRequest())
 
 	e.GET("/v1/transit", handlers.TransitInfo())
 	e.POST("/v1/transit/encrypt", handlers.EncryptString())

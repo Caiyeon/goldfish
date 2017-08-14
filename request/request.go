@@ -85,18 +85,36 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 	lockHash[hash] = true
 	defer delete(lockHash, hash)
 
+	// fetch request from cubbyhole, if it exists
+	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		// a nil response could mean this is a github request
+		if len(hash) == 40 {
+			return CreateGithubRequest(auth, map[string]interface{}{
+				"commithash": hash,
+			})
+		}
+		// otherwise, this request simply doesn't exist
+		return nil, errors.New("Request ID not found")
+	}
+
+	// decode secret to a request
+	t := ""
+	if typeRaw, ok := resp.Data["Type"]; !ok {
+		if typeRaw, ok = resp.Data["type"]; ok {
+			t, _ = typeRaw.(string)
+		}
+	} else {
+		t, _ = typeRaw.(string)
+	}
+
 	switch strings.ToLower(t) {
 	case "policy":
-		var req PolicyRequest
-		// fetch request from cubbyhole, if it exists
-		resp, err := vault.ReadFromCubbyhole("requests/" + hash)
-		if err != nil {
-			return nil, err
-		}
-		if resp == nil {
-			return nil, errors.New("Change ID not found")
-		}
 		// decode secret into policy request
+		var req PolicyRequest
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
 			return nil, err
 		}
@@ -112,19 +130,8 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 		return &req, nil
 
 	case "github":
-		var req GithubRequest
-		// fetch request from cubbyhole, if it exists
-		resp, err := vault.ReadFromCubbyhole("requests/" + hash)
-		if err != nil {
-			return nil, err
-		}
-		if resp == nil {
-			// a nil resp could mean this github req hasn't been approved yet
-			return CreateGithubRequest(auth, map[string]interface{}{
-				"commithash": hash,
-			})
-		}
 		// decode secret into github request
+		var req GithubRequest
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
 			return nil, err
 		}
