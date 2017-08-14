@@ -107,8 +107,8 @@ func CreateGithubRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*Git
 
 	// for each policy in vault that wasn't found on github, mark it as to be deleted
 	for _, name := range currentPolicies {
-		// do not allow overriding root policy
-		if name == "root" {
+		// a missing root or default policy is fine, don't delete either of these
+		if name == "root" || name == "default" {
 			continue
 		}
 		if _, ok := newPolicies[name]; !ok {
