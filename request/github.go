@@ -34,7 +34,9 @@ func (r GithubRequest) IsRootOnly() bool {
 
 // verifies user can read all policies in the changes
 func CreateGithubRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*GithubRequest, error) {
-	r := &GithubRequest{}
+	r := &GithubRequest{
+		Changes: make(map[string]PolicyDiff),
+	}
 	r.Type = "github"
 
 	if temp, ok := raw["commithash"]; ok {
