@@ -108,28 +108,27 @@ func Get(auth *vault.AuthInfo, t string, hash string) (Request, error) {
 		return &req, nil
 
 	case "github":
-		// var req GithubRequest
-		// // fetch request from cubbyhole, if it exists
-		// resp, err := vault.ReadFromCubbyhole("requests/" + hash)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// if resp == nil {
-		// 	// a nil resp could mean this github req hasn't been approved yet
-		// 	return req.Create(auth, map[string]interface{}{
-		// 		"CommitHash": hash,
-		// 	})
-		// }
-		// // decode secret into github request
-		// if err := mapstructure.Decode(resp.Data, &req); err != nil {
-		// 	return nil, err
-		// }
-		// // verify user has vault privilege to read the contained policies
-		// if err := req.Verify(auth); err != nil {
-		// 	return nil, err
-		// }
-		// return &req, nil
-		return nil, errors.New("Not implemented yet")
+		var req GithubRequest
+		// fetch request from cubbyhole, if it exists
+		resp, err := vault.ReadFromCubbyhole("requests/" + hash)
+		if err != nil {
+			return nil, err
+		}
+		if resp == nil {
+			// a nil resp could mean this github req hasn't been approved yet
+			return CreateGithubRequest(auth, map[string]interface{}{
+				"commithash": hash,
+			})
+		}
+		// decode secret into github request
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return nil, err
+		}
+		// verify user has vault privilege to read the contained policies
+		if err := req.Verify(auth); err != nil {
+			return nil, err
+		}
+		return &req, nil
 
 	default:
 		return nil, errors.New("Invalid request type: " + t)
@@ -185,17 +184,16 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 		return req.Approve(hash, unseal)
 
 	case "github":
-		// // decode secret into github request
-		// var req GithubRequest
-		// if err :+ mapstructure.Decode(resp.Data, &req); err != nil {
-		// 	return err
-		// }
-		// // verify user has vault privleges to read contained policies
-		// if err := req.Verify(auth); err != nil {
-		// 	return err
-		// }
-		// return req.Approve(hash, unseal)
-		return errors.New("Not implemented yet")
+		// decode secret into github request
+		var req GithubRequest
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return err
+		}
+		// verify user has vault privleges to read contained policies
+		if err := req.Verify(auth); err != nil {
+			return err
+		}
+		return req.Approve(hash, unseal)
 
 	default:
 		return errors.New("Invalid request type: " + t)
@@ -249,16 +247,15 @@ func Reject(auth *vault.AuthInfo, hash string) error {
 
 	case "github":
 		// decode secret into github request
-		// var req GithubRequest
-		// if err :+ mapstructure.Decode(resp.Data, &req); err != nil {
-		// 	return err
-		// }
-		// // verify user has vault privleges to read contained policies
-		// if err := req.Verify(auth); err != nil {
-		// 	return err
-		// }
-		// return req.Reject(auth, hash)
-		return errors.New("Not implemented yet")
+		var req GithubRequest
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return err
+		}
+		// verify user has vault privleges to read contained policies
+		if err := req.Verify(auth); err != nil {
+			return err
+		}
+		return req.Reject(auth, hash)
 
 	default:
 		return errors.New("Invalid request type: " + t)
