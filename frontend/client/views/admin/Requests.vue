@@ -220,7 +220,7 @@ export default {
       if (this.request !== null) {
         return
       }
-      this.$http.get(this.searchURL, {
+      this.$http.get('/v1/policy/request?hash=' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.request = response.data.result

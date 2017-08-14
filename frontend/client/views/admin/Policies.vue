@@ -125,8 +125,6 @@
 </template>
 
 <script>
-const querystring = require('querystring')
-
 export default {
   data () {
     return {
@@ -225,14 +223,17 @@ export default {
     },
 
     addPolicyRequest: function () {
-      this.$http.post('/v1/policy/request?policy=' + this.selectedPolicy,
-      querystring.stringify({ rules: this.policyRulesModified }), {
+      this.$http.post('/v1/policy/request/add', {
+        type: 'policy',
+        policyname: this.selectedPolicy,
+        rules: this.policyRulesModified
+      }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
 
       .then((response) => {
         this.$message({
-          message: 'Your change ID is: ' + response.data.result,
+          message: 'Your request ID is: ' + response.data.result,
           type: 'success',
           duration: 0,
           showCloseButton: true
