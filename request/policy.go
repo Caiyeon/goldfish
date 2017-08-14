@@ -163,12 +163,26 @@ func (r *PolicyRequest) Approve(hash string, unsealKey string) error {
 		ID:   rootToken,
 	}
 
+	// update progress
+	r.Progress = r.Required
+
 	// prepare cleanup
 	defer vault.DeleteFromCubbyhole("requests/" + hash)
 	defer rootAuth.RevokeSelf()
 
 	// make requested change
-	return rootAuth.PutPolicy(r.PolicyName, r.Proposed)
+	if err := rootAuth.PutPolicy(r.PolicyName, r.Proposed); err != nil {
+		return err
+	}
+
+	// return new policy
+	if p, err := rootAuth.GetPolicy(r.PolicyName); err != nil {
+		return err
+	} else {
+		r.Previous = p
+	}
+
+	return nil
 }
 
 // purges the request entry and unseal tokens from goldfish's cubbyhole
