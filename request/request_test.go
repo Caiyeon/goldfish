@@ -67,11 +67,11 @@ func TestRequestSystem(t *testing.T) {
 			})
 
 			// approve the request
-			err = Approve(rootAuth, hash, unsealTokens[0])
+			_, err = Approve(rootAuth, hash, unsealTokens[0])
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, unsealTokens[1])
+			_, err = Approve(rootAuth, hash, unsealTokens[1])
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, unsealTokens[2])
+			_, err = Approve(rootAuth, hash, unsealTokens[2])
 			So(err, ShouldBeNil)
 
 			// confirm changes were made
@@ -94,11 +94,11 @@ func TestRequestSystem(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// approve the request
-			err = Approve(rootAuth, hash, unsealTokens[0])
+			_, err = Approve(rootAuth, hash, unsealTokens[0])
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, unsealTokens[1])
+			_, err = Approve(rootAuth, hash, unsealTokens[1])
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, unsealTokens[2])
+			_, err = Approve(rootAuth, hash, unsealTokens[2])
 			So(err, ShouldBeNil)
 
 			// confirm changes were made
@@ -121,11 +121,11 @@ func TestRequestSystem(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// approve the request
-			err = Approve(rootAuth, hash, "NotUnseal")
+			_, err = Approve(rootAuth, hash, "NotUnseal")
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, "NotUnseal")
+			_, err = Approve(rootAuth, hash, "NotUnseal")
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, "NotUnseal")
+			_, err = Approve(rootAuth, hash, "NotUnseal")
 			So(err, ShouldNotBeNil)
 
 			// confirm changes were NOT made
@@ -148,9 +148,9 @@ func TestRequestSystem(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// approve the request
-			err = Approve(rootAuth, hash, "NotUnseal")
+			_, err = Approve(rootAuth, hash, "NotUnseal")
 			So(err, ShouldBeNil)
-			err = Approve(rootAuth, hash, "NotUnseal")
+			_, err = Approve(rootAuth, hash, "NotUnseal")
 			So(err, ShouldBeNil)
 
 			// reject the request
