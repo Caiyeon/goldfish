@@ -51,7 +51,7 @@ func TestRequestSystem(t *testing.T) {
 			So(hash, ShouldNotBeEmpty)
 
 			// retrieve the request
-			req, err := Get(rootAuth, "policy", hash)
+			req, err := Get(rootAuth, hash)
 			So(err, ShouldBeNil)
 
 			// verify request body
@@ -90,7 +90,7 @@ func TestRequestSystem(t *testing.T) {
 			So(hash, ShouldNotBeEmpty)
 
 			// retrieve the request
-			req, err = Get(rootAuth, "policy", hash)
+			req, err = Get(rootAuth, hash)
 			So(err, ShouldBeNil)
 
 			// approve the request
@@ -117,7 +117,7 @@ func TestRequestSystem(t *testing.T) {
 			So(hash, ShouldNotBeEmpty)
 
 			// retrieve the request
-			req, err = Get(rootAuth, "policy", hash)
+			req, err = Get(rootAuth, hash)
 			So(err, ShouldBeNil)
 
 			// approve the request
@@ -144,7 +144,7 @@ func TestRequestSystem(t *testing.T) {
 			So(hash, ShouldNotBeEmpty)
 
 			// retrieve the request
-			_, err = Get(rootAuth, "policy", hash)
+			_, err = Get(rootAuth, hash)
 			So(err, ShouldBeNil)
 
 			// approve the request
@@ -158,7 +158,7 @@ func TestRequestSystem(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// confirm request no longer exists
-			req, err = Get(rootAuth, "policy", hash)
+			req, err = Get(rootAuth, hash)
 			So(err, ShouldNotBeNil)
 			So(req, ShouldBeNil)
 

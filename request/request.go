@@ -75,7 +75,7 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 }
 
 // fetches a request if it exists, and if user has authentication
-func Get(auth *vault.AuthInfo, t string, hash string) (Request, error) {
+func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 	// lock hash in map before reading from vault cubbyhole
 	lockMap.Lock()
 	defer lockMap.Unlock()
