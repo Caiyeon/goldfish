@@ -93,9 +93,14 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 	if resp == nil {
 		// a nil response could mean this is a github request
 		if len(hash) == 40 {
-			return CreateGithubRequest(auth, map[string]interface{}{
+			if req, err := CreateGithubRequest(auth, map[string]interface{}{
 				"commithash": hash,
-			})
+			}); err != nil {
+				return nil, err
+			} else {
+				_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(req))
+				return req, nil
+			}
 		}
 		// otherwise, this request simply doesn't exist
 		return nil, errors.New("Request ID not found")
@@ -164,7 +169,7 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) (Request, error) 
 		return nil, err
 	}
 	if resp == nil {
-		return nil, errors.New("Change ID not found")
+		return nil, errors.New("Request ID not found")
 	}
 
 	// decode secret to a request
@@ -238,7 +243,7 @@ func Reject(auth *vault.AuthInfo, hash string) error {
 		return err
 	}
 	if resp == nil {
-		return errors.New("Change ID not found")
+		return errors.New("Request ID not found")
 	}
 
 	// decode secret to a request
