@@ -112,7 +112,7 @@ func ApproveRequest() echo.HandlerFunc {
 		}
 
 		// approve the request by hash
-		err := request.Approve(auth, hash.(string), unseal.(string))
+		req, err := request.Approve(auth, hash.(string), unseal.(string))
 		if err != nil {
 			return c.JSON(http.StatusForbidden, H{
 				"error": err.Error(),
@@ -120,7 +120,7 @@ func ApproveRequest() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, H{
-			"result": "success",
+			"result": req,
 		})
 	}
 }

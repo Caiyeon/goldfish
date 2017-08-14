@@ -148,12 +148,12 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 
 // if unseal is nonempty string, approve request with current auth
 // otherwise, add unseal to list of unseals to generate root token later
-func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
+func Approve(auth *vault.AuthInfo, hash string, unseal string) (Request, error) {
 	// lock hash in map before writing to vault cubbyhole
 	lockMap.Lock()
 	defer lockMap.Unlock()
 	if _, locked := lockHash[hash]; locked {
-		return errors.New("Someone else is currently editing this request")
+		return nil, errors.New("Someone else is currently editing this request")
 	}
 	lockHash[hash] = true
 	defer delete(lockHash, hash)
@@ -161,10 +161,10 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 	// fetch request from cubbyhole
 	resp, err := vault.ReadFromCubbyhole("requests/" + hash)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if resp == nil {
-		return errors.New("Change ID not found")
+		return nil, errors.New("Change ID not found")
 	}
 
 	// decode secret to a request
@@ -177,7 +177,7 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 		t, _ = typeRaw.(string)
 	}
 	if t == "" {
-		return errors.New("Invalid request type")
+		return nil, errors.New("Invalid request type")
 	}
 
 	switch strings.ToLower(t) {
@@ -185,33 +185,39 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) error {
 		// decode secret into policy request
 		var req PolicyRequest
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
-			return err
+			return nil, err
 		}
 		// verify hash
 		hash_uint64, err := hashstructure.Hash(req, nil)
 		if err != nil || strconv.FormatUint(hash_uint64, 16) != hash {
-			return errors.New("Hashes do not match")
+			return nil, errors.New("Hashes do not match")
 		}
 		// verify policy request is still valid
 		if err := req.Verify(auth); err != nil {
-			return err
+			return nil, err
 		}
-		return req.Approve(hash, unseal)
+		if err := req.Approve(hash, unseal); err != nil {
+			return nil, err
+		}
+		return &req, nil
 
 	case "github":
 		// decode secret into github request
 		var req GithubRequest
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
-			return err
+			return nil, err
 		}
 		// verify user has vault privleges to read contained policies
 		if err := req.Verify(auth); err != nil {
-			return err
+			return nil, err
 		}
-		return req.Approve(hash, unseal)
+		if err := req.Approve(hash, unseal); err != nil {
+			return nil, err
+		}
+		return &req, nil
 
 	default:
-		return errors.New("Invalid request type: " + t)
+		return nil, errors.New("Invalid request type: " + t)
 	}
 }
 
