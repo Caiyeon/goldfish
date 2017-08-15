@@ -241,9 +241,18 @@
                 </label>
 
                 <div class="panel-block">
-                  <button class="button is-danger is-outlined is-fullwidth" @click="selectedPolicies = []">
-                    Reset selected policies
-                  </button>
+                  <div class="field is-grouped">
+                    <p class="control">
+                      <a class="button is-primary is-outlined" @click="listAllPolicies()">
+                        List all policies
+                      </a>
+                    </p>
+                    <p class="control">
+                      <a class="button is-danger is-outlined" @click="selectedPolicies = []">
+                        Reset selection
+                      </a>
+                    </p>
+                  </div>
                 </div>
 
               </nav>
@@ -492,23 +501,7 @@ export default {
 
     // if root policy, fetch all available policies from server
     if (this.availablePolicies.indexOf('root') > -1) {
-      this.$http.get('/v1/policy', {
-        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-      }).then((response) => {
-        this.availablePolicies = response.data.result
-        // default policy is always an option, and the first item in list
-        var i = this.availablePolicies.indexOf('default')
-        if (i < 0) {
-          this.availablePolicies.splice(0, 0, 'default')
-        } else if (i > 0) {
-          var temp = this.availablePolicies[i]
-          this.availablePolicies[i] = this.availablePolicies[0]
-          this.availablePolicies[0] = temp
-        }
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
+      this.listAllPolicies()
     }
   },
 
@@ -585,6 +578,26 @@ export default {
       .catch((error) => {
         this.$onError(error)
         this.selectedRoleLoading = false
+      })
+    },
+
+    listAllPolicies: function () {
+      this.$http.get('/v1/policy', {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
+        this.availablePolicies = response.data.result
+        // default policy is always an option, and the first item in list
+        var i = this.availablePolicies.indexOf('default')
+        if (i < 0) {
+          this.availablePolicies.splice(0, 0, 'default')
+        } else if (i > 0) {
+          var temp = this.availablePolicies[i]
+          this.availablePolicies[i] = this.availablePolicies[0]
+          this.availablePolicies[0] = temp
+        }
+      })
+      .catch((error) => {
+        this.$onError(error)
       })
     }
 
