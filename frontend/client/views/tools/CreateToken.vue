@@ -260,7 +260,7 @@
           </div>
 
           <!-- Confirm button -->
-          <div class="field">
+          <div class="field is-grouped">
             <div class="control">
               <button class="button is-primary"
               :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
@@ -268,8 +268,16 @@
               :disabled="selectedPolicies.length === 0 || this.payloadJSON.metadata === 'INVALID JSON'">
                 Create {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
-              <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
-              <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
+            </div>
+
+          <!-- Confirm request button -->
+            <div class="control">
+              <button class="button is-info"
+              :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
+              @click="createTokenRequest()"
+              :disabled="selectedPolicies.length === 0 || this.payloadJSON.metadata === 'INVALID JSON'">
+                Request {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
+              </button>
             </div>
           </div>
 
@@ -549,6 +557,42 @@ export default {
         })
         this.createdToken = response.data.result.auth || response.data.result.wrap_info
       })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    // creates a request instead of directing creating the token
+    createTokenRequest: function () {
+      if (this.payloadJSON.metadata === 'INVALID JSON') {
+        return
+      }
+
+      this.createdToken = null
+      this.$http.post('/v1/request/add', {
+        type: 'token',
+        tokenCreateRequest: this.payloadJSON
+      }, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+
+      .then((response) => {
+        this.$message({
+          message: 'Your request ID is: ' + response.data.result,
+          type: 'success',
+          duration: 0,
+          showCloseButton: true
+        })
+
+        if (response.data.error !== '') {
+          this.$notify({
+            title: 'Slack webhook',
+            message: response.data.error,
+            type: 'warning'
+          })
+        }
+      })
+
       .catch((error) => {
         this.$onError(error)
       })

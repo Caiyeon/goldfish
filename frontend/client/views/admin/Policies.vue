@@ -223,7 +223,7 @@ export default {
     },
 
     addPolicyRequest: function () {
-      this.$http.post('/v1/policy/request/add', {
+      this.$http.post('/v1/request/add', {
         type: 'policy',
         policyname: this.selectedPolicy,
         rules: this.policyRulesModified

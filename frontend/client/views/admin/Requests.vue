@@ -212,7 +212,7 @@ export default {
       if (this.request !== null) {
         return
       }
-      this.$http.get('/v1/policy/request?hash=' + this.searchString, {
+      this.$http.get('/v1/request?hash=' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.request = response.data.result
@@ -223,7 +223,7 @@ export default {
     },
 
     approve: function () {
-      this.$http.post('/v1/policy/request/approve?hash=' + this.searchString, {
+      this.$http.post('/v1/request/approve?hash=' + this.searchString, {
         unseal: this.unsealToken
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -271,7 +271,7 @@ export default {
     },
 
     reject: function () {
-      this.$http.delete('/v1/policy/request/reject?hash=' + this.searchString, {
+      this.$http.delete('/v1/request/reject?hash=' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
