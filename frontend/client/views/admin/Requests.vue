@@ -69,19 +69,19 @@
 
             <!-- Request details -->
             <div class="columns">
-              <div class="column">
-                <article class="message is-primary">
+              <div v-if="request.Previous" class="column">
+                <article class="message is-primary" :class="request.Proposed ? '' : 'is-danger'">
                   <div class="message-header">
-                    Current policy rules
+                    {{request.Proposed ? 'Current policy rules' : 'Will be deleted!'}}
                   </div>
                   <pre v-highlightjs="request.Previous"><code class="ruby"></code></pre>
                 </article>
               </div>
 
-              <div class="column">
-                <article class="message is-info">
+              <div v-if="request.Proposed" class="column">
+                <article class="message is-info" :class="request.Previous ? '' : 'is-success'">
                   <div class="message-header">
-                  Proposed policy rules
+                  {{request.Previous ? 'Proposed policy rules' : 'Will be created!'}}
                   </div>
                   <pre v-highlightjs="request.Proposed"><code class="ruby"></code></pre>
                 </article>
