@@ -121,16 +121,23 @@
               </p>
             </div>
 
-            <div class="field">
-              <p class="control is-pulled-right">
+            <div class="field is-grouped is-pulled-right">
+              <p v-if="newPolicyName === ''" class="control">
+                <a class="button is-danger is-outlined"
+                  @click="addPolicyRemoveRequest()"
+                  :disabled="selectedPolicy === ''">
+                  <span>Request deletion</span>
+                </a>
+              </p>
+
+              <p class="control">
                 <a class="button is-primary is-outlined"
                   @click="addPolicyRequest()"
                   :class="newPolicyName ? 'is-info' : ''"
-                  :disabled="policyRules === policyRulesModified || (policies.indexOf(newPolicyName) > -1)">
+                  :disabled="policyRules === policyRulesModified
+                  || (policies.indexOf(newPolicyName) > -1)
+                  || policyRulesModified === ''">
                   <span>Request {{newPolicyName ? 'creation' : 'changes'}}</span>
-                  <span class="icon is-small">
-                    <i class="fa fa-check"></i>
-                  </span>
                 </a>
               </p>
             </div>
@@ -258,7 +265,7 @@ export default {
     },
 
     addPolicyRequest: function () {
-      if (this.policyRules === this.policyRulesModified) {
+      if (this.policyRules === this.policyRulesModified || this.policyRulesModified === '') {
         return
       }
 
@@ -278,7 +285,6 @@ export default {
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
-
       .then((response) => {
         this.$message({
           message: 'Your request ID is: ' + response.data.result,
@@ -286,7 +292,6 @@ export default {
           duration: 0,
           showCloseButton: true
         })
-
         if (response.data.error !== '') {
           this.$notify({
             title: 'Slack webhook',
@@ -295,7 +300,37 @@ export default {
           })
         }
       })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
 
+    addPolicyRemoveRequest: function () {
+      if (this.selectedPolicy === '' || this.newPolicyName !== '') {
+        return
+      }
+      this.$http.post('/v1/request/add', {
+        type: 'policy',
+        policyname: this.selectedPolicy,
+        rules: ''
+      }, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+      .then((response) => {
+        this.$message({
+          message: 'Your request ID is: ' + response.data.result,
+          type: 'success',
+          duration: 0,
+          showCloseButton: true
+        })
+        if (response.data.error !== '') {
+          this.$notify({
+            title: 'Slack webhook',
+            message: response.data.error,
+            type: 'warning'
+          })
+        }
+      })
       .catch((error) => {
         this.$onError(error)
       })
