@@ -130,7 +130,7 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 		}
 		// verify policy request is still valid
 		if err := req.Verify(auth); err != nil {
-			return nil, errors.New(err.Error() + ", thus, request has been deleted")
+			return nil, err
 		}
 		return &req, nil
 
