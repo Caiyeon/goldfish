@@ -14,7 +14,7 @@
                 </a>
               </p>
               <p class="control">
-                <input class="input" type="text"
+                <input v-focus class="input" type="text"
                 placeholder="Enter a request ID"
                 v-model="searchString"
                 @keyup.enter="search()"
