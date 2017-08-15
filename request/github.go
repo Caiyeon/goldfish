@@ -213,6 +213,7 @@ func (r *GithubRequest) Approve(hash string, unsealKey string) error {
 	}
 
 	// prepare cleanup
+	r.Progress = r.Required
 	defer vault.DeleteFromCubbyhole("requests/" + hash)
 	defer rootAuth.RevokeSelf()
 
