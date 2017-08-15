@@ -124,6 +124,11 @@ func CreateGithubRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*Git
 		}
 	}
 
+	// if vault and github are identical, don't create the request in cubbyhole
+	if len(r.Changes) == 0 {
+		return nil, errors.New("No changes detected")
+	}
+
 	return r, nil
 }
 
