@@ -130,7 +130,9 @@
             </div>
 
             <!-- Request details -->
-            <div v-for="(details, policy) in request.Changes" class="box">
+            <div class="box"
+            v-if="request.Progress !== request.Required"
+            v-for="(details, policy) in request.Changes">
               <!-- policy name title and status tag -->
               <nav class="level">
                 <div class="level-left">
@@ -236,6 +238,8 @@ export default {
             message: 'Root token generated and revoked',
             type: 'success'
           })
+          this.bConfirm = false
+          this.bReject = false
         } else {
           if (this.request.Progress === 1) {
             this.$notify({
@@ -277,7 +281,7 @@ export default {
           message: 'Request data purged',
           type: 'warning'
         })
-        this.request = null
+        this.reset()
       })
       .catch((error) => {
         this.$onError(error)
