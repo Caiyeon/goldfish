@@ -262,23 +262,12 @@
           <!-- Confirm button -->
           <div class="field">
             <div class="control">
-              <button
-              v-if="selectedPolicies.indexOf('root') > -1"
-              class="button is-danger"
+              <button class="button is-primary"
+              :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
               @click="createToken()"
-              :disabled="this.payloadJSON.metadata === 'INVALID JSON'">
-                Create Root Token
+              :disabled="selectedPolicies.length === 0 || this.payloadJSON.metadata === 'INVALID JSON'">
+                Create {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
-
-              <button
-              v-else
-              class="button is-primary"
-              @click="createToken()"
-              :disabled="selectedPolicies.length === 0 ||
-              this.payloadJSON.metadata === 'INVALID JSON'">
-                Create Token
-              </button>
-
               <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
               <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
             </div>
