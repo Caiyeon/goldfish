@@ -40,13 +40,19 @@ func CreatePolicyRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*Pol
 	}
 
 	if temp, ok := raw["rules"]; ok {
-		r.Proposed, _ = temp.(string)
-	}
-	if r.Proposed == "" {
-		return nil, "", errors.New("No changes proposed")
-	}
-	if _, err := hcl.Parse(r.Proposed); err != nil {
-		return nil, "", errors.New("Policy must be HCL formatted")
+		if r.Proposed, ok = temp.(string); ok {
+			// if rules is empty, treat it as a deletion request
+			// if rules is not empty, make sure it's HCL formatted
+			if r.Proposed != "" {
+				if _, err := hcl.Parse(r.Proposed); err != nil {
+					return nil, "", errors.New("Policy must be HCL formatted")
+				}
+			}
+		} else {
+			return nil, "", errors.New("Could not type assert 'rules' field")
+		}
+	} else {
+		return nil, "", errors.New("'rules' field is required")
 	}
 
 	// collect requester's information
@@ -171,15 +177,23 @@ func (r *PolicyRequest) Approve(hash string, unsealKey string) error {
 	defer rootAuth.RevokeSelf()
 
 	// make requested change
-	if err := rootAuth.PutPolicy(r.PolicyName, r.Proposed); err != nil {
-		return err
-	}
-
-	// return new policy
-	if p, err := rootAuth.GetPolicy(r.PolicyName); err != nil {
-		return err
+	if r.Proposed == "" {
+		// if the request was to delete the policy
+		if err := rootAuth.DeletePolicy(r.PolicyName); err != nil {
+			return err
+		}
+		r.Previous = ""
 	} else {
-		r.Previous = p
+		// if the request was to change the policy
+		if err := rootAuth.PutPolicy(r.PolicyName, r.Proposed); err != nil {
+			return err
+		}
+		// update the request object with the new policy from vault
+		if p, err := rootAuth.GetPolicy(r.PolicyName); err != nil {
+			return err
+		} else {
+			r.Previous = p
+		}
 	}
 
 	return nil
