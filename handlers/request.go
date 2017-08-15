@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/caiyeon/goldfish/request"
 	"github.com/labstack/echo"
@@ -20,9 +21,16 @@ func GetRequest() echo.HandlerFunc {
 		// fetch request from cubbyhole
 		req, err := request.Get(auth, c.FormValue("hash"))
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, H{
-				"error": err.Error(),
-			})
+			// if error contains 403 from vault, forward it to the user
+			if strings.Contains(err.Error(), "Code: 403. Errors:\n\n* permission denied") {
+				return c.JSON(http.StatusForbidden, H{
+					"error": err.Error(),
+				})
+			} else {
+				return c.JSON(http.StatusBadRequest, H{
+					"error": err.Error(),
+				})
+			}
 		}
 
 		// return request details
@@ -64,9 +72,16 @@ func AddRequest() echo.HandlerFunc {
 		// add the request
 		hash, err := request.Add(auth, params)
 		if err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": err.Error(),
-			})
+			// if error contains 403 from vault, forward it to the user
+			if strings.Contains(err.Error(), "Code: 403. Errors:\n\n* permission denied") {
+				return c.JSON(http.StatusForbidden, H{
+					"error": err.Error(),
+				})
+			} else {
+				return c.JSON(http.StatusBadRequest, H{
+					"error": err.Error(),
+				})
+			}
 		}
 
 		// TODO: add slack webhook
@@ -114,9 +129,16 @@ func ApproveRequest() echo.HandlerFunc {
 		// approve the request by hash
 		req, err := request.Approve(auth, hash.(string), unseal.(string))
 		if err != nil {
-			return c.JSON(http.StatusForbidden, H{
-				"error": err.Error(),
-			})
+			// if error contains 403 from vault, forward it to the user
+			if strings.Contains(err.Error(), "Code: 403. Errors:\n\n* permission denied") {
+				return c.JSON(http.StatusForbidden, H{
+					"error": err.Error(),
+				})
+			} else {
+				return c.JSON(http.StatusBadRequest, H{
+					"error": err.Error(),
+				})
+			}
 		}
 
 		return c.JSON(http.StatusOK, H{
@@ -142,9 +164,16 @@ func RejectRequest() echo.HandlerFunc {
 		}
 
 		if err := request.Reject(auth, hash); err != nil {
-			return c.JSON(http.StatusBadRequest, H{
-				"error": err.Error(),
-			})
+			// if error contains 403 from vault, forward it to the user
+			if strings.Contains(err.Error(), "Code: 403. Errors:\n\n* permission denied") {
+				return c.JSON(http.StatusForbidden, H{
+					"error": err.Error(),
+				})
+			} else {
+				return c.JSON(http.StatusBadRequest, H{
+					"error": err.Error(),
+				})
+			}
 		}
 
 		return c.JSON(http.StatusOK, H{
