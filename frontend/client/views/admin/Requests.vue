@@ -216,7 +216,6 @@ export default {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.request = response.data.result
-        console.log(JSON.stringify(this.request))
       })
       .catch((error) => {
         this.$onError(error)
