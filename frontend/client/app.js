@@ -61,21 +61,15 @@ Vue.prototype.$notify = openNotification
 function handleError (error) {
   // if the server gave a response message, print that
   if (error.response.data.error) {
+    // duration should be proportional to the error message length
     openNotification({
       title: 'Error: ' + error.response.status,
       message: error.response.data.error,
-      type: 'danger'
+      type: 'danger',
+      duration: error.response.data.error.length > 60 ? 20000 : 4500
     })
     console.log(error.response.data.error)
   } else {
-    if (error.response.status === 403) {
-      // either user is not logged in, or user's actions were denied by vault
-      openNotification({
-        title: 'Error: ' + error.response.status.toString(),
-        message: 'Invalid CSRF. Please refresh page',
-        type: 'danger'
-      })
-    }
     if (error.response.status === 404) {
       openNotification({
         title: 'Error: 404',
