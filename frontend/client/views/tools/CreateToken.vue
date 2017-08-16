@@ -106,7 +106,7 @@
               </div>
               <div v-if="bWrapped" class="field">
                 <input class="input" type="text"
-                  placeholder="Wrap-ttl e.g. '5m'"
+                  placeholder="Wrap_ttl e.g. '5m'"
                   v-model="wrap_ttl"
                   :class="stringToSeconds(this.wrap_ttl) < 0 ? 'is-danger' : ''">
                 <p v-if="stringToSeconds(this.wrap_ttl) < 0" class="help is-danger">
@@ -453,7 +453,7 @@ export default {
     createParams: function () {
       var params = ''
       if (this.bWrapped) {
-        params = params + 'wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's&'
+        params = params + 'wrap_ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's&'
       }
       if (this.bOrphan) {
         params = params + 'orphan=true&'
@@ -571,11 +571,13 @@ export default {
       this.createdToken = null
       this.$http.post('/v1/request/add', {
         type: 'token',
+        wrap_ttl: this.bWrapped ? this.stringToSeconds(this.wrap_ttl).toString() : '',
+        orphan: this.bOrphan,
+        role: this.bRole ? this.selectedRole : '',
         tokenCreateRequest: this.payloadJSON
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
-
       .then((response) => {
         this.$message({
           message: 'Your request ID is: ' + response.data.result,
@@ -583,7 +585,6 @@ export default {
           duration: 0,
           showCloseButton: true
         })
-
         if (response.data.error !== '') {
           this.$notify({
             title: 'Slack webhook',
@@ -592,7 +593,6 @@ export default {
           })
         }
       })
-
       .catch((error) => {
         this.$onError(error)
       })

@@ -114,7 +114,7 @@ func CreateToken() echo.HandlerFunc {
 			request,
 			c.QueryParam("orphan") == "true",
 			c.QueryParam("role"),
-			c.QueryParam("wrap-ttl"),
+			c.QueryParam("wrap_ttl"),
 		); err != nil {
 			return parseError(c, err)
 		} else {
