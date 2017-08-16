@@ -166,6 +166,38 @@ func TestRequestSystem(t *testing.T) {
 			rules, err = rootAuth.GetPolicy("abc")
 			So(err, ShouldBeNil)
 			So(rules, ShouldEqual, "# this is not the same rule")
+
+			//-----------------------------------------------------------------
+			// removing an exist policy through request
+			hash, err = Add(rootAuth, map[string]interface{}{
+				"Type":       "policy",
+				"policyname": "abc",
+				"rules":      "", // empty rules will mark it for deletion
+			})
+			So(err, ShouldBeNil)
+			So(hash, ShouldNotBeEmpty)
+
+			// retrieve the request
+			_, err = Get(rootAuth, hash)
+			So(err, ShouldBeNil)
+
+			// approve the request
+			_, err = Approve(rootAuth, hash, unsealTokens[0])
+			So(err, ShouldBeNil)
+			_, err = Approve(rootAuth, hash, unsealTokens[1])
+			So(err, ShouldBeNil)
+			_, err = Approve(rootAuth, hash, unsealTokens[2])
+			So(err, ShouldBeNil)
+
+			// confirm request no longer exists
+			req, err = Get(rootAuth, hash)
+			So(err, ShouldNotBeNil)
+			So(req, ShouldBeNil)
+
+			// confirm policy no longer exists
+			rules, err = rootAuth.GetPolicy("abc")
+			So(err, ShouldBeNil)
+			So(rules, ShouldEqual, "")
 		})
 	})
 }
