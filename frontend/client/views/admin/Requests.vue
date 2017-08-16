@@ -89,7 +89,7 @@
             </div>
           </article>
 
-          <!-- Displaying a set of changes via github commit hash -->
+          <!-- Request type: github -->
           <article v-if="request !== null && request['Type'] === 'github'">
             <br>
             <!-- Request general info -->
@@ -171,6 +171,53 @@
             </div>
           </article>
 
+          <!-- Request type: token -->
+          <article v-if="request !== null && request['Type'] === 'token'">
+            <br>
+            <!-- Request general info -->
+            <article class="message is-primary">
+              <div class="message-body">
+                <strong>Request type: </strong>{{request.Type}}<br>
+                <strong>Requester display name: </strong>{{request.Requester}}<br>
+                <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
+                <strong>Unseal progress: </strong>{{request.Progress}} out of {{request.Required}}
+                  <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
+              </div>
+            </article>
+
+            <!-- Approve/Reject -->
+            <div class="field is-grouped">
+              <p class="control">
+                <button class="button is-success" @click="bConfirm = true">Approve</button>
+              </p>
+              <p class="control">
+                <button v-if="!bReject" class="button is-warning" @click="bReject = true">Reject</button>
+                <button v-else class="button is-danger" @click="reject()">Confirm Reject</button>
+              </p>
+              <div v-if="bConfirm" class="field has-addons">
+                <p class="control">
+                  <input class="input" type="password"
+                  placeholder="Enter an unseal token"
+                  v-model="unsealToken"
+                  @keyup.enter="approve()">
+                </p>
+                <p class="control">
+                  <a class="button is-info" @click="approve()">
+                    Confirm
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <!-- Request details -->
+            <div class="field">
+              <label class="label">Request payload:</label>
+              <article class="message is-primary">
+                <pre v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
+              </article>
+            </div>
+          </article>
+
         </article>
       </div>
     </div>
@@ -195,6 +242,14 @@ export default {
   computed: {
     session: function () {
       return this.$store.getters.session
+    },
+
+    // returns a constructed JSON object with the token creation request
+    tokenRequestPreview: function () {
+      if (!this.request || this.request['Type'] !== 'token' || !this.request['CreateRequest']) {
+        return {}
+      }
+      return this.request.CreateRequest
     }
   },
 
