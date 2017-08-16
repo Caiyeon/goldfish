@@ -34,6 +34,9 @@ type Request interface {
 
 // adds a request if user has authentication
 func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
+	lockMap.Lock()
+	defer lockMap.Unlock()
+
 	t := ""
 	if typeRaw, ok := raw["Type"]; !ok {
 		if typeRaw, ok = raw["type"]; ok {
@@ -55,8 +58,6 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 		}
 
 		// lock hash in map before writing to vault cubbyhole
-		lockMap.Lock()
-		defer lockMap.Unlock()
 		if _, locked := lockHash[hash]; locked {
 			return "", errors.New("Someone else is currently editing this request")
 		}
