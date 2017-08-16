@@ -198,6 +198,9 @@ func TestRequestSystem(t *testing.T) {
 			rules, err = rootAuth.GetPolicy("abc")
 			So(err, ShouldBeNil)
 			So(rules, ShouldEqual, "")
+			policies, err := rootAuth.ListPolicies()
+			So(err, ShouldBeNil)
+			So(policies, ShouldNotContain, "abc")
 		})
 	})
 }
