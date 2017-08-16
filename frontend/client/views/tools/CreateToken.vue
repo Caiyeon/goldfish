@@ -567,14 +567,22 @@ export default {
       if (this.payloadJSON.metadata === 'INVALID JSON') {
         return
       }
+      if (!this.bWrapped || this.stringToSeconds(this.wrap_ttl) < 1) {
+        this.$notify({
+          title: 'Wrap required',
+          message: 'Token creation requests must be wrapped',
+          type: 'warning'
+        })
+        return
+      }
 
       this.createdToken = null
       this.$http.post('/v1/request/add', {
         type: 'token',
-        wrap_ttl: this.bWrapped ? this.stringToSeconds(this.wrap_ttl).toString() : '',
-        orphan: this.bOrphan,
+        orphan: this.bOrphan ? 'true' : '',
         role: this.bRole ? this.selectedRole : '',
-        tokenCreateRequest: this.payloadJSON
+        wrap_ttl: this.stringToSeconds(this.wrap_ttl).toString(),
+        create_request: this.payloadJSON
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })

@@ -70,6 +70,23 @@ func Add(auth *vault.AuthInfo, raw map[string]interface{}) (string, error) {
 	case "github":
 		return "", errors.New("Github requests do not need to be added")
 
+	case "token":
+		// construct request fields
+		req, hash, err := CreateTokenRequest(auth, raw)
+		if err != nil {
+			return "", err
+		}
+
+		// lock hash in map before writing to vault cubbyhole
+		if _, locked := lockHash[hash]; locked {
+			return "", errors.New("Someone else is currently editing this request")
+		}
+		lockHash[hash] = true
+		defer delete(lockHash, hash)
+
+		_, err = vault.WriteToCubbyhole("requests/"+hash, structs.Map(req))
+		return hash, err
+
 	default:
 		return "", errors.New("Unsupported request type")
 	}
@@ -147,6 +164,18 @@ func Get(auth *vault.AuthInfo, hash string) (Request, error) {
 		}
 		return &req, nil
 
+	case "token":
+		// decode secret into token creation request
+		var req TokenRequest
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return nil, err
+		}
+		// verify user has at least default policy
+		if err := req.Verify(auth); err != nil {
+			return nil, err
+		}
+		return &req, nil
+
 	default:
 		return nil, errors.New("Invalid request type: " + t)
 	}
@@ -213,7 +242,22 @@ func Approve(auth *vault.AuthInfo, hash string, unseal string) (Request, error) 
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
 			return nil, err
 		}
-		// verify user has vault privleges to read contained policies
+		// verify user has vault privileges to read contained policies
+		if err := req.Verify(auth); err != nil {
+			return nil, err
+		}
+		if err := req.Approve(hash, unseal); err != nil {
+			return nil, err
+		}
+		return &req, nil
+
+	case "token":
+		// decode secret into token creation request
+		var req TokenRequest
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return nil, err
+		}
+		// verify user has at least default policy
 		if err := req.Verify(auth); err != nil {
 			return nil, err
 		}
@@ -282,7 +326,19 @@ func Reject(auth *vault.AuthInfo, hash string) error {
 		if err := mapstructure.Decode(resp.Data, &req); err != nil {
 			return err
 		}
-		// verify user has vault privleges to read contained policies
+		// verify user has vault privileges to read contained policies
+		if err := req.Verify(auth); err != nil {
+			return err
+		}
+		return req.Reject(auth, hash)
+
+	case "token":
+		// decode secret into token creation request
+		var req TokenRequest
+		if err := mapstructure.Decode(resp.Data, &req); err != nil {
+			return err
+		}
+		// verify user has at least default policy
 		if err := req.Verify(auth); err != nil {
 			return err
 		}
