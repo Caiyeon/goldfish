@@ -265,7 +265,9 @@
               <button class="button is-primary"
               :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
               @click="createToken()"
-              :disabled="selectedPolicies.length === 0 || this.payloadJSON.metadata === 'INVALID JSON'">
+              :disabled="selectedPolicies.length === 0
+              || this.payloadJSON.metadata === 'INVALID JSON'
+              || (selectedRole && this.bOrphan)">
                 Create {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
             </div>
@@ -275,7 +277,9 @@
               <button class="button is-info"
               :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
               @click="createTokenRequest()"
-              :disabled="selectedPolicies.length === 0 || this.payloadJSON.metadata === 'INVALID JSON'">
+              :disabled="selectedPolicies.length === 0
+              || this.payloadJSON.metadata === 'INVALID JSON'
+              || (selectedRole && this.bOrphan)">
                 Request {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
             </div>
@@ -372,7 +376,6 @@ export default {
       bRenewable: true,
       bNoParent: false,
       bPeriodic: false,
-      bRole: false,
       bWrapped: false,
       bMetadata: false,
       bOrphan: false,
@@ -458,7 +461,7 @@ export default {
       if (this.bOrphan) {
         params = params + 'orphan=true&'
       }
-      if (this.bRole) {
+      if (this.selectedRole) {
         params = params + 'role=' + encodeURIComponent(this.selectedRole) + '&'
       }
       return params
@@ -544,6 +547,10 @@ export default {
       if (this.payloadJSON.metadata === 'INVALID JSON') {
         return
       }
+      // role and orphan is not allowed by vault API
+      if (this.selectedRole && this.bOrphan) {
+        return
+      }
 
       this.createdToken = null
       this.$http.post('/v1/token/create?' + this.createParams, this.payloadJSON, {
@@ -576,11 +583,16 @@ export default {
         return
       }
 
+      // role and orphan is not allowed by vault API
+      if (this.selectedRole && this.bOrphan) {
+        return
+      }
+
       this.createdToken = null
       this.$http.post('/v1/request/add', {
         type: 'token',
         orphan: this.bOrphan ? 'true' : '',
-        role: this.bRole ? this.selectedRole : '',
+        role: this.selectedRole,
         wrap_ttl: this.stringToSeconds(this.wrap_ttl).toString(),
         create_request: this.payloadJSON
       }, {
