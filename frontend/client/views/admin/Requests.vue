@@ -234,9 +234,18 @@
                   </div>
                 </div>
               </div>
-              <article class="message is-primary">
-                <pre v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
-              </article>
+              <div class="columns">
+                <div class="column">
+                  <article class="message is-primary">
+                    <pre v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
+                  </article>
+                </div>
+                <div class="column">
+                  <article v-if="request.CreateResponse" class="message is-primary">
+                    <pre v-highlightjs="JSON.stringify(request.CreateResponse.wrap_info, null, '    ')"><code class="javascript"></code></pre>
+                  </article>
+                </div>
+              </div>
             </div>
           </article>
 
@@ -316,6 +325,14 @@ export default {
           })
           this.bConfirm = false
           this.bReject = false
+
+          // if there is wrapped info, notify user
+          this.$message({
+            message: 'Created resource is in wrapping token: ' + this.request.CreateResponse.wrap_info.token,
+            type: 'success',
+            duration: 0,
+            showCloseButton: true
+          })
         } else {
           if (this.request.Progress === 1) {
             this.$notify({
