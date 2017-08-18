@@ -267,7 +267,7 @@
               @click="createToken()"
               :disabled="selectedPolicies.length === 0
               || this.payloadJSON.metadata === 'INVALID JSON'
-              || (selectedRole && this.bOrphan)">
+              || (this.selectedRole !== '' && this.bOrphan)">
                 Create {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
             </div>
@@ -279,7 +279,7 @@
               @click="createTokenRequest()"
               :disabled="selectedPolicies.length === 0
               || this.payloadJSON.metadata === 'INVALID JSON'
-              || (selectedRole && this.bOrphan)">
+              || (this.selectedRole !== '' && this.bOrphan)">
                 Request {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
             </div>
@@ -461,7 +461,7 @@ export default {
       if (this.bOrphan) {
         params = params + 'orphan=true&'
       }
-      if (this.selectedRole) {
+      if (this.selectedRole !== '') {
         params = params + 'role=' + encodeURIComponent(this.selectedRole) + '&'
       }
       return params

@@ -213,16 +213,24 @@
             <div class="field">
               <label class="label">Request payload:</label>
               <div class="field is-grouped is-grouped-multiline">
-                <div v-if="request.Orphan === 'true'" class="control">
+                <div class="control">
                   <div class="tags has-addons">
-                    <span class="tag">Requested token is</span>
-                    <span class="tag is-warning">Orphan</span>
+                    <span class="tag">Orphan?</span>
+                    <span class="tag is-primary" :class="request.Orphan ? 'is-warning': ''">
+                      {{request.Orphan ? 'Yes' : 'No'}}
+                    </span>
                   </div>
                 </div>
                 <div v-if="request.Role" class="control">
                   <div class="tags has-addons">
-                    <span class="tag">Requested role</span>
+                    <span class="tag">Role</span>
                     <span class="tag is-warning">{{request.Role}}</span>
+                  </div>
+                </div>
+                <div v-if="request.Wrap_ttl" class="control">
+                  <div class="tags has-addons">
+                    <span class="tag">Wrap_ttl</span>
+                    <span class="tag is-primary">{{request.Wrap_ttl}}</span>
                   </div>
                 </div>
               </div>

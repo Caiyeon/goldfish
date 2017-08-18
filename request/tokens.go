@@ -77,7 +77,7 @@ func CreateTokenRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*Toke
     }
 
 	if r.Orphan == "true" && r.Role != "" {
-		return nil, errors.New("'role' and 'orphan' fields are mutually exclusive")
+		return nil, "", errors.New("'role' and 'orphan' fields are mutually exclusive")
 	}
 
 	// collect requester's information
