@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"crypto/tls"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -10,7 +11,15 @@ import (
 )
 
 func VaultHealth() (string, error) {
-	resp, err := http.Get(vaultConfig.Address + "/v1/sys/health")
+	client := &http.Client{
+		Transport: &http.Transport{
+        	TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: vaultConfig.Tls_skip_verify,
+			},
+    	},
+	}
+
+	resp, err := client.Get(vaultConfig.Address + "/v1/sys/health")
 	if err != nil {
 		return "", err
 	}
