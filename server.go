@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/caiyeon/goldfish/config"
@@ -109,10 +109,10 @@ func main() {
 
 	// prevent caching by client (e.g. Safari)
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-	    return func(c echo.Context) error {
-	        c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	        return next(c)
-	    }
+		return func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			return next(c)
+		}
 	})
 
 	// unless explicitly disabled, some extra https configurations need to be set
@@ -220,7 +220,7 @@ func main() {
 	}
 }
 
-const versionString = "Goldfish version: v0.6.0-rc1"
+const versionString = "Goldfish version: v0.7.0-rc1"
 
 const devInitString = `
 
