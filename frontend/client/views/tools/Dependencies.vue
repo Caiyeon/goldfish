@@ -11,19 +11,22 @@
 
         <!-- select resource type -->
         <div class="field has-addons">
-          <div class="field">
-            <p class="control has-icons-right">
-              <span class="select">
-                <select v-model="resourceType" required
-                :disabled="loading || resourceType !== ''">
-                  <option value="" disabled selected hidden>
-                    Select a resource type...</option>
-                  <option v-for="res in supportedResourceTypes">
-                    {{res}}</option>
-                </select>
-              </span>
-            </p>
-          </div>
+          <p class="control has-icons-right">
+            <span class="select">
+              <select v-model="resourceType" required
+              :disabled="loading || resourceType !== ''">
+                <option value="" disabled selected hidden>
+                  Select a resource type...</option>
+                <option v-for="res in supportedResourceTypes">
+                  {{res}}</option>
+              </select>
+            </span>
+          </p>
+          <p v-if="resourceType !== ''" class="control">
+            <a class="button is-danger" @click="resetAll()" :disabled="loading">
+              Reset all
+            </a>
+          </p>
         </div>
 
         <!-- resourceType: policy -->
@@ -61,7 +64,7 @@
 
             <p class="control">
               <a class="button is-info"
-              @click="confirmed = true"
+              @click="confirmed = (selectedPolicy !== '')"
               :disabled="loading || selectedPolicy === '' || confirmed">
                 Confirm
               </a>
@@ -136,7 +139,7 @@
 
             <p class="control">
               <a class="button is-info"
-              @click="confirmed = true"
+              @click="confirmed = (selectedMount !== '')"
               :disabled="loading || selectedMount === '' || confirmed">
                 Confirm
               </a>
@@ -243,6 +246,19 @@ export default {
       if (index !== -1) {
         return this.results[index]
       }
+    },
+
+    // purges entire page of selected fields, but maintain lists of policies & mounts
+    resetAll: function () {
+      // don't reset if loading, in order to keep a consistent state
+      if (this.loading) {
+        return
+      }
+      this.resourceType = ''
+      this.confirmed = false
+      this.results = []
+      this.selectedPolicy = ''
+      this.selectedMount = ''
     },
 
     searchDependencies: function (resourceType, searchType) {

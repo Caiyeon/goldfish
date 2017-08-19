@@ -106,7 +106,7 @@
               </div>
               <div v-if="bWrapped" class="field">
                 <input class="input" type="text"
-                  placeholder="Wrap-ttl e.g. '5m'"
+                  placeholder="Wrap_ttl e.g. '5m'"
                   v-model="wrap_ttl"
                   :class="stringToSeconds(this.wrap_ttl) < 0 ? 'is-danger' : ''">
                 <p v-if="stringToSeconds(this.wrap_ttl) < 0" class="help is-danger">
@@ -115,6 +115,22 @@
                 <p v-if="stringToSeconds(this.wrap_ttl) > 0" class="help is-info">
                   {{ stringToSeconds(this.wrap_ttl) }} seconds
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Orphan -->
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">
+                Orphan?
+              </label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <vb-switch type="info" :checked="bOrphan" v-model="bOrphan"></vb-switch>
+                </div>
               </div>
             </div>
           </div>
@@ -225,9 +241,18 @@
                 </label>
 
                 <div class="panel-block">
-                  <button class="button is-danger is-outlined is-fullwidth" @click="selectedPolicies = []">
-                    Reset selected policies
-                  </button>
+                  <div class="field is-grouped">
+                    <p class="control">
+                      <a class="button is-primary is-outlined" @click="listAllPolicies()">
+                        List all policies
+                      </a>
+                    </p>
+                    <p class="control">
+                      <a class="button is-danger is-outlined" @click="selectedPolicies = []">
+                        Reset selection
+                      </a>
+                    </p>
+                  </div>
                 </div>
 
               </nav>
@@ -235,27 +260,28 @@
           </div>
 
           <!-- Confirm button -->
-          <div class="field">
+          <div class="field is-grouped">
             <div class="control">
-              <button
-              v-if="selectedPolicies.indexOf('root') > -1"
-              class="button is-danger"
+              <button class="button is-primary"
+              :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
               @click="createToken()"
-              :disabled="this.payloadJSON.metadata === 'INVALID JSON'">
-                Create Root Token
+              :disabled="selectedPolicies.length === 0
+              || this.payloadJSON.metadata === 'INVALID JSON'
+              || (this.selectedRole !== '' && this.bOrphan)">
+                Create {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
+            </div>
 
-              <button
-              v-else
-              class="button is-primary"
-              @click="createToken()"
-              :disabled="selectedPolicies.length === 0 ||
-              this.payloadJSON.metadata === 'INVALID JSON'">
-                Create Token
+          <!-- Confirm request button -->
+            <div class="control">
+              <button class="button is-info"
+              :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
+              @click="createTokenRequest()"
+              :disabled="selectedPolicies.length === 0
+              || this.payloadJSON.metadata === 'INVALID JSON'
+              || (this.selectedRole !== '' && this.bOrphan)">
+                Request {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
-
-              <p v-if="selectedPolicies.length === 0" class="help is-danger">WARNING: No policies selected</p>
-              <p v-if="selectedPolicies.indexOf('root') > -1" class="help is-danger">WARNING: Root policy is selected</p>
             </div>
           </div>
 
@@ -266,6 +292,14 @@
         <div class="column is-6">
 
           <!-- Warnings -->
+          <div v-if="bOrphan && selectedRole" class="field">
+            <article class="message is-danger">
+              <div class="message-body">
+                <strong>Invalid: orphaned and role selections are mutually exclusive
+                  (vault API only allows one or the other)</strong>
+              </div>
+            </article>
+          </div>
           <div v-if="availableRoles === null" class="field">
             <article class="message is-warning">
               <div class="message-body">
@@ -342,9 +376,9 @@ export default {
       bRenewable: true,
       bNoParent: false,
       bPeriodic: false,
-      bRole: false,
       bWrapped: false,
       bMetadata: false,
+      bOrphan: false,
       ID: '',
       displayName: '',
       ttl: '',
@@ -419,11 +453,18 @@ export default {
       return payload
     },
 
-    wrapParam: function () {
+    createParams: function () {
+      var params = ''
       if (this.bWrapped) {
-        return 'wrap-ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's'
+        params = params + 'wrap_ttl=' + this.stringToSeconds(this.wrap_ttl).toString() + 's&'
       }
-      return ''
+      if (this.bOrphan) {
+        params = params + 'orphan=true&'
+      }
+      if (this.selectedRole !== '') {
+        params = params + 'role=' + encodeURIComponent(this.selectedRole) + '&'
+      }
+      return params
     }
   },
 
@@ -460,23 +501,7 @@ export default {
 
     // if root policy, fetch all available policies from server
     if (this.availablePolicies.indexOf('root') > -1) {
-      this.$http.get('/v1/policy', {
-        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
-      }).then((response) => {
-        this.availablePolicies = response.data.result
-        // default policy is always an option, and the first item in list
-        var i = this.availablePolicies.indexOf('default')
-        if (i < 0) {
-          this.availablePolicies.splice(0, 0, 'default')
-        } else if (i > 0) {
-          var temp = this.availablePolicies[i]
-          this.availablePolicies[i] = this.availablePolicies[0]
-          this.availablePolicies[0] = temp
-        }
-      })
-      .catch((error) => {
-        this.$onError(error)
-      })
+      this.listAllPolicies()
     }
   },
 
@@ -522,9 +547,13 @@ export default {
       if (this.payloadJSON.metadata === 'INVALID JSON') {
         return
       }
+      // role and orphan is not allowed by vault API
+      if (this.selectedRole && this.bOrphan) {
+        return
+      }
 
       this.createdToken = null
-      this.$http.post('/v1/token/create?' + this.wrapParam, this.payloadJSON, {
+      this.$http.post('/v1/token/create?' + this.createParams, this.payloadJSON, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
@@ -534,6 +563,55 @@ export default {
           type: 'success'
         })
         this.createdToken = response.data.result.auth || response.data.result.wrap_info
+      })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
+
+    // creates a request instead of directing creating the token
+    createTokenRequest: function () {
+      if (this.payloadJSON.metadata === 'INVALID JSON') {
+        return
+      }
+      if (!this.bWrapped || this.stringToSeconds(this.wrap_ttl) < 1) {
+        this.$notify({
+          title: 'Wrap required',
+          message: 'Token creation requests must be wrapped',
+          type: 'warning'
+        })
+        return
+      }
+
+      // role and orphan is not allowed by vault API
+      if (this.selectedRole && this.bOrphan) {
+        return
+      }
+
+      this.createdToken = null
+      this.$http.post('/v1/request/add', {
+        type: 'token',
+        orphan: this.bOrphan ? 'true' : '',
+        role: this.selectedRole,
+        wrap_ttl: this.stringToSeconds(this.wrap_ttl).toString(),
+        create_request: this.payloadJSON
+      }, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+      .then((response) => {
+        this.$message({
+          message: 'Your request ID is: ' + response.data.result,
+          type: 'success',
+          duration: 0,
+          showCloseButton: true
+        })
+        if (response.data.error !== '') {
+          this.$notify({
+            title: 'Slack webhook',
+            message: response.data.error,
+            type: 'warning'
+          })
+        }
       })
       .catch((error) => {
         this.$onError(error)
@@ -553,6 +631,26 @@ export default {
       .catch((error) => {
         this.$onError(error)
         this.selectedRoleLoading = false
+      })
+    },
+
+    listAllPolicies: function () {
+      this.$http.get('/v1/policy', {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      }).then((response) => {
+        this.availablePolicies = response.data.result
+        // default policy is always an option, and the first item in list
+        var i = this.availablePolicies.indexOf('default')
+        if (i < 0) {
+          this.availablePolicies.splice(0, 0, 'default')
+        } else if (i > 0) {
+          var temp = this.availablePolicies[i]
+          this.availablePolicies[i] = this.availablePolicies[0]
+          this.availablePolicies[0] = temp
+        }
+      })
+      .catch((error) => {
+        this.$onError(error)
       })
     }
 

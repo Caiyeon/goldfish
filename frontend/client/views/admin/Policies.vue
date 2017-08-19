@@ -63,52 +63,81 @@
       <!-- Policies table -->
       <div class="tile is-parent is-marginless is-paddingless">
         <div class="tile is-parent is-child is-vertical is-5">
-          <article class="tile is-child box">
+          <article class="tile is-child box is-clearfix">
             <table class="table is-fullwidth is-striped is-narrow">
               <thead>
                 <tr>
-                  <th></th>
                   <th>Policy Name</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(entry, index) in filteredPolicies">
-                  <td width="34">
-                    <span class="icon">
-                    <a @click="getPolicyRules(entry)">
-                      <i class="fa fa-info"></i>
-                    </a>
-                    </span>
-                  </td>
                   <td>
-                    {{ entry }}
+                    <a class="tag is-primary"
+                    :class="entry === 'root' ? 'is-danger': ''"
+                    @click="getPolicyRules(entry)">
+                      {{entry}}</a>
+                  </td>
+                </tr>
+                <tr v-if="bNewPolicy">
+                  <td>
+                    <input v-if="bNewPolicy && !newPolicyName"
+                      v-model.lazy="newPolicyName"
+                      placeholder="Enter a policy name"></input>
+                    <div v-if="bNewPolicy && newPolicyName" class="tags has-addons is-marginless is-paddingless">
+                      <span class="tag is-info">
+                        {{newPolicyName}}
+                      </span>
+                      <a class="tag is-delete" @click="bNewPolicy = false; newPolicyName = ''"></a>
+                    </div>
+                    <p v-if="bNewPolicy && newPolicyName && (policies.indexOf(newPolicyName) === -1)" class="help is-info">
+                      You are requesting this policy to be created
+                    </p>
+                    <p v-if="bNewPolicy && (policies.indexOf(newPolicyName) > -1)" class="help is-danger">
+                      This policy already exists! <br>Cancel this policy, click on the existing one, and then request changes
+                    </p>
                   </td>
                 </tr>
               </tbody>
             </table>
+            <a v-if="!newPolicyName"
+            class="button is-primary is-outlined is-pulled-right"
+            @click="bNewPolicy = true; reset()">
+              Request a new policy</a>
           </article>
         </div>
 
-      <!-- Policy details -->
+        <!-- Policy details -->
         <div class="tile is-parent is-vertical">
           <article class="tile is-child box">
-            <h4 class="subtitle is-4">Policy Rules</h4>
+            <p class="subtitle is-4">Policy Rules</p>
 
             <div class="field">
               <p class="control">
-                <textarea class="textarea" placeholder="Select a policy" v-model="policyRulesModified"></textarea>
+                <textarea class="textarea"
+                placeholder="Select a policy"
+                v-model="policyRulesModified"
+                rows="20"></textarea>
               </p>
             </div>
 
-            <div class="field">
-              <p class="control is-pulled-right">
+            <div class="field is-grouped is-pulled-right">
+              <p v-if="newPolicyName === ''" class="control">
+                <a class="button is-danger is-outlined"
+                  @click="addPolicyRemoveRequest()"
+                  :disabled="selectedPolicy === ''">
+                  <span>Request deletion</span>
+                </a>
+              </p>
+
+              <p class="control">
                 <a class="button is-primary is-outlined"
                   @click="addPolicyRequest()"
-                  :disabled="policyRules === policyRulesModified">
-                  <span>Request changes</span>
-                  <span class="icon is-small">
-                    <i class="fa fa-check"></i>
-                  </span>
+                  :class="newPolicyName ? 'is-info' : ''"
+                  :disabled="policyRules === policyRulesModified
+                  || (policies.indexOf(newPolicyName) > -1)
+                  || policyRulesModified === ''">
+                  <span>Request {{newPolicyName ? 'creation' : 'changes'}}</span>
                 </a>
               </p>
             </div>
@@ -122,11 +151,10 @@
 </template>
 
 <script>
-const querystring = require('querystring')
-
 export default {
   data () {
     return {
+      bNewPolicy: false,
       policies: [],
       policyRules: '',
       policyRulesModified: '',
@@ -138,7 +166,8 @@ export default {
         searched: 0,
         regex: false
       },
-      selectedPolicy: ''
+      selectedPolicy: '',
+      newPolicyName: ''
     }
   },
 
@@ -177,7 +206,21 @@ export default {
   },
 
   methods: {
+    reset: function () {
+      this.selectedPolicy = ''
+      this.policyRules = ''
+      this.policyRulesModified = ''
+    },
+
     getPolicyRules: function (policyName) {
+      if (this.newPolicyName) {
+        this.$notify({
+          title: 'New policy in edit',
+          message: 'Cancel the new policy before viewing another',
+          type: 'warning'
+        })
+        return
+      }
       this.policyRules = ''
       this.policyRulesModified = ''
       this.selectedPolicy = policyName
@@ -222,19 +265,33 @@ export default {
     },
 
     addPolicyRequest: function () {
-      this.$http.post('/v1/policy/request?policy=' + this.selectedPolicy,
-      querystring.stringify({ rules: this.policyRulesModified }), {
+      if (this.policyRules === this.policyRulesModified || this.policyRulesModified === '') {
+        return
+      }
+
+      if (this.policies.indexOf(this.newPolicyName) > -1) {
+        this.$notify({
+          title: 'Policy already exists',
+          message: 'Cancel this new policy, select the existing one, and edit that instead',
+          type: 'warning'
+        })
+        return
+      }
+
+      this.$http.post('/v1/request/add', {
+        type: 'policy',
+        policyname: this.selectedPolicy || this.newPolicyName,
+        rules: this.policyRulesModified
+      }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
-
       .then((response) => {
         this.$message({
-          message: 'Your change ID is: ' + response.data.result,
+          message: 'Your request ID is: ' + response.data.result,
           type: 'success',
           duration: 0,
           showCloseButton: true
         })
-
         if (response.data.error !== '') {
           this.$notify({
             title: 'Slack webhook',
@@ -243,7 +300,37 @@ export default {
           })
         }
       })
+      .catch((error) => {
+        this.$onError(error)
+      })
+    },
 
+    addPolicyRemoveRequest: function () {
+      if (this.selectedPolicy === '' || this.newPolicyName !== '') {
+        return
+      }
+      this.$http.post('/v1/request/add', {
+        type: 'policy',
+        policyname: this.selectedPolicy,
+        rules: ''
+      }, {
+        headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+      })
+      .then((response) => {
+        this.$message({
+          message: 'Your request ID is: ' + response.data.result,
+          type: 'success',
+          duration: 0,
+          showCloseButton: true
+        })
+        if (response.data.error !== '') {
+          this.$notify({
+            title: 'Slack webhook',
+            message: response.data.error,
+            type: 'warning'
+          })
+        }
+      })
       .catch((error) => {
         this.$onError(error)
       })
@@ -296,9 +383,5 @@ export default {
 
   .fa-info {
     color: lightskyblue;
-  }
-
-  .textarea {
-    height: 500px;
   }
 </style>

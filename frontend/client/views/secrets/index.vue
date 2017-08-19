@@ -133,10 +133,18 @@
                     </a>
 
                     <!-- Deleting a secret -->
-                    <a v-if="currentPathType === 'Path' && entry.type === 'Secret'" @click="deleteSecret(currentPath + entry.path)">
-                    <span class="icon">
-                      <i class="fa fa-trash-o"></i>
-                    </span>
+                    <a v-if="confirmDelete.includes(entry.path)"
+                    @click="deleteSecret(currentPath + entry.path)">
+                      <span class="tag is-rounded is-danger is-pulled-right">
+                        Confirm
+                      </span>
+                    </a>
+
+                    <a v-else-if="currentPathType === 'Path' && entry.type === 'Secret'"
+                    @click="confirmDelete.push(entry.path)">
+                      <span class="icon is-pulled-right">
+                        <i class="fa fa-trash-o"></i>
+                      </span>
                     </a>
                   </td>
                 </tr>
@@ -187,7 +195,7 @@
                     <input v-focus
                       class="input is-small"
                       type="text"
-                      placeholder="Add a new secret"
+                      placeholder="Press enter to add a secret"
                       v-model="newKey"
                       v-bind:class="[
                         newKey === '' ? '' : 'is-success',
@@ -236,7 +244,8 @@ export default {
       tableDataCopy: [],
       newKey: '',
       newValue: '',
-      editMode: false
+      editMode: false,
+      confirmDelete: []
     }
   },
 
@@ -310,8 +319,8 @@ export default {
       this.newKey = ''
       this.newValue = ''
       this.editMode = false
-      this.confirmDelete = false
       this.displayJSON = false
+      this.confirmDelete = []
 
       this.$http.get('/v1/secrets?path=' + encodeURIComponent(path), {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
@@ -343,6 +352,7 @@ export default {
 
       .catch((error) => {
         this.$onError(error)
+        this.tableData = []
       })
     },
 

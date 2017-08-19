@@ -4,25 +4,18 @@
       <div class="tile is-parent is-vertical">
         <article class="tile is-child box">
 
+          <!-- Search bar -->
           <div class="field">
-          <!-- <label class="label">Search by change ID:</label> -->
+            <label class="label">Enter a request ID or github commit hash:</label>
             <div class="field has-addons">
-              <p v-if="request === null" class="control has-icons-right">
-                <span class="select">
-                  <select v-model="searchType">
-                    <option v-bind:value="'changeid'">Change ID</option>
-                    <option v-bind:value="'commit'">Commit Hash</option>
-                  </select>
-                </span>
-              </p>
-              <p v-else class="control">
-                <a class="button is-danger" @click="request = null">
+              <p v-if="request !== null" class="control">
+                <a class="button is-danger" @click="reset()">
                   Reset
                 </a>
               </p>
               <p class="control">
-                <input class="input" type="text"
-                placeholder="Enter a change ID"
+                <input v-focus class="input" type="text"
+                placeholder="Enter a request ID"
                 v-model="searchString"
                 @keyup.enter="search()"
                 :disabled="request !== null">
@@ -35,19 +28,22 @@
             </div>
           </div>
 
-          <!-- Displaying a single request via changeid -->
-          <article v-if="request !== null && !request.length">
+          <!-- Request type: policy -->
+          <article v-if="request !== null && request['Type'] === 'policy'">
             <br>
+            <!-- Request general info -->
             <article class="message is-primary">
               <div class="message-body">
+                <strong>Request type: </strong>{{request.Type}}<br>
+                <strong>Policy name: </strong>{{request.PolicyName}}<br>
                 <strong>Requester display name: </strong>{{request.Requester}}<br>
                 <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
-                <strong>Policy: </strong>{{request.Policy}}<br>
-                <strong>Unseal progress: </strong>
-                {{progress}} out of {{required}} <strong>{{progress === required ? ' Done!' : ''}}</strong>
+                <strong>Unseal progress: </strong>{{request.Progress}} out of {{request.Required}}
+                  <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
               </div>
             </article>
 
+            <!-- Approve/Reject -->
             <div class="field is-grouped">
               <p class="control">
                 <button class="button is-success" @click="bConfirm = true">Approve</button>
@@ -71,46 +67,56 @@
               </div>
             </div>
 
+            <!-- Request details -->
             <div class="columns">
-              <div class="column">
-                <article class="message is-primary">
+              <div v-if="request.Previous" class="column">
+                <article class="message is-primary" :class="request.Proposed ? '' : 'is-danger'">
                   <div class="message-header">
-                    Current policy rules
+                    {{request.Proposed ? 'Current policy rules' : 'Will be deleted!'}}
                   </div>
-                  <pre v-highlightjs="request.Current"><code class="ruby"></code></pre>
+                  <pre v-highlightjs="request.Previous"><code class="ruby"></code></pre>
                 </article>
               </div>
 
-              <div class="column">
-                <article class="message is-info">
+              <div v-if="request.Proposed" class="column">
+                <article class="message is-info" :class="request.Previous ? '' : 'is-success'">
                   <div class="message-header">
-                  Proposed policy rules
+                  {{request.Previous ? 'Proposed policy rules' : 'Will be created!'}}
                   </div>
-                  <pre v-highlightjs="request.New"><code class="ruby"></code></pre>
+                  <pre v-highlightjs="request.Proposed"><code class="ruby"></code></pre>
                 </article>
               </div>
             </div>
           </article>
 
-          <!-- Displaying a set of changes via github commit hash -->
-          <article v-if="request !== null && request.length > 1">
+          <!-- Request type: github -->
+          <article v-if="request !== null && request['Type'] === 'github'">
             <br>
+            <!-- Request general info -->
             <article class="message is-primary">
               <div class="message-body">
-                <strong>Github commit hash: </strong>{{searchString}}<br>
-                <strong>Number of policies affected: </strong>{{request.length}}<br>
-                <strong>Unseal progress: </strong>
-                {{progress}} out of {{required}} <strong>{{progress === required ? ' Done!' : ''}}</strong>
+                <strong>Request type: </strong>{{request.Type}}<br>
+                <strong>Github commit hash: </strong>{{request.CommitHash}}<br>
+                <strong>Number of policies affected: </strong>{{Object.keys(request.Changes).length}}<br>
+                <strong>Requester display name: </strong>{{request.Requester}}<br>
+                <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
+                <strong>Unseal progress: </strong>{{request.Progress}} out of {{request.Required}}
+                  <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
               </div>
             </article>
 
+            <!-- Approve/Reject -->
             <div class="field is-grouped">
               <p class="control">
                 <button class="button is-success" @click="bConfirm = true">Approve</button>
               </p>
+              <p class="control">
+                <button v-if="!bReject" class="button is-warning" @click="bReject = true">Reject</button>
+                <button v-else class="button is-danger" @click="reject()">Confirm Reject</button>
+              </p>
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
-                  <input class="input" type="text"
+                  <input class="input" type="password"
                   placeholder="Enter an unseal token"
                   v-model="unsealToken"
                   @keyup.enter="approve()">
@@ -123,44 +129,124 @@
               </div>
             </div>
 
-            <div v-for="(policy, index) in request" class="box">
+            <!-- Request details -->
+            <div class="box"
+            v-if="request.Progress !== request.Required"
+            v-for="(details, policy) in request.Changes">
               <!-- policy name title and status tag -->
               <nav class="level">
                 <div class="level-left">
                   <div class="level-item">
                     <div class="content is-marginless is-paddingless">
-                      <h3 class="is-marginless is-paddingless">{{policy.Policy}}</h3>
+                      <h3 class="is-marginless is-paddingless">{{policy}}</h3>
                     </div>
                   </div>
                   <div class="level-item">
-                    <span v-if="policy.New && policy.Current" class="tag is-info">Will be changed!</span>
-                    <span v-if="!policy.New && policy.Current" class="tag is-danger">Will be deleted!</span>
-                    <span v-if="policy.New && !policy.Current" class="tag is-success">Will be created!</span>
+                    <span v-if="details.Previous && details.Proposed" class="tag is-info">Will be changed!</span>
+                    <span v-if="details.Previous && !details.Proposed" class="tag is-danger">Will be deleted!</span>
+                    <span v-if="!details.Previous && details.Proposed" class="tag is-success">Will be created!</span>
                   </div>
                 </div>
               </nav>
 
               <div class="columns">
-                <div v-if="policy.Current" class="column">
-                  <article class="message is-primary" :class="policy.New ? '' : 'is-danger'">
+                <div v-if="details.Previous" class="column">
+                  <article class="message is-primary" :class="details.Proposed ? '' : 'is-danger'">
                     <div class="message-header">
                       Current policy rules
                     </div>
-                    <pre v-highlightjs="policy.Current"><code class="ruby"></code></pre>
+                    <pre v-highlightjs="details.Previous"><code class="ruby"></code></pre>
                   </article>
                 </div>
 
-                <div v-if="policy.New" class="column">
-                  <article class="message is-info" :class="policy.Current ? '' : 'is-success'">
+                <div v-if="details.Proposed" class="column">
+                  <article class="message is-info" :class="details.Previous ? '' : 'is-success'">
                     <div class="message-header">
                     Proposed policy rules
                     </div>
-                    <pre v-highlightjs="policy.New"><code class="ruby"></code></pre>
+                    <pre v-highlightjs="details.Proposed"><code class="ruby"></code></pre>
                   </article>
                 </div>
               </div>
             </div>
+          </article>
 
+          <!-- Request type: token -->
+          <article v-if="request !== null && request['Type'] === 'token'">
+            <br>
+            <!-- Request general info -->
+            <article class="message is-primary">
+              <div class="message-body">
+                <strong>Request type: </strong>{{request.Type}}<br>
+                <strong>Requester display name: </strong>{{request.Requester}}<br>
+                <strong>Requester accessor hash: </strong>{{request.RequesterHash}}<br>
+                <strong>Unseal progress: </strong>{{request.Progress}} out of {{request.Required}}
+                  <strong>{{request.Progress === request.Required ? ' Done!' : ''}}</strong>
+              </div>
+            </article>
+
+            <!-- Approve/Reject -->
+            <div class="field is-grouped">
+              <p class="control">
+                <button class="button is-success" @click="bConfirm = true">Approve</button>
+              </p>
+              <p class="control">
+                <button v-if="!bReject" class="button is-warning" @click="bReject = true">Reject</button>
+                <button v-else class="button is-danger" @click="reject()">Confirm Reject</button>
+              </p>
+              <div v-if="bConfirm" class="field has-addons">
+                <p class="control">
+                  <input class="input" type="password"
+                  placeholder="Enter an unseal token"
+                  v-model="unsealToken"
+                  @keyup.enter="approve()">
+                </p>
+                <p class="control">
+                  <a class="button is-info" @click="approve()">
+                    Confirm
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <!-- Request details -->
+            <div class="field">
+              <label class="label">Request payload:</label>
+              <div class="field is-grouped is-grouped-multiline">
+                <div class="control">
+                  <div class="tags has-addons">
+                    <span class="tag">Orphan?</span>
+                    <span class="tag is-primary" :class="request.Orphan ? 'is-warning': ''">
+                      {{request.Orphan ? 'Yes' : 'No'}}
+                    </span>
+                  </div>
+                </div>
+                <div v-if="request.Role" class="control">
+                  <div class="tags has-addons">
+                    <span class="tag">Role</span>
+                    <span class="tag is-warning">{{request.Role}}</span>
+                  </div>
+                </div>
+                <div v-if="request.Wrap_ttl" class="control">
+                  <div class="tags has-addons">
+                    <span class="tag">Wrap_ttl</span>
+                    <span class="tag is-primary">{{request.Wrap_ttl}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="columns">
+                <div class="column">
+                  <article class="message is-primary">
+                    <pre v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
+                  </article>
+                </div>
+                <div class="column">
+                  <article v-if="request.CreateResponse" class="message is-primary">
+                    <pre v-highlightjs="JSON.stringify(request.CreateResponse.wrap_info, null, '    ')"><code class="javascript"></code></pre>
+                  </article>
+                </div>
+              </div>
+            </div>
           </article>
 
         </article>
@@ -170,19 +256,14 @@
 </template>
 
 <script>
-const querystring = require('querystring')
-
 export default {
   data () {
     return {
       searchString: '',
-      searchType: 'changeid',
       request: null,
       bConfirm: false,
       bReject: false,
-      unsealToken: '',
-      progress: 0,
-      required: 0
+      unsealToken: ''
     }
   },
 
@@ -200,38 +281,33 @@ export default {
       return this.$store.getters.session
     },
 
-    searchURL: function () {
-      var url = '/v1/policy/request?type=' + this.searchType
-      if (this.searchType === 'changeid') {
-        url += '&id=' + this.searchString
-      } else if (this.searchType === 'commit') {
-        url += '&sha=' + this.searchString
+    // returns a constructed JSON object with the token creation request
+    tokenRequestPreview: function () {
+      if (!this.request || this.request['Type'] !== 'token' || !this.request['CreateRequest']) {
+        return {}
       }
-      return url
-    },
-
-    updateURL: function () {
-      var url = '/v1/policy/request/update?type=' + this.searchType
-      if (this.searchType === 'changeid') {
-        url += '&id=' + this.searchString
-      } else if (this.searchType === 'commit') {
-        url += '&sha=' + this.searchString
-      }
-      return url
+      return this.request.CreateRequest
     }
   },
 
   methods: {
+    reset: function () {
+      this.request = null
+      this.bConfirm = false
+      this.bReject = false
+      this.unsealToken = ''
+    },
+
+    // requests for the request object from backend
     search: function () {
+      // force user to use reset button if they want to find another request
       if (this.request !== null) {
         return
       }
-      this.$http.get(this.searchURL, {
+      this.$http.get('/v1/request?hash=' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.request = response.data.result
-        this.progress = response.data.progress
-        this.required = response.data.required
       })
       .catch((error) => {
         this.$onError(error)
@@ -239,52 +315,63 @@ export default {
     },
 
     approve: function () {
-      this.$http.post(this.updateURL, querystring.stringify({
+      this.$http.post('/v1/request/approve?hash=' + this.searchString, {
         unseal: this.unsealToken
-      }), {
+      }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
         this.unsealToken = ''
-        // if more unseals are needed
-        if (response.data.progress) {
-          this.progress = response.data.progress
+        this.request = response.data.result
+        // notify user of progress
+        if (this.request.Progress === this.request.Required) {
           this.$notify({
-            title: 'Progress',
-            message: response.data.progress.toString() + ' unseal tokens received so far',
+            title: 'Change success',
+            message: 'Root token generated and revoked',
             type: 'success'
           })
-          if (response.data.progress === 1) {
+          this.bConfirm = false
+          this.bReject = false
+
+          // if there is wrapped info, notify user
+          this.$message({
+            message: 'Created resource is in wrapping token: ' + this.request.CreateResponse.wrap_info.token,
+            type: 'success',
+            duration: 0,
+            showCloseButton: true
+          })
+        } else {
+          if (this.request.Progress === 1) {
             this.$notify({
               title: 'Timer started',
               message: 'Other operators have a 1 hour window to enter their unseal tokens',
               duration: 20000,
               type: 'warning'
             })
+          } else {
+            this.$notify({
+              title: 'Progress',
+              message: this.request.Progress.toString() + ' unseal tokens received so far',
+              type: 'success'
+            })
           }
-        // if change was successfully completed
-        } else {
-          this.progress = this.required
-          if (this.searchType === 'changeid') {
-            this.request.Current = response.data.result || this.request.Current
-          }
-          this.$notify({
-            title: 'Change success',
-            message: 'Root token generated and revoked',
-            type: 'success'
-          })
         }
       })
       .catch((error) => {
         this.unsealToken = ''
-        if (error.response.data.error.includes('Progress has been reset')) {
-          this.progress = 0
+        try {
+          if (error.response.data.error.includes('Progress has been reset')) {
+            this.request.Progress = 0
+          } else {
+            this.$onError(error)
+          }
+        } catch (e) {
+          this.$onError(error)
         }
-        this.$onError(error)
       })
     },
 
     reject: function () {
-      this.$http.delete('/v1/policy/request/' + this.searchString, {
+      this.$http.delete('/v1/request/reject?hash=' + this.searchString, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
@@ -293,7 +380,7 @@ export default {
           message: 'Request data purged',
           type: 'warning'
         })
-        this.request = null
+        this.reset()
       })
       .catch((error) => {
         this.$onError(error)
@@ -301,7 +388,6 @@ export default {
     }
 
   }
-
 }
 </script>
 

@@ -791,11 +791,11 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
-			"checksumSHA1": "C/DCmWfotL5hMeQMd4FYGSlHPQE=",
+			"checksumSHA1": "uK1chQA/LitAGOl/EuU2bhvaI5s=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/hashicorp/go-multierror",
 			"path": "github.com/hashicorp/go-multierror",
-			"revision": "d8e2db65a326b529477cc40295d5902906645e6b",
-			"revisionTime": "2017-06-05T02:18:34Z"
+			"revision": "4bbaaac6b22b68edf316f4d692b980871363dc74",
+			"revisionTime": "2017-08-12T00:57:06Z"
 		},
 		{
 			"checksumSHA1": "TG3zJYgk5ywVkpHIr2bQSslh35g=",

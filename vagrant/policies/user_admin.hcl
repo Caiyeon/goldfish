@@ -6,7 +6,7 @@ path "auth/token/accessors/" {
 	capabilities = ["list", "sudo"]
 }
 path "auth/token/lookup-accessor*" {
-	capabilities = ["update", "sudo"]
+	capabilities = ["read", "update"]
 }
 
 # allows user to list roles and read role details
