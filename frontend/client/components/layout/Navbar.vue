@@ -38,7 +38,7 @@
                 <div class="navbar-item">
                   <div>{{session.display_name}}
                     <p v-if="tokenExpiresIn === ''" class="has-text-info">will not expire</p>
-                    <p v-if="tokenExpiresIn !== ''" class="has-text-info">expires in {{tokenExpiresIn}}</p>
+                    <p v-if="tokenExpiresIn !== ''" class="has-text-info">expires {{tokenExpiresIn}}</p>
                   </div>
                 </div>
 
@@ -224,7 +224,7 @@ export default {
     },
 
     renewLogin: function () {
-      this.$http.post('/api/login/renew-self', {}, {
+      this.$http.post('/v1/login/renew-self', {}, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
