@@ -224,7 +224,7 @@ export default {
     },
 
     renewLogin: function () {
-      this.$http.post('/api/login/renew-self', {}, {
+      this.$http.post('/v1/login/renew-self', {}, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
       .then((response) => {
