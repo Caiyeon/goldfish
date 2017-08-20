@@ -38,7 +38,7 @@
                 <div class="navbar-item">
                   <div>{{session.display_name}}
                     <p v-if="tokenExpiresIn === ''" class="has-text-info">will not expire</p>
-                    <p v-if="tokenExpiresIn !== ''" class="has-text-info">expires in {{tokenExpiresIn}}</p>
+                    <p v-if="tokenExpiresIn !== ''" class="has-text-info">expires {{tokenExpiresIn}}</p>
                   </div>
                 </div>
 
