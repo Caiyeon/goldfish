@@ -443,7 +443,7 @@ export default {
         'explicit_max_ttl': this.stringToSeconds(this.max_ttl).toString() + 's',
         'renewable': !!this.bRenewable,
         'no_parent': !!this.bNoParent,
-        'period': this.bPeriodic ? this.period_ttl : '',
+        'period': this.bPeriodic ? this.stringToSeconds(this.max_ttl).toString() + 's' : '',
         'no_default_policy': this.selectedPolicies.indexOf('default') === -1,
         'policies': this.selectedPolicies
       }

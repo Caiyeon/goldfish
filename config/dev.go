@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"time"
 	"strings"
+	"time"
 
 	auditFile "github.com/hashicorp/vault/builtin/audit/file"
 	auditSocket "github.com/hashicorp/vault/builtin/audit/socket"
@@ -326,6 +326,9 @@ func initDevVaultCore() (string, chan struct{}) {
 
 func generateWrappedSecretID(v VaultConfig, token string) (string, error) {
 	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return "", err
+	}
 	if err := client.SetAddress(v.Address); err != nil {
 		return "", err
 	}
