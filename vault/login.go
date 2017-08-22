@@ -106,6 +106,32 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 		auth.Pass = ""
 		return lookupResp.Data, nil
 
+	case "okta":
+		client.SetToken("")
+		// fetch client access token by performing a login
+		resp, err := client.Logical().Write("auth/okta/login/"+auth.ID,
+			map[string]interface{}{
+				"password": auth.Pass,
+			})
+		if err != nil {
+			return nil, err
+		}
+		if resp.Auth == nil || resp.Auth.ClientToken == "" {
+			return nil, errors.New("Unable to parse vault response")
+		}
+
+		client.SetToken(resp.Auth.ClientToken)
+		lookupResp, err := client.Auth().Token().LookupSelf()
+		if err != nil {
+			return nil, err
+		}
+
+		// let future requests re-use the client token
+		auth.Type = "token"
+		auth.ID = resp.Auth.ClientToken
+		auth.Pass = ""
+		return lookupResp.Data, nil
+
 	default:
 		return nil, errors.New("Unsupported authentication type")
 	}
