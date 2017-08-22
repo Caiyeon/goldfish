@@ -2,6 +2,7 @@ package github
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strings"
 
@@ -15,7 +16,7 @@ var demoAccessToken string
 
 func init() {
 	if acc := os.Getenv("GITHUB_ACCESS_TOKEN"); acc == "" {
-		panic("Demo instance requires env var GITHUB_ACCESS_TOKEN")
+		log.Println("Demo instance requires env var GITHUB_ACCESS_TOKEN")
 	} else {
 		demoAccessToken = acc
 	}
