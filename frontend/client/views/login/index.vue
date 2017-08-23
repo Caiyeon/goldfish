@@ -113,7 +113,7 @@
                 </div>
               </div>
 
-              <!-- Userpass login form -->
+              <!-- Okta login form -->
               <div v-if="type === 'Okta'" class="field">
                 <div class="field">
                   <p class="control has-icons-left">
@@ -397,7 +397,7 @@ export default {
         this.$store.commit('setSession', newSession)
 
         // notify user of generated client-token
-        if (this.type === 'Userpass' || this.type === 'LDAP') {
+        if (this.type === 'Userpass' || this.type === 'LDAP' || this.type === 'Okta') {
           this.$message({
             message: 'Your access token is: ' + response.data.result['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',
