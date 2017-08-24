@@ -13,17 +13,11 @@ import (
 	"github.com/caiyeon/goldfish/github"
 	"github.com/caiyeon/goldfish/slack"
 	"github.com/caiyeon/goldfish/vault"
-
 	"github.com/fatih/structs"
-
-	"github.com/gorilla/securecookie"
-
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/vault/helper/xor"
-
 	"github.com/labstack/echo"
-
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
 )
@@ -553,7 +547,11 @@ func updatePolicyRequestByChangeID(c echo.Context, auth *vault.AuthInfo, hash st
 	}
 
 	// start a root generation
-	otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
+	randomBytes, err := uuid.GenerateRandomBytes(16)
+	if err != nil {
+		return parseError(c, err)
+	}
+	otp := base64.StdEncoding.EncodeToString(randomBytes)
 	status, err = vault.GenerateRootInit(otp)
 	if err != nil {
 		return parseError(c, err)
@@ -703,7 +701,11 @@ func updatePolicyRequestByCommitHash(c echo.Context, auth *vault.AuthInfo, hash 
 	}
 
 	// start a root generation
-	otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
+	randomBytes, err := uuid.GenerateRandomBytes(16)
+	if err != nil {
+		return parseError(c, err)
+	}
+	otp := base64.StdEncoding.EncodeToString(randomBytes)
 	status, err = vault.GenerateRootInit(otp)
 	if err != nil {
 		return parseError(c, err)

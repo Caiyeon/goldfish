@@ -743,12 +743,6 @@
 			"revisionTime": "2017-06-09T00:26:10Z"
 		},
 		{
-			"checksumSHA1": "GKB96ojS6AY/uBnfLWqZBsxTBY4=",
-			"path": "github.com/gorilla/securecookie",
-			"revision": "e59506cc896acb7f7bf732d4fdf5e25f7ccd8983",
-			"revisionTime": "2017-02-24T19:38:04Z"
-		},
-		{
 			"checksumSHA1": "BRKZy5LWnhLmaOetWzJpj7gtKYY=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/hailocab/go-hostpool",
 			"path": "github.com/hailocab/go-hostpool",
