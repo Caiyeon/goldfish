@@ -332,6 +332,10 @@ func TestGoldfishWrapper(t *testing.T) {
 			resp, err = (&AuthInfo{ID: "tesla", Pass: "password", Type: "ldap"}).Login()
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
+
+			resp, err = (&AuthInfo{ID: "tesla", Pass: "notpassword", Type: "ldap"}).Login()
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
 		})
 
 		// ldap
