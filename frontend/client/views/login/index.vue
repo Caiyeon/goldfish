@@ -16,7 +16,7 @@
               <div class="field has-addons">
                 <div class="control">
                   <input class="input" type="text" v-model="secretID"
-                  placeholder="Insert wrapping token">
+                  placeholder="Insert wrapping token" @keyup.enter="bootstrapGoldfish()">
                   <p class="help is-info">
                     vault write -f -wrap-ttl=5m auth/approle/role/goldfish/secret-id
                   </p>
