@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
 # Version of goldfish to install
-ENV GOLDFISH_VERSION=v0.5.1 \
+ENV GOLDFISH_VERSION=v0.7.0-rc1 \
     VAULT_TOKEN=
 
 # Directory to put Goldfish binary in
