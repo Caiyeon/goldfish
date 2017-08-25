@@ -2,7 +2,7 @@
 
 Quickly start up a Vault and Goldfish stack using [docker-compose](https://github.com/docker/compose). This is meant as a template for deploying to different orchestration environments for production use.
 
-This is similar to a [Production Deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment#3-deploy-release-version).
+This is similar to a [production deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment).
 
 To launch:
 ```bash
@@ -25,13 +25,5 @@ Stack details:
 - [Official Vault container](https://hub.docker.com/_/vault/) setting default `VAULT_DEV_ROOT_TOKEN_ID=goldfish`
 - Goldfish [Goldfish release](https://github.com/Caiyeon/goldfish/releases) set in `Dockefile.compose`
 - Runs with `entrypoint.sh` to configure Vault for Goldfish
-  - Runs [Prepare Vault](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment#1-prepare-vault-only-needs-to-be-done-once) commands and configures [Vagrant Policy](https://github.com/Caiyeon/goldfish/blob/master/vagrant/policies/goldfish.hcl) using the [Vault HTTP API](https://www.vaultproject.io/api/index.html) instead of the `vault` binary.
+  - Runs [production deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment) commands and configures [Goldfish Policy](https://github.com/Caiyeon/goldfish/blob/master/vagrant/policies/goldfish.hcl) using the [Vault HTTP API](https://www.vaultproject.io/api/index.html) instead of the `vault` binary.
 - Uses `docker.hcl` for Goldfish configuration
-
-Bring up the stack:
-
-```bash
-docker-compose up
-```
-
-Go to http://localhost:8080 in a browser and login with token `goldfish`.
