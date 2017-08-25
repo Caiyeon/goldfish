@@ -10,7 +10,6 @@ import (
 
 	"github.com/caiyeon/goldfish/vault"
 	"github.com/fatih/structs"
-	"github.com/gorilla/securecookie"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/xor"
 	"github.com/mitchellh/hashstructure"
@@ -359,7 +358,12 @@ func generateRootToken(unsealKeys []string) (string, error) {
 	lockRoot.Lock()
 	defer lockRoot.Unlock()
 
-	otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
+	// initialize root generation with a randomly generated otp
+	randomBytes, err := uuid.GenerateRandomBytes(16)
+	if err != nil {
+		return "", err
+	}
+	otp := base64.StdEncoding.EncodeToString(randomBytes)
 	status, err := vault.GenerateRootInit(otp)
 	if err != nil {
 		return "", err

@@ -34,6 +34,12 @@ var (
 )
 
 func init() {
+	// customized help message
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, helpMessage)
+	}
+
+	// cmd line args
 	flag.BoolVar(&devMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
 	flag.BoolVar(&printVersion, "version", false, "Display goldfish's version and exit")
 	flag.StringVar(&wrappingToken, "token", "", "Token generated from approle (must be wrapped!)")
@@ -98,6 +104,8 @@ func main() {
 	// instantiate echo web server
 	e := echo.New()
 	e.HideBanner = true
+	e.Server.ReadTimeout = 10 * time.Second
+	e.Server.WriteTimeout = 2 * time.Minute
 
 	// setup middleware
 	e.Use(middleware.Logger())
@@ -260,4 +268,25 @@ To enable mlock without launching goldfish as root:
 sudo setcap cap_ipc_lock=+ep $(readlink -f $(which goldfish))
 
 To disable mlock entirely, set disable_mlock to "1" in config file
+`
+
+const helpMessage = `Usage: goldfish [options]
+See https://github.com/Caiyeon/goldfish/wiki for details
+
+Required Arguments:
+
+  -config=config.hcl      The deployment config file
+                          See github.com/caiyeon/goldfish/config/sample.hcl
+                          for a full list of options
+
+Optional Arguments:
+
+  -token=<uuid>           A wrapping token which contains a secret_id
+                          Can be provided after launch, on Login page
+                          Generate with 'vault write -f transit/keys/goldfish'
+
+  -version                Print the version and exit
+
+  -dev                    Launch goldfish in dev mode
+                          A localhost dev vault instance will be launched
 `

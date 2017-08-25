@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/caiyeon/goldfish/config"
-	"github.com/gorilla/securecookie"
+	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/api"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -214,7 +214,9 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// generating a new root token
-			otp := base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(16))
+			randomBytes, err := uuid.GenerateRandomBytes(16)
+			So(err, ShouldBeNil)
+			otp := base64.StdEncoding.EncodeToString(randomBytes)
 			status, err := GenerateRootInit(otp)
 			So(err, ShouldBeNil)
 			So(status.Progress, ShouldEqual, 0)
@@ -332,6 +334,10 @@ func TestGoldfishWrapper(t *testing.T) {
 			resp, err = (&AuthInfo{ID: "tesla", Pass: "password", Type: "ldap"}).Login()
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
+
+			resp, err = (&AuthInfo{ID: "tesla", Pass: "notpassword", Type: "ldap"}).Login()
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
 		})
 
 		// ldap

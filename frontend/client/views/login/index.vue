@@ -47,6 +47,7 @@
                       <option v-bind:value="'Userpass'">Userpass</option>
                       <option v-bind:value="'Github'">Github</option>
                       <option v-bind:value="'LDAP'">LDAP</option>
+                      <option v-bind:value="'Okta'">Okta</option>
                     </select>
                   </div>
                 </div>
@@ -94,6 +95,26 @@
 
               <!-- LDAP login form -->
               <div v-if="type === 'LDAP'" class="field">
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="text" placeholder="Username" v-model="ID">
+                    <span class="icon is-small">
+                      <i class="fa fa-user-circle-o"></i>
+                    </span>
+                  </p>
+                </div>
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="password" placeholder="Password" v-model="password">
+                    <span class="icon is-small">
+                      <i class="fa fa-lock"></i>
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Okta login form -->
+              <div v-if="type === 'Okta'" class="field">
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="text" placeholder="Username" v-model="ID">
@@ -384,7 +405,7 @@ export default {
         this.$store.commit('setSession', newSession)
 
         // notify user of generated client-token
-        if (this.type === 'Userpass' || this.type === 'LDAP') {
+        if (this.type === 'Userpass' || this.type === 'LDAP' || this.type === 'Okta') {
           this.$message({
             message: 'Your access token is: ' + response.data.result['id'] + ' and this is the only time you will see it. If you wish, you may login with this to avoid creating unnecessary access tokens in the future.',
             type: 'warning',

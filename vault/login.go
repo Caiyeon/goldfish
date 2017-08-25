@@ -2,6 +2,8 @@ package vault
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/hashicorp/vault/api"
 )
 
@@ -20,95 +22,50 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	client.SetToken("")
 
-	switch auth.Type {
-	case "token":
-		client.SetToken(auth.ID)
-		resp, err := client.Auth().Token().LookupSelf()
-		if err != nil {
-			return nil, err
-		}
-		return resp.Data, nil
-
-	case "userpass":
-		client.SetToken("")
-		// fetch client access token by performing a login
-		resp, err := client.Logical().Write("auth/userpass/login/"+auth.ID,
-			map[string]interface{}{
-				"password": auth.Pass,
-			})
-		if err != nil {
-			return nil, err
-		}
-		if resp.Auth == nil || resp.Auth.ClientToken == "" {
-			return nil, errors.New("Unable to parse vault response")
-		}
-
-		client.SetToken(resp.Auth.ClientToken)
-		lookupResp, err := client.Auth().Token().LookupSelf()
-		if err != nil {
-			return nil, err
-		}
-
-		// let future requests re-use the client token
-		auth.Type = "token"
-		auth.ID = resp.Auth.ClientToken
-		auth.Pass = ""
-		return lookupResp.Data, nil
-
-	case "github":
-		client.SetToken("")
-		// fetch client access token by performing a login
-		resp, err := client.Logical().Write("auth/github/login",
-			map[string]interface{}{
-				"token": auth.ID,
-			})
-		if err != nil {
-			return nil, err
-		}
-		if resp.Auth == nil || resp.Auth.ClientToken == "" {
-			return nil, errors.New("Unable to parse vault response")
-		}
-
-		client.SetToken(resp.Auth.ClientToken)
-		lookupResp, err := client.Auth().Token().LookupSelf()
-		if err != nil {
-			return nil, err
-		}
-
-		// let future requests re-use the client token
-		auth.Type = "token"
-		auth.ID = resp.Auth.ClientToken
-		return lookupResp.Data, nil
-
-	case "ldap":
-		client.SetToken("")
-		resp, err := client.Logical().Write("auth/ldap/login/"+auth.ID,
-			map[string]interface{}{
-				"password": auth.Pass,
-			})
-		if err != nil {
-			return nil, err
-		}
-		if resp.Auth == nil || resp.Auth.ClientToken == "" {
-			return nil, errors.New("Unable to parse vault response")
-		}
-
-		client.SetToken(resp.Auth.ClientToken)
-		lookupResp, err := client.Auth().Token().LookupSelf()
-		if err != nil {
-			return nil, err
-		}
-
-		// let future requests re-use the client token
-		auth.Type = "token"
-		auth.ID = resp.Auth.ClientToken
-		auth.Pass = ""
-		return lookupResp.Data, nil
-
-	default:
-		return nil, errors.New("Unsupported authentication type")
+	// supported means there's a mapping to how the login should be performed
+	t := strings.ToLower(auth.Type)
+	key, exists := LoginMap[t]
+	if !exists {
+		return nil, errors.New("Unsupported authentication type: " + t)
 	}
+
+	// token logins don't require any writes to vault
+	if t == "token" {
+		client.SetToken(auth.ID)
+	}
+
+	// if logging in for the first time with these auth backends
+	if t == "userpass" || t == "ldap" || t == "github" || t == "okta" {
+		// fetch a client token by logging. Auth backend is hardcoded for now
+		resp, err := client.Logical().Write("auth/" + t + "/login/" + auth.ID,
+			map[string]interface{}{
+				key: auth.Pass,
+			})
+		if err != nil {
+			return nil, err
+		}
+		// sanity check to make sure client token exists
+		if resp.Auth == nil || resp.Auth.ClientToken == "" {
+			return nil, errors.New("Unable to parse vault response")
+		}
+		// set the returned client token as the client's auth
+		client.SetToken(resp.Auth.ClientToken)
+	}
+
+	// user must be able to lookup-self. This is in the default policy
+	lookupResp, err := client.Auth().Token().LookupSelf()
+	if err != nil {
+		return nil, err
+	}
+
+	// set auth type to token, so future requests don't need a login again
+	auth.Type = "token"
+	auth.ID = client.Token()
+	auth.Pass = ""
+
+	return lookupResp.Data, nil
 }
 
 func (auth AuthInfo) RenewSelf() (*api.Secret, error) {
@@ -125,4 +82,13 @@ func (auth AuthInfo) LookupSelf() (*api.Secret, error) {
 		return nil, err
 	}
 	return client.Auth().Token().LookupSelf()
+}
+
+// Logging in with different methods requires different secondary keys
+var LoginMap = map[string]string{
+    "token": "",
+	"userpass": "password",
+	"github": "token",
+	"ldap": "password",
+	"okta": "password",
 }

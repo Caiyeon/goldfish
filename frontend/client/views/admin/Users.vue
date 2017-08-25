@@ -9,26 +9,25 @@
           <div class="tabs is-medium is-boxed is-fullwidth">
             <ul>
               <li v-bind:class="tabName === 'token' ? 'is-active' : ''"
-                v-on:click="switchTab(0)"
+                v-on:click="switchTab(0, true)"
                 disabled>
                 <a>Tokens</a>
               </li>
               <li v-bind:class="tabName === 'userpass' ? 'is-active' : ''"
-                v-on:click="switchTab(1)"
+                v-on:click="switchTab(1, true)"
                 :disabled="loading">
                 <a>Userpass</a>
               </li>
               <li v-bind:class="tabName === 'approle' ? 'is-active' : ''"
-                v-on:click="switchTab(2)"
+                v-on:click="switchTab(2, true)"
                 :disabled="loading">
                 <a>Approle</a>
               </li>
               <li v-bind:class="tabName === 'ldap' ? 'is-active' : ''"
-                v-on:click="switchTab(3)"
+                v-on:click="switchTab(3, true)"
                 :disabled="loading">
                 <a>LDAP</a>
               </li>
-              <!-- <li disabled><a>Certificates</a></li> -->
             </ul>
           </div>
 
@@ -183,6 +182,12 @@
                 </tr>
               </tbody>
             </table>
+
+            <a v-if="tableData.length === 0" class="pagination-next"
+              v-on:click="switchTab(0, true)"
+              :disabled="loading"
+            >Load the first page of tokens</a>
+
           </div>
 
           <!-- Userpass tab -->
@@ -355,6 +360,7 @@ export default {
       lastPage: 1,
       tokenCount: 0,
       loading: false,
+
       // when adding properties here,
       // be careful with reactivity (overwritten by switchTab())
       search: {
@@ -369,7 +375,7 @@ export default {
   },
 
   mounted: function () {
-    this.switchTab(0)
+    this.switchTab(0, false)
   },
 
   computed: {
@@ -456,7 +462,9 @@ export default {
   },
 
   methods: {
-    switchTab: function (index) {
+    // if fetchDetails is set to false, accessor details will not be fetched
+    // this lightens potentially unnecessary stress on the vault server
+    switchTab: function (index, fetchDetails = true) {
       // switching during loading is disabled
       if (this.loading) {
         return
@@ -482,7 +490,11 @@ export default {
         }).then((response) => {
           this.accessors = response.data.result
           this.lastPage = Math.ceil(this.accessors.length / 300)
-          this.loadPage(1) // loadPage will turn loading to false
+          if (fetchDetails) {
+            this.loadPage(1) // loadPage will turn loading to false
+          } else {
+            this.loading = false
+          }
         })
         .catch((error) => {
           this.loading = false
