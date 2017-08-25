@@ -104,6 +104,8 @@ func main() {
 	// instantiate echo web server
 	e := echo.New()
 	e.HideBanner = true
+	e.Server.ReadTimeout = 10 * time.Second
+	e.Server.WriteTimeout = 2 * time.Minute
 
 	// setup middleware
 	e.Use(middleware.Logger())
