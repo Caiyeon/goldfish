@@ -25,6 +25,15 @@ func TestGoldfishWrapper(t *testing.T) {
 		panic(err)
 	}
 
+	Convey("Testing bootstrap functions", t, func() {
+		Convey("Reusing the server's own token as raw token", func() {
+			cfg.Vault.Raw_token = vaultToken
+			SetConfig(cfg.Vault)
+			err = BootstrapRaw()
+			So(err, ShouldBeNil)
+		})
+	})
+
 	// start unit tests
 	Convey("Testing API wrapper", t, func() {
 		// this will be imitating the client token
