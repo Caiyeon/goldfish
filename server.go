@@ -77,7 +77,7 @@ func main() {
 		cfg, err = config.LoadConfigFile(cfgPath)
 	}
 	if err != nil {
-		panic(err)
+		log.Fatalf("[ERROR]: Launching goldfish: %s", err.Error())
 	}
 
 	if !cfg.DisableMlock {
@@ -92,11 +92,11 @@ func main() {
 	// if bootstrapping options are provided, do so immediately
 	if wrappingToken != "" {
 		if err := vault.Bootstrap(wrappingToken); err != nil {
-			panic(err)
+			log.Fatalf("[ERROR]: Bootstrapping goldfish %s", err.Error())
 		}
 	} else if cfg.Vault.Raw_token != "" {
 		if err := vault.BootstrapRaw(); err != nil {
-			panic(err)
+			log.Fatalf("[ERROR]: Bootstrapping goldfish: %s", err.Error())
 		}
 	}
 
