@@ -20,7 +20,7 @@ func TestGoldfishWrapper(t *testing.T) {
 
 	// bootstrap goldfish to vault
 	SetConfig(cfg.Vault)
-	err = StartGoldfishWrapper(wrappingToken)
+	err = Bootstrap(wrappingToken)
 	if err != nil {
 		panic(err)
 	}

@@ -37,6 +37,7 @@ type VaultConfig struct {
 	Runtime_config  string
 	Approle_login   string
 	Approle_id      string
+	Raw_token       string
 }
 
 func LoadConfigFile(path string) (*Config, error) {
@@ -254,6 +255,7 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		"runtime_config",
 		"approle_login",
 		"approle_id",
+		"raw_token",
 	}
 	if err := checkHCLKeys(vault.Val, valid); err != nil {
 		return fmt.Errorf("vault.%s: %s", key, err.Error())
@@ -284,26 +286,37 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		if tlsSkip == "1" {
 			result.Vault.Tls_skip_verify = true
 		} else if tlsSkip != "0" {
-			return fmt.Errorf("listener.%s: tls_disable can be 0 or 1", key)
+			return fmt.Errorf("vault.%s: tls_disable can be 0 or 1", key)
 		}
 	}
 
-	if runtimeConfig, ok := m["runtime_config"]; ok {
+	if runtimeConfig, ok := m["runtime_config"]; ok && runtimeConfig != "" {
 		result.Vault.Runtime_config = runtimeConfig
 	} else {
 		result.Vault.Runtime_config = "secret/goldfish"
 	}
 
-	if login, ok := m["approle_login"]; ok {
+	if login, ok := m["approle_login"]; ok && login != "" {
 		result.Vault.Approle_login = login
 	} else {
 		result.Vault.Approle_login = "auth/approle/login"
 	}
 
-	if id, ok := m["approle_id"]; ok {
+	if id, ok := m["approle_id"]; ok && id != "" {
 		result.Vault.Approle_id = id
 	} else {
 		result.Vault.Approle_id = "goldfish"
+	}
+
+	if t, ok := m["raw_token"]; ok && t != "" {
+		// reject config if approle is also provided. Ambiguous input
+		_, found1 := m["approle_login"]
+		_, found2 := m["approle_id"]
+		if found1 || found2 {
+			return fmt.Errorf("vault.%s: raw_token conflicts with approle_login & approle_id", key)
+		}
+		// if no conflicts, set raw token to be consumed later
+		result.Vault.Raw_token = t
 	}
 
 	return nil

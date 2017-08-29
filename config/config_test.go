@@ -42,6 +42,7 @@ func TestConfigParser(t *testing.T) {
 				Runtime_config:  "secret/goldfish",
 				Approle_login:   "auth/approle/login",
 				Approle_id:      "goldfish",
+				Raw_token:       "",
 			},
 		})
 	})
@@ -70,6 +71,7 @@ func TestConfigParser(t *testing.T) {
 				Runtime_config: "secret/goldfish",
 				Approle_login:  "auth/approle/login",
 				Approle_id:     "goldfish",
+				Raw_token:      "",
 			},
 		})
 	})
@@ -97,6 +99,7 @@ func TestConfigParser(t *testing.T) {
 				Runtime_config:  "secret/goldfish",
 				Approle_login:   "auth/approle/login",
 				Approle_id:      "goldfish",
+				Raw_token:       "",
 			},
 		})
 	})
@@ -359,6 +362,7 @@ var defaultParsedConfig = &Config {
 		Runtime_config: "secret/goldfish",
 		Approle_login:  "auth/approle/login",
 		Approle_id:     "goldfish",
+		Raw_token:      "",
 	},
 	DisableMlock: false,
 }
@@ -375,6 +379,7 @@ var devParsedConfig = &Config {
 		Runtime_config: "secret/goldfish",
 		Approle_login:  "auth/approle/login",
 		Approle_id:     "goldfish",
+		Raw_token:      "",
 	},
 	DisableMlock: true,
 }
@@ -391,6 +396,7 @@ var sampleParsedConfig = &Config {
 		Runtime_config: "secret/goldfish",
 		Approle_login:  "auth/approle/login",
 		Approle_id:     "goldfish",
+		Raw_token:      "",
 	},
 	DisableMlock: false,
 	DisableMlockRaw: 0,

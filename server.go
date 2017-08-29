@@ -86,11 +86,16 @@ func main() {
 		}
 	}
 
+	// configure goldfish server settings and token
 	vault.SetConfig(cfg.Vault)
 
-	// if wrapping token is provided, bootstrap goldfish immediately
+	// if bootstrapping options are provided, do so immediately
 	if wrappingToken != "" {
-		if err := vault.StartGoldfishWrapper(wrappingToken); err != nil {
+		if err := vault.Bootstrap(wrappingToken); err != nil {
+			panic(err)
+		}
+	} else if cfg.Vault.Raw_token != "" {
+		if err := vault.BootstrapRaw(); err != nil {
 			panic(err)
 		}
 	}
