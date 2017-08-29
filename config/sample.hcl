@@ -43,12 +43,6 @@ vault {
 	# [Optional] [Default: "goldfish"]
 	# You can omit this if you already customized the approle ID to be 'goldfish'
 	approle_id      = "goldfish"
-
-	# [Optional] [Default: ""]
-	# Set this to provide a raw token for goldfish to bootstrap with, instead of AppRole.
-	# Any person that has seen this token can potentially intercept unseal tokens. Be careful!
-	# Should be only used as a last resort, when AppRole is not available
-	raw_token = ""
 }
 
 # [Optional] [Default: 0] [Allowed values: 0, 1]
