@@ -89,7 +89,7 @@
               <a class="navbar-link is-active">
                 Docs
               </a>
-              <div class="navbar-dropdown ">
+              <div class="navbar-dropdown is-boxed">
                 <a class="navbar-item" target="_blank" href="https://github.com/Caiyeon/goldfish/wiki/Configuration#run-time-configurations">
                   Configuration
                 </a>
