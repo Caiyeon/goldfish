@@ -123,13 +123,9 @@ func Bootstrap(wrappingToken string) error {
 
 // similar to bootstrap function, but uses a raw token instead of an approle secret_id
 // highly dangerous and not recommended unless approle is inaccessible
-func BootstrapRaw() error {
-	if vaultConfig.Raw_token == "" {
-		return errors.New("Raw_token is not set in configuration")
-	}
-
+func BootstrapRaw(token string) error {
 	// ensure the token has necessary rights
-	vaultToken = vaultConfig.Raw_token
+	vaultToken = token
 	if err := CheckServerRights(); err != nil {
 		vaultToken = ""
 		return err

@@ -37,7 +37,6 @@ type VaultConfig struct {
 	Runtime_config  string
 	Approle_login   string
 	Approle_id      string
-	Raw_token       string
 }
 
 func LoadConfigFile(path string) (*Config, error) {
@@ -255,7 +254,6 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		"runtime_config",
 		"approle_login",
 		"approle_id",
-		"raw_token",
 	}
 	if err := checkHCLKeys(vault.Val, valid); err != nil {
 		return fmt.Errorf("vault.%s: %s", key, err.Error())
@@ -306,17 +304,6 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		result.Vault.Approle_id = id
 	} else {
 		result.Vault.Approle_id = "goldfish"
-	}
-
-	if t, ok := m["raw_token"]; ok && t != "" {
-		// reject config if approle is also provided. Ambiguous input
-		_, found1 := m["approle_login"]
-		_, found2 := m["approle_id"]
-		if found1 || found2 {
-			return fmt.Errorf("vault.%s: raw_token conflicts with approle_login & approle_id", key)
-		}
-		// if no conflicts, set raw token to be consumed later
-		result.Vault.Raw_token = t
 	}
 
 	return nil

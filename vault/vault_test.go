@@ -27,9 +27,7 @@ func TestGoldfishWrapper(t *testing.T) {
 
 	Convey("Testing bootstrap functions", t, func() {
 		Convey("Reusing the server's own token as raw token", func() {
-			cfg.Vault.Raw_token = vaultToken
-			SetConfig(cfg.Vault)
-			err = BootstrapRaw()
+			err = BootstrapRaw(vaultToken)
 			So(err, ShouldBeNil)
 		})
 	})
