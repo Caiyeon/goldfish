@@ -143,7 +143,7 @@ func main() {
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
 			XFrameOptions:         "SAMEORIGIN",
-			ContentSecurityPolicy: "default-src 'self' https://api.github.com",
+			ContentSecurityPolicy: "default-src 'self' https://api.github.com/repos/caiyeon/goldfish",
 		}))
 
 		// if redirect is set, forward port 80 to port 443
