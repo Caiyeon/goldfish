@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"io/ioutil"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
@@ -24,13 +25,14 @@ import (
 )
 
 var (
-	devMode       bool
-	wrappingToken string
-	cfgPath       string
-	cfg           *config.Config
-	devVaultCh    chan struct{}
-	err           error
-	printVersion  bool
+	cfg            *config.Config
+	cfgPath        string
+	devMode        bool
+	devVaultCh     chan struct{}
+	err            error
+	nomadTokenFile string
+	printVersion   bool
+	wrappingToken  string
 )
 
 func init() {
@@ -43,6 +45,7 @@ func init() {
 	flag.BoolVar(&devMode, "dev", false, "Set to true to save time in development. DO NOT SET TO TRUE IN PRODUCTION!!")
 	flag.BoolVar(&printVersion, "version", false, "Display goldfish's version and exit")
 	flag.StringVar(&wrappingToken, "token", "", "Token generated from approle (must be wrapped!)")
+	flag.StringVar(&nomadTokenFile, "nomad-token-file", "", "If you are using Nomad, this file should contain a secret_id")
 	flag.StringVar(&cfgPath, "config", "", "The path of the deployment config HCL file")
 
 	// if vault dev core is active, relay shutdown signal
@@ -94,11 +97,16 @@ func main() {
 		if err := vault.Bootstrap(wrappingToken); err != nil {
 			log.Fatalf("[ERROR]: Bootstrapping goldfish %s", err.Error())
 		}
-	} else if cfg.Vault.Raw_token != "" {
-		if err := vault.BootstrapRaw(); err != nil {
+	} else if nomadTokenFile != "" {
+		raw, err := ioutil.ReadFile(nomadTokenFile)
+		if err != nil {
+			log.Fatalf("[ERROR]: Could not read token file: %s", err.Error())
+		}
+		if err := vault.BootstrapRaw(string(raw)); err != nil {
 			log.Fatalf("[ERROR]: Bootstrapping goldfish: %s", err.Error())
 		}
 	}
+
 
 	// display welcome message
 	if devMode {
@@ -289,6 +297,10 @@ Optional Arguments:
   -token=<uuid>           A wrapping token which contains a secret_id
                           Can be provided after launch, on Login page
                           Generate with 'vault write -f transit/keys/goldfish'
+
+  -nomad-token-file       A path to a file containing a raw token.
+                          Not recommended unless approle is unavailable,
+						  in the case of Nomad for example.
 
   -version                Print the version and exit
 
