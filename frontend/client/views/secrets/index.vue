@@ -543,6 +543,70 @@ export default {
       .catch((error) => {
         this.$onError(error)
       })
+    },
+
+    deleteSecretMulti: function (paths) {
+      var successes = 0
+      var failures = 0
+
+      for (var i = 0; i < paths.length; i++) {
+        let path = paths[i]
+
+        // check if current path is valid
+        if (!path.includes('/')) {
+          this.$notify({
+            title: 'Invalid',
+            message: 'Cannot delete a mount',
+            type: 'warning'
+          })
+          failures++
+          continue
+        }
+        // recursive deletion may come later, but not now
+        if (path.endsWith('/')) {
+          this.$notify({
+            title: 'Invalid',
+            message: 'Cannot delete a path',
+            type: 'warning'
+          })
+          failures++
+          continue
+        }
+
+        // request deletion of secret
+        this.$http.delete('/v1/secrets?path=' + encodeURIComponent(path), {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        })
+        .then((response) => {
+          this.editMode = false
+          successes++
+
+          // if all requests have been completed, notify user
+          if (successes + failures === paths.length) {
+            this.$notify({
+              title: 'Done!',
+              message: successes.toString() + ' out of ' + path.length.toString() + ' secrets deleted successfully!',
+              type: 'success'
+            })
+          }
+
+          if (this.currentPath === path) {
+            // if deleting current secret, wipe table data
+            this.tableData = []
+          } else {
+            // if deleting a row, find it and remove it
+            for (var j = 0; j < this.tableData.length; j++) {
+              if (this.currentPath + this.tableData[j].path === path) {
+                this.deleteItem(j)
+              }
+            }
+          }
+        })
+        .catch((error) => {
+          this.$onError(error)
+          failures++
+        })
+      }
     }
 
   }
