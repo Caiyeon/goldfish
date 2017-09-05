@@ -119,7 +119,7 @@
                     </p>
                   </td>
                   <!-- View-only -->
-                  <td v-else>
+                  <td v-if="!editMode && currentPathType === 'Secret'">
                     {{ entry.desc }}
                   </td>
 
@@ -296,7 +296,7 @@ export default {
       if (this.currentPathType === 'Secret') {
         return ['Key', 'Value', '']
       } else if (this.currentPathType === 'Path') {
-        return ['Subpaths', 'Description', '']
+        return ['Subpaths', '']
       }
       return []
     }
