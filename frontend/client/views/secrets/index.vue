@@ -375,8 +375,7 @@ export default {
       }
 
       // fetch data again
-      this.currentPath = resultPath
-      this.changePath(this.currentPath)
+      this.changePath(resultPath)
     },
 
     type: function (index) {
