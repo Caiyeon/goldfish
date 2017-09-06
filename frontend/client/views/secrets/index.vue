@@ -40,14 +40,14 @@
             <!-- Actions on current path -->
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
-              v-on:click="startEdit">
+              v-on:click="startEdit()">
               Add Secret
             </a>
 
             <!-- Actions on current secret -->
             <a v-if="editMode === false && currentPathType === 'Secret'"
               class="button is-success is-small is-marginless"
-              v-on:click="startEdit"
+              v-on:click="startEdit()"
               :disabled="displayJSON">
               Edit Secret
             </a>
