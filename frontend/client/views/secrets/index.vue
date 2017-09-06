@@ -624,6 +624,16 @@ export default {
         .catch((error) => {
           this.$onError(error)
           failures++
+
+          // if all requests have been completed, notify user
+          if (successes + failures === paths.length) {
+            this.$message({
+              message: successes.toString() + ' out of ' + paths.length.toString() + ' secret(s) deleted successfully!',
+              type: successes === paths.length ? 'success' : 'warning',
+              duration: 0,
+              showCloseButton: true
+            })
+          }
         })
       }
     },
