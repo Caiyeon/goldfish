@@ -98,7 +98,7 @@ func Bootstrap() echo.HandlerFunc {
 			})
 		}
 
-		if err := vault.StartGoldfishWrapper(wrap.Wrapping_token); err != nil {
+		if err := vault.Bootstrap(wrap.Wrapping_token); err != nil {
 			return c.JSON(http.StatusInternalServerError, H{
 				"error": err.Error(),
 			})

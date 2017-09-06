@@ -21,6 +21,18 @@ var (
 	errorChannel = make(chan error, 1)
 )
 
+func init() {
+	// non-catastrophic errors can be logged via errorChannel
+	// e.g. if goldfish server was unable to fetch runtime config
+	go func() {
+		for err := range errorChannel {
+			if err != nil {
+				log.Println("[ERROR]: ", err.Error())
+			}
+		}
+	}()
+}
+
 func Bootstrapped() bool {
 	return vaultToken != ""
 }
@@ -55,9 +67,9 @@ func NewGoldfishVaultClient() (client *api.Client, err error) {
 	return client, err
 }
 
-func StartGoldfishWrapper(wrappingToken string) error {
+func Bootstrap(wrappingToken string) error {
 	if wrappingToken == "" {
-		return errors.New("Token must be provided in non-dev mode")
+		return errors.New("Wrapping token must be provided")
 	}
 
 	client, err := NewVaultClient()
@@ -98,31 +110,65 @@ func StartGoldfishWrapper(wrappingToken string) error {
 		return err
 	}
 
-	// verify that the secret_id is valid
+	// verify that the client token is sufficiently privileged
 	vaultToken = resp.Auth.ClientToken
-	client.SetToken(resp.Auth.ClientToken)
-	if _, err := client.Auth().Token().LookupSelf(); err != nil {
+	if err := CheckServerRights(); err != nil {
+		vaultToken = ""
 		return err
 	}
 
+	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
+	return nil
+}
+
+// similar to bootstrap function, but uses a raw token instead of an approle secret_id
+// highly dangerous and not recommended unless approle is inaccessible
+func BootstrapRaw(token string) error {
+	// ensure the token has necessary rights
+	vaultToken = token
+	if err := CheckServerRights(); err != nil {
+		vaultToken = ""
+		return err
+	}
+
+	// log this token's accessor
+	client, err := NewGoldfishVaultClient()
+	if err != nil {
+		return err
+	}
+	resp, err := client.Auth().Token().LookupSelf()
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("Could not bootstrap, vault returned nil response")
+	}
+
+	log.Println("[INFO ]: Server token accessor:", resp.Data["accessor"])
+	return nil
+}
+
+// check to ensure server's token has basic rights, and is able to read config path
+func CheckServerRights() error {
+	if vaultToken == "" {
+		return errors.New("vault token must be set to check rights")
+	}
+
+	client, err := NewGoldfishVaultClient()
+	if err != nil {
+		return err
+	}
+
+	// verify server token can lookup self (this should be in default policy)
+	if _, err := client.Auth().Token().LookupSelf(); err != nil {
+		return err
+	}
 	// verify that the client token is renewable
 	if err := renewServerToken(); err != nil {
 		return err
 	}
-
-	// errors that are not catastrophic can be logged here
-	go func() {
-		for err := range errorChannel {
-			if err != nil {
-				log.Println("[ERROR]: ", err.Error())
-			}
-		}
-	}()
-
-	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
-
-	// start goroutines for loading config and renewing token
-	if err := LoadRuntimeConfig(vaultConfig.Runtime_config); err != nil {
+	// load runtime config once to make sure policy allows for it
+	if err := loadConfigFromVault(vaultConfig.Runtime_config); err != nil {
 		return err
 	}
 

@@ -5,10 +5,10 @@ listener "tcp" {
 	# For production, simply ":443" would be just fine (default https)
 	address       = "127.0.0.1:8000"
 
-	# [Required (unless tls_disable = 1)] the certificate file
+	# [Required (unless tls_disable == 1)] the certificate file
 	tls_cert_file = ""
 
-	# [Required (unless tls_disable = 1)] the private key file
+	# [Required (unless tls_disable == 1)] the private key file
 	tls_key_file  = ""
 
 	# [Optional] [Default: 0] [Allowed values: 0, 1]
@@ -47,4 +47,5 @@ vault {
 
 # [Optional] [Default: 0] [Allowed values: 0, 1]
 # Set to 1 to disable mlock. Implementation is similar to vault - see vault docs for details
+# This option will be ignored on unsupported platforms (e.g Windows)
 disable_mlock = 0

@@ -89,7 +89,7 @@
               <a class="navbar-link is-active">
                 Docs
               </a>
-              <div class="navbar-dropdown ">
+              <div class="navbar-dropdown is-boxed">
                 <a class="navbar-item" target="_blank" href="https://github.com/Caiyeon/goldfish/wiki/Configuration#run-time-configurations">
                   Configuration
                 </a>
@@ -257,7 +257,7 @@ export default {
 .app-navbar {
   position: fixed;
   min-width: 100%;
-  z-index: 1024;
+  z-index: 8;
   box-shadow: 0 2px 3px rgba(17, 17, 17, 0.1), 0 0 0 1px rgba(17, 17, 17, 0.1);
 
   .container {

@@ -146,7 +146,7 @@ export default {
   min-width: 45px;
   max-height: 100vh;
   height: calc(100% - 50px);
-  z-index: 1024 - 1;
+  z-index: 8 - 1;
   background: #FFF;
   box-shadow: 0 2px 3px rgba(17, 17, 17, 0.1), 0 0 0 1px rgba(17, 17, 17, 0.1);
   overflow-y: auto;

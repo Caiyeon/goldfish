@@ -20,10 +20,17 @@ func TestGoldfishWrapper(t *testing.T) {
 
 	// bootstrap goldfish to vault
 	SetConfig(cfg.Vault)
-	err = StartGoldfishWrapper(wrappingToken)
+	err = Bootstrap(wrappingToken)
 	if err != nil {
 		panic(err)
 	}
+
+	Convey("Testing bootstrap functions", t, func() {
+		Convey("Reusing the server's own token as raw token", func() {
+			err = BootstrapRaw(vaultToken)
+			So(err, ShouldBeNil)
+		})
+	})
 
 	// start unit tests
 	Convey("Testing API wrapper", t, func() {

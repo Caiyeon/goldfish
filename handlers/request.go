@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/caiyeon/goldfish/request"
+	"github.com/caiyeon/goldfish/slack"
+	"github.com/caiyeon/goldfish/vault"
 	"github.com/labstack/echo"
 )
 
@@ -84,7 +86,24 @@ func AddRequest() echo.HandlerFunc {
 			}
 		}
 
-		// TODO: add slack webhook
+		// if config has a slack webhook, send the hash (aka change ID) to the channel
+		conf := vault.GetConfig()
+		if conf.SlackWebhook != "" {
+			// send a message using webhook
+			err = slack.PostMessageWebhook(
+				conf.SlackChannel,
+				"A new policy change request has been submitted",
+				"Request ID: \n*"+hash+"*",
+				conf.SlackWebhook,
+			)
+			// change request is fine, just let the frontend know it wasn't slack'd
+			if err != nil {
+				return c.JSON(http.StatusOK, H{
+					"result": hash,
+					"error":  "Could not send to slack webhook",
+				})
+			}
+		}
 
 		// if all is good, return hash
 		return c.JSON(http.StatusOK, H{

@@ -284,23 +284,23 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		if tlsSkip == "1" {
 			result.Vault.Tls_skip_verify = true
 		} else if tlsSkip != "0" {
-			return fmt.Errorf("listener.%s: tls_disable can be 0 or 1", key)
+			return fmt.Errorf("vault.%s: tls_disable can be 0 or 1", key)
 		}
 	}
 
-	if runtimeConfig, ok := m["runtime_config"]; ok {
+	if runtimeConfig, ok := m["runtime_config"]; ok && runtimeConfig != "" {
 		result.Vault.Runtime_config = runtimeConfig
 	} else {
 		result.Vault.Runtime_config = "secret/goldfish"
 	}
 
-	if login, ok := m["approle_login"]; ok {
+	if login, ok := m["approle_login"]; ok && login != "" {
 		result.Vault.Approle_login = login
 	} else {
 		result.Vault.Approle_login = "auth/approle/login"
 	}
 
-	if id, ok := m["approle_id"]; ok {
+	if id, ok := m["approle_id"]; ok && id != "" {
 		result.Vault.Approle_id = id
 	} else {
 		result.Vault.Approle_id = "goldfish"

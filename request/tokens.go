@@ -36,15 +36,32 @@ func CreateTokenRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*Toke
 	r := &TokenRequest{}
 	r.Type = "token"
 
-    // parse required and optional keys
+    // decode raw map to token creation request
     if temp, ok := raw["create_request"]; ok {
         m, ok := temp.(map[string]interface{})
 		if !ok {
             return nil, "", errors.New("'create_request' is a wrong format")
         }
-        if err := mapstructure.Decode(m, &r.CreateRequest); err != nil {
-            return nil, "", errors.New("could not decode create_request: " + err.Error())
+
+        decoder, err := mapstructure.NewDecoder(
+            &mapstructure.DecoderConfig{
+        		Metadata: nil,
+        		Result:   &r.CreateRequest,
+        		TagName:  "json",
+        	},
+        )
+        if err != nil {
+    		return nil, "", errors.New("Could not decode mapstructure: " + err.Error())
+    	}
+
+        err = decoder.Decode(m)
+        if err != nil {
+            return nil, "", errors.New("Could not decode mapstructure: " + err.Error())
         }
+
+        // created token would be revoked when the generated root token is revoked,
+        // so no_parent needs to be set
+        r.CreateRequest.NoParent = true
     } else {
         return nil, "", errors.New("'create_request' is required")
     }
