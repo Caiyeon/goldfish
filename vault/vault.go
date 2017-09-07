@@ -110,69 +110,65 @@ func Bootstrap(wrappingToken string) error {
 		return err
 	}
 
-	// verify that the client token is sufficiently privileged
-	vaultToken = resp.Auth.ClientToken
-	if err := CheckServerRights(); err != nil {
-		vaultToken = ""
-		return err
-	}
-
-	log.Println("[INFO ]: Server token accessor:", resp.Auth.Accessor)
-	return nil
+	// BootstrapRaw will verify that the token is privileged and
+	// will also setup background processes
+	return BootstrapRaw(resp.Auth.ClientToken)
 }
 
 // similar to bootstrap function, but uses a raw token instead of an approle secret_id
-// highly dangerous and not recommended unless approle is inaccessible
+// highly dangerous and not recommended to be called externally unless approle is inaccessible
 func BootstrapRaw(token string) error {
 	// ensure the token has necessary rights
+	accessor, err := VerifyTokenRights(token)
+	if err != nil {
+		return err
+	}
+
+	// set package's token
 	vaultToken = token
-	if err := CheckServerRights(); err != nil {
+
+	// notify user of the accessor so it can be revoked if needed
+	log.Println("[INFO ]: Server token accessor:", accessor)
+
+	// launch background processes
+	if err := LoadRuntimeConfig(vaultConfig.Runtime_config); err != nil {
+		// reset package token
 		vaultToken = ""
 		return err
 	}
 
-	// log this token's accessor
-	client, err := NewGoldfishVaultClient()
-	if err != nil {
-		return err
-	}
-	resp, err := client.Auth().Token().LookupSelf()
-	if err != nil {
-		return err
-	}
-	if resp == nil {
-		return errors.New("Could not bootstrap, vault returned nil response")
-	}
-
-	log.Println("[INFO ]: Server token accessor:", resp.Data["accessor"])
 	return nil
 }
 
 // check to ensure server's token has basic rights, and is able to read config path
-func CheckServerRights() error {
-	if vaultToken == "" {
-		return errors.New("vault token must be set to check rights")
-	}
-
+func VerifyTokenRights(token string) (accessor string, err error) {
 	client, err := NewGoldfishVaultClient()
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	// overwrite the returned client's potentially nonempty token
+	client.SetToken(token)
 
 	// verify server token can lookup self (this should be in default policy)
-	if _, err := client.Auth().Token().LookupSelf(); err != nil {
-		return err
-	}
-	// verify that the client token is renewable
-	if err := renewServerToken(); err != nil {
-		return err
-	}
-	// load runtime config once to make sure policy allows for it
-	if err := loadConfigFromVault(vaultConfig.Runtime_config); err != nil {
-		return err
+	if resp, err := client.Auth().Token().LookupSelf(); err != nil {
+		return "", err
+	} else if resp == nil {
+		return "", errors.New("Could not lookup self... response from vault was nil")
+	} else {
+		// if lookup succeeded, record the token's accessor
+		accessor = resp.Data["accessor"].(string)
 	}
 
-	return nil
+	// verify that the client token is renewable
+	if resp, err := client.Auth().Token().RenewSelf(0); err != nil {
+		return "", err
+	} else if resp == nil {
+		return "", errors.New("Could not renew token... response from vault was nil")
+	}
+
+	// good enough
+	return accessor, nil
 }
 
 func LoadRuntimeConfig(configPath string) error {
@@ -197,4 +193,20 @@ func renewServerTokenEvery(interval time.Duration) {
 		time.Sleep(interval)
 		errorChannel <- renewServerToken()
 	}
+}
+
+func renewServerToken() error {
+	client, err := NewGoldfishVaultClient()
+	if err != nil {
+		return err
+	}
+	resp, err := client.Auth().Token().RenewSelf(0)
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("Could not renew token... response from vault was nil")
+	}
+	log.Println("[INFO ]: Server token renewed")
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/hashicorp/vault/api"
@@ -88,22 +87,6 @@ func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 		return nil, err
 	}
 	return client.Logical().Delete("cubbyhole/" + name)
-}
-
-func renewServerToken() error {
-	client, err := NewGoldfishVaultClient()
-	if err != nil {
-		return err
-	}
-	resp, err := client.Auth().Token().RenewSelf(0)
-	if err != nil {
-		return err
-	}
-	if resp == nil {
-		return errors.New("Could not renew token... response from vault was nil")
-	}
-	log.Println("[INFO ]: Server token renewed")
-	return nil
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {
