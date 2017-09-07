@@ -40,14 +40,29 @@
             <!-- Actions on current path -->
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
-              v-on:click="startEdit">
+              v-on:click="startEdit()">
               Add Secret
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Path'"
+              class="button is-info is-small is-marginless"
+              v-on:click="selectAllSecrets()">
+              Select All Secrets
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
+              class="button is-warning is-small is-marginless"
+              v-on:click="selectedRows = []">
+              Cancel Selection
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
+              class="button is-danger is-small is-marginless"
+              v-on:click="deleteSelection()">
+              Delete Selection
             </a>
 
             <!-- Actions on current secret -->
             <a v-if="editMode === false && currentPathType === 'Secret'"
               class="button is-success is-small is-marginless"
-              v-on:click="startEdit"
+              v-on:click="startEdit()"
               :disabled="displayJSON">
               Edit Secret
             </a>
@@ -89,7 +104,8 @@
 
               <!-- body -->
               <tbody>
-                <tr v-for="(entry, index) in tableData">
+                <tr v-for="(entry, index) in tableData"
+                :class="selectedRows.includes(entry.path) ? 'is-selected' : ''">
                   <td width="68">
                     <span class="tag is-rounded is-pulled-left" v-bind:class="type(index)">
                       {{ entry.type }}
@@ -103,11 +119,11 @@
                     </p>
                   </td>
                   <!-- View-only -->
-                  <td v-else>
+                  <td v-else @click="select(entry.path)">
                     <span v-if="currentPathType === 'Secret'">
                       {{ entry.path }}
                     </span>
-                    <a v-else @click="changePath(currentPath, entry)">
+                    <a v-else @click="changePath(currentPath, entry); select(entry.path)">
                       {{ entry.path }}
                     </a>
                   </td>
@@ -245,7 +261,9 @@ export default {
       newKey: '',
       newValue: '',
       editMode: false,
-      confirmDelete: []
+      confirmDelete: [],
+      selectedRows: [],
+      lastSelectedRow: 0
     }
   },
 
@@ -327,6 +345,7 @@ export default {
       })
       .then((response) => {
         this.tableData = []
+        this.selectedRows = []
         this.currentPath = response.data.path
         let result = response.data.result
         if (this.currentPathType === 'Path') {
@@ -375,8 +394,7 @@ export default {
       }
 
       // fetch data again
-      this.currentPath = resultPath
-      this.changePath(this.currentPath)
+      this.changePath(resultPath)
     },
 
     type: function (index) {
@@ -583,10 +601,11 @@ export default {
 
           // if all requests have been completed, notify user
           if (successes + failures === paths.length) {
-            this.$notify({
-              title: 'Done!',
-              message: successes.toString() + ' out of ' + path.length.toString() + ' secrets deleted successfully!',
-              type: 'success'
+            this.$message({
+              message: successes.toString() + ' out of ' + paths.length.toString() + ' secret(s) deleted successfully!',
+              type: successes === paths.length ? 'success' : 'warning',
+              duration: 0,
+              showCloseButton: true
             })
           }
 
@@ -605,8 +624,75 @@ export default {
         .catch((error) => {
           this.$onError(error)
           failures++
+
+          // if all requests have been completed, notify user
+          if (successes + failures === paths.length) {
+            this.$message({
+              message: successes.toString() + ' out of ' + paths.length.toString() + ' secret(s) deleted successfully!',
+              type: successes === paths.length ? 'success' : 'warning',
+              duration: 0,
+              showCloseButton: true
+            })
+          }
         })
       }
+    },
+
+    // either adds or removes the entry from selected rows
+    select: function (entry) {
+      // selection on keys is pointless
+      if (this.currentPathType === 'Secret') {
+        return
+      }
+      // selection on paths is not supported for now
+      if (entry.endsWith('/')) {
+        return
+      }
+      // otherwise, select the entry (or unselect it if it already is selected)
+      if (this.selectedRows.includes(entry)) {
+        this.unselect(entry)
+      } else {
+        this.selectedRows.push(entry)
+      }
+    },
+
+    unselect: function (entry) {
+      let index = this.selectedRows.indexOf(entry)
+      if (index > -1) {
+        this.selectedRows.splice(index, 1)
+      }
+    },
+
+    selectAllSecrets: function () {
+      // if this current path is not a path, there's nothing to be selected
+      if (this.currentPathType !== 'Path') {
+        return
+      }
+      // for each item in table, if it's a secret, add it to the selected array
+      for (var i = 0; i < this.tableData.length; i++) {
+        let entry = this.tableData[i].path
+        if (!entry.endsWith('/') && !this.selectedRows.includes(entry)) {
+          this.selectedRows.push(entry)
+        }
+      }
+    },
+
+    deleteSelection: function () {
+      if (this.currentPathType !== 'Path') {
+        return
+      }
+
+      // append full secret paths to an array
+      var paths = []
+      for (var i = 0; i < this.selectedRows.length; i++) {
+        paths.push(this.currentPath + this.selectedRows[i])
+      }
+
+      // delete all selected secrets and give toast notification
+      this.deleteSecretMulti(paths)
+
+      // reset selection
+      this.selectedRows = []
     }
 
   }
