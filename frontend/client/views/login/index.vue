@@ -329,7 +329,7 @@ export default {
       this.vaultHealthLoading = true
       this.$http.get('/v1/vaulthealth')
       .then((response) => {
-        this.vaultHealthData = JSON.parse(response.data.result)
+        this.vaultHealthData = response.data.result
         this.vaultHealthData['server_time_utc'] = moment.utc(
           moment.unix(this.vaultHealthData['server_time_utc']))
           .format('ddd, h:mm:ss A MMMM Do YYYY') + ' GMT'

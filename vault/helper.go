@@ -1,35 +1,17 @@
 package vault
 
 import (
-	"crypto/tls"
 	"errors"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/hashicorp/vault/api"
 )
 
-func VaultHealth() (string, error) {
-	client := &http.Client{
-		Transport: &http.Transport{
-        	TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: vaultConfig.Tls_skip_verify,
-			},
-    	},
-	}
-
-	resp, err := client.Get(vaultConfig.Address + "/v1/sys/health")
+func VaultHealth() (*api.HealthResponse, error) {
+	client, err := NewVaultClient()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return "", err
-	}
-
-	return string(body), nil
+	return client.Sys().Health()
 }
 
 // lookup current root generation status
