@@ -1,36 +1,17 @@
 package vault
 
 import (
-	"crypto/tls"
 	"errors"
-	"io/ioutil"
-	"log"
-	"net/http"
 
 	"github.com/hashicorp/vault/api"
 )
 
-func VaultHealth() (string, error) {
-	client := &http.Client{
-		Transport: &http.Transport{
-        	TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: vaultConfig.Tls_skip_verify,
-			},
-    	},
-	}
-
-	resp, err := client.Get(vaultConfig.Address + "/v1/sys/health")
+func VaultHealth() (*api.HealthResponse, error) {
+	client, err := NewVaultClient()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return "", err
-	}
-
-	return string(body), nil
+	return client.Sys().Health()
 }
 
 // lookup current root generation status
@@ -88,22 +69,6 @@ func DeleteFromCubbyhole(name string) (*api.Secret, error) {
 		return nil, err
 	}
 	return client.Logical().Delete("cubbyhole/" + name)
-}
-
-func renewServerToken() error {
-	client, err := NewGoldfishVaultClient()
-	if err != nil {
-		return err
-	}
-	resp, err := client.Auth().Token().RenewSelf(0)
-	if err != nil {
-		return err
-	}
-	if resp == nil {
-		return errors.New("Could not renew token... response from vault was nil")
-	}
-	log.Println("[INFO ]: Server token renewed")
-	return nil
 }
 
 func WrapData(wrapttl string, data map[string]interface{}) (string, error) {

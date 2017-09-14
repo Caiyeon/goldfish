@@ -41,7 +41,7 @@ func VaultHealth() echo.HandlerFunc {
 			return parseError(c, err)
 		}
 		return c.JSON(http.StatusOK, H{
-			"result": string(resp),
+			"result": resp,
 		})
 	}
 }

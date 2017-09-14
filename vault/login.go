@@ -36,6 +36,13 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 		client.SetToken(auth.ID)
 	}
 
+	// github logins are special: they only have one auth piece
+	// these fields need to be swapped for the frontend to handle them easily
+	if t == "github" {
+		auth.Pass = auth.ID
+		auth.ID = ""
+	}
+
 	// if logging in for the first time with these auth backends
 	if t == "userpass" || t == "ldap" || t == "github" || t == "okta" {
 		// fetch a client token by logging. Auth backend is hardcoded for now
