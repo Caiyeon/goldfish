@@ -268,7 +268,15 @@ export default {
   },
 
   mounted: function () {
-    this.changePath(this.currentPath)
+    // if path parameter was provided via url, go to that
+    this.changePath(this.$route.query['path'] || this.currentPath)
+  },
+
+  watch: {
+    '$route' (to, from) {
+      // if query path is provided, go to that secret
+      this.changePath(to.query['path'] || '')
+    }
   },
 
   computed: {
@@ -334,6 +342,11 @@ export default {
         }
       }
 
+      // if user was editing, cancel it and restore local data
+      if (this.editMode) {
+        this.cancelEdit()
+      }
+
       this.newKey = ''
       this.newValue = ''
       this.editMode = false
@@ -347,6 +360,14 @@ export default {
         this.tableData = []
         this.selectedRows = []
         this.currentPath = response.data.path
+
+        // push path into url history
+        this.$router.push({
+          query: {
+            path: response.data.path
+          }
+        })
+
         let result = response.data.result
         if (this.currentPathType === 'Path') {
           // listing subdirectories
