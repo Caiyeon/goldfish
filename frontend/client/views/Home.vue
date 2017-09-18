@@ -7,17 +7,15 @@
     <h1 class="is-title is-bold">{{ name.replace('-', ' ') }}</h1>
 
     <p>
-      <strong>{{ description }}</strong>,
-      <a :href="homepage">Live Demo</a>
+      <strong>{{ description }}</strong>
     </p>
 
-    <p>Supports Vue 2.0 and Bulma 0.5!</p>
+    <p>Uses VueJS 2.4 and Bulma CSS 0.5!</p>
   </div>
 </template>
 
 <script>
 export default {
-
   data () {
     return this.$store.state.pkg
   }
