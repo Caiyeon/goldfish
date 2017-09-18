@@ -23,7 +23,7 @@
                   <input class="input is-medium is-expanded" type="text"
                   placeholder="Enter the path of a secret or directory"
                   v-model.lazy="currentPath"
-                  @keyup.enter="changePath(currentPath)">
+                  @keyup.enter="pushPath(currentPath)">
                   </p>
                 </div>
               </div>
@@ -123,7 +123,7 @@
                     <span v-if="currentPathType === 'Secret'">
                       {{ entry.path }}
                     </span>
-                    <a v-else @click="changePath(currentPath, entry); select(entry.path)">
+                    <a v-else @click="pushPath(currentPath + entry.path); select(entry.path)">
                       {{ entry.path }}
                     </a>
                   </td>
@@ -268,7 +268,16 @@ export default {
   },
 
   mounted: function () {
-    this.changePath(this.currentPath)
+    // if path parameter was provided via url, go to that
+    this.changePath(this.$route.query['path'] || this.currentPath)
+  },
+
+  watch: {
+    // watch for route changes, e.g. if query parameters are updated
+    '$route' (to, from) {
+      // if query path is provided, go to that secret
+      this.changePath(to.query['path'] || '')
+    }
   },
 
   computed: {
@@ -321,17 +330,28 @@ export default {
   },
 
   methods: {
+    tempFinish: function () {
+      this.$nprogress.done()
+    },
+
     deleteItem: function (index) {
       this.tableData.splice(index, 1)
     },
 
-    changePath: function (path, entry) {
-      if (entry) {
-        if (entry.type === 'Key') {
-          return
-        } else {
-          path += entry.path
-        }
+    pushPath: function (path) {
+      if (path && (path !== this.currentPath)) {
+        this.$router.push({
+          query: {
+            path: path
+          }
+        })
+      }
+    },
+
+    changePath: function (path) {
+      // if user was editing, cancel it and restore local data
+      if (this.editMode) {
+        this.cancelEdit()
       }
 
       this.newKey = ''
@@ -347,6 +367,7 @@ export default {
         this.tableData = []
         this.selectedRows = []
         this.currentPath = response.data.path
+
         let result = response.data.result
         if (this.currentPathType === 'Path') {
           // listing subdirectories
@@ -368,7 +389,6 @@ export default {
           }
         }
       })
-
       .catch((error) => {
         this.$onError(error)
         this.tableData = []
@@ -393,8 +413,8 @@ export default {
         return
       }
 
-      // fetch data again
-      this.changePath(resultPath)
+      // update query parameter which will trigger loading the secret
+      this.pushPath(resultPath)
     },
 
     type: function (index) {

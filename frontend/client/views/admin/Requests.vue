@@ -216,8 +216,9 @@
                 <div class="control">
                   <div class="tags has-addons">
                     <span class="tag">Orphan?</span>
-                    <span class="tag is-primary" :class="request.Orphan ? 'is-warning': ''">
-                      {{request.Orphan ? 'Yes' : 'No'}}
+                    <span class="tag is-primary"
+                    :class="(request.Orphan || tokenRequestPreview.no_parent) ? 'is-warning': ''">
+                      {{(request.Orphan || tokenRequestPreview.no_parent) ? 'Yes' : 'No'}}
                     </span>
                   </div>
                 </div>

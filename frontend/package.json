@@ -1,7 +1,7 @@
 {
   "name": "goldfish",
   "version": "0.7.0-custom",
-  "description": "Vault Admin Panel",
+  "description": "A HashiCorp Vault UI",
   "repository": "caiyeon/goldfish",
   "homepage": "",
   "license": "MPL 2.0",
