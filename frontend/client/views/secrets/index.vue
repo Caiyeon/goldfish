@@ -348,15 +348,7 @@ export default {
       }
     },
 
-    changePath: function (path, entry) {
-      if (entry) {
-        if (entry.type === 'Key') {
-          return
-        } else {
-          path += entry.path
-        }
-      }
-
+    changePath: function (path) {
       // if user was editing, cancel it and restore local data
       if (this.editMode) {
         this.cancelEdit()
