@@ -362,9 +362,14 @@ export default {
         try {
           if (error.response.data.error.includes('Progress has been reset')) {
             this.request.Progress = 0
-          } else {
-            this.$onError(error)
+          } else if (error.response.data.error.includes('Request has been deleted')) {
+            this.$notify({
+              title: 'Error',
+              message: 'This request contains invalid data, and has been deleted as a result',
+              type: 'error'
+            })
           }
+          this.$onError(error)
         } catch (e) {
           this.$onError(error)
         }
