@@ -170,9 +170,9 @@ func TestConfigParser(t *testing.T) {
 	Convey("Parser should reject invalid listener - invalid tls_autoredirect configuration", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
-			address          = "127.0.0.1:8000"
-			tls_disable      = 1
-			tls_autoredirect = 1
+				address          = "127.0.0.1:8000"
+				tls_disable      = 1
+				tls_autoredirect = 1
 			}
 			vault {
 				address         = "http://127.0.0.1:8200"
@@ -185,8 +185,8 @@ func TestConfigParser(t *testing.T) {
 	Convey("Parser should reject invalid listener - invalid tls_autoredirect", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
-			address          = "127.0.0.1:8000"
-			tls_autoredirect = "invalid"
+				address          = "127.0.0.1:8000"
+				tls_autoredirect = "invalid"
 			}
 			vault {
 				address         = "http://127.0.0.1:8200"
