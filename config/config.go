@@ -7,12 +7,11 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/vault/helper/parseutil"
 )
-
-var ch = make(chan error)
 
 type Config struct {
 	Listener        *ListenerConfig `hcl:"-"`
@@ -171,15 +170,14 @@ func checkHCLKeys(node ast.Node, valid []string) error {
 		validMap[v] = struct{}{}
 	}
 
-	var err error
+	var err *multierror.Error
 	for _, item := range list.Items {
 		key := item.Keys[0].Token.Value().(string)
 		if _, ok := validMap[key]; !ok {
-			err = fmt.Errorf("Invalid key '%s' on line '%d'", key, item.Assign.Line)
-			ch <- err
+			err = multierror.Append(err, fmt.Errorf("Invalid key '%s' on line '%d'", key, item.Assign.Line))
 		}
 	}
-	return err
+	return err.ErrorOrNil()
 }
 
 func parseListener(result *Config, listener *ast.ObjectItem) error {

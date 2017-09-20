@@ -74,6 +74,22 @@ func TestConfigParser(t *testing.T) {
 		})
 	})
 
+	Convey("Parser should reject invalid keys", t, func() {
+		cfg, err := ParseConfig(`
+			listener "tcp" {
+				address          = "127.0.0.1:8000"
+				invalid          = "value"
+			}
+			vault {
+				address         = "http://127.0.0.1:8200"
+			}
+			`)
+		So(cfg, ShouldBeNil)
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "Invalid key")
+		So(err.Error(), ShouldContainSubstring, "invalid")
+	})
+
 	Convey("Parser should accept valid string - tls_skip_verify enabled (listener)", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
