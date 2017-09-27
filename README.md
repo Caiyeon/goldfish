@@ -181,3 +181,7 @@ See: [Architecture](https://github.com/Caiyeon/goldfish/wiki/Architecture)
 This server should behave as a goldfish, forgetting everything immediately after a request is completed. That, and other inside-joke reasons.
 
 Credits for the goldfish icon goes to [Laurel Chan](https://www.linkedin.com/in/laurel-chan-11baa286)
+
+<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/WYT8J9rrsTK63FQg68eQYsJN/Caiyeon/goldfish'>
+  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/WYT8J9rrsTK63FQg68eQYsJN/Caiyeon/goldfish.svg' />
+</a>
