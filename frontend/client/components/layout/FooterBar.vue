@@ -2,6 +2,13 @@
   <footer class="footer">
     <div class="container">
       <div class="content has-text-centered">
+
+        <!-- NONE of these third party scripts will be in the production binaries -->
+
+        <!-- codesponsor.io -->
+        <div id="code-sponsor-widget"></div>
+
+        <!-- github buttons -->
         <p class="social">
           <a>
             <github-button
@@ -18,6 +25,8 @@
             data-icon="octicon-repo-forked">Forks</github-button>
           </a>
         </p>
+
+        <!-- general description -->
         <p><span class="icon"><i class="fa fa-code"></i></span> with <span class="icon"><i class="fa fa-heart"></i></span> by <a href="https://github.com/caiyeon">caiyeon</a></p>
         <p>
           <a :href="'https://github.com/' + repository">Source code</a>
@@ -40,6 +49,12 @@ export default {
 
   data () {
     return this.$store.state.pkg
+  },
+
+  created: function () {
+    let ckeditor = document.createElement('script')
+    ckeditor.setAttribute('src', 'https://app.codesponsor.io/scripts/KwI4KKNq6AdRGL7X-taMDA?theme=light&height=300')
+    document.head.appendChild(ckeditor)
   }
 }
 </script>
