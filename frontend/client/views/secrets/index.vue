@@ -339,7 +339,7 @@ export default {
     },
 
     pushPath: function (path) {
-      if (path && (path !== this.currentPath)) {
+      if (path) {
         this.$router.push({
           query: {
             path: path

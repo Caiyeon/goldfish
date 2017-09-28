@@ -15,6 +15,10 @@
 
 </div>
 
+<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/WYT8J9rrsTK63FQg68eQYsJN/Caiyeon/goldfish'>
+  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/WYT8J9rrsTK63FQg68eQYsJN/Caiyeon/goldfish.svg' />
+</a>
+
 ## What is this?
 
 [Goldfish](https://vault-ui.io) is a HashiCorp Vault UI
