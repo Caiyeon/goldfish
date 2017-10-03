@@ -1,7 +1,12 @@
-# You need go (v1.8), npm (v3), nodejs (v7)
+# You need go (v1.9), npm (v5), nodejs (v6)
+# You will also need cross-env (sudo npm install -g cross-env)
 
-# generate frontend static assets
+# install & update npm packages
 cd frontend
+npm install
+npm update
+
+# compile frontend
 npm run build || exit 1
 cd ..
 

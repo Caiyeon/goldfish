@@ -489,6 +489,7 @@ export default {
           type: 'success'
         })
         this.editMode = false
+        this.pushPath(this.currentPath)
       })
       .catch((error) => {
         this.$onError(error)
