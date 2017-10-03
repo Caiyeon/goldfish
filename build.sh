@@ -2,6 +2,9 @@
 
 # generate frontend static assets
 cd frontend
+# first time running
+npm install
+
 npm run build || exit 1
 cd ..
 
