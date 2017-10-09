@@ -60,7 +60,7 @@ func (auth AuthInfo) ListLDAPGroups() ([]LDAPGroup, error) {
 					results[i].Policies = policies
 				} else if policies, ok := raw.(string); ok {
 					// vault v0.8.2 and lower has a different JSON response
-					results[i].Policies = strings.Split(p, ",")
+					results[i].Policies = strings.Split(policies, ",")
 				}
 			}
 		}
