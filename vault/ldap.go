@@ -27,6 +27,12 @@ func (auth AuthInfo) ListLDAPGroups() ([]LDAPGroup, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// if there are no ldap groups, return an empty slice
+	if _, ok := resp.Data["keys"]; !ok {
+		return []LDAPGroup{}, nil
+	}
+
 	raw, ok := resp.Data["keys"].([]interface{})
 	if !ok {
 		return nil, errors.New("Failed to fetch LDAP group names")
