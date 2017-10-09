@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo 'Downloading go...'
-curl -s https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz -o go.tar.gz
+curl -s https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz -o go.tar.gz
 sudo tar -xvf go.tar.gz
 rm go.tar.gz
 sudo rm -r /usr/local/go

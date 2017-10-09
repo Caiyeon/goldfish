@@ -34,8 +34,9 @@ systemctl start goldfish
 # Required modules
 echo 'Installing nodejs and npm...'
 sudo apt-get purge -y nodejs npm
-curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 sudo apt-get install -y nodejs
+sudo npm install npm@5 -g
 echo Nodejs version:
 nodejs -v
 echo NPM version:
