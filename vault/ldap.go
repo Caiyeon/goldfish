@@ -45,11 +45,15 @@ func (auth AuthInfo) ListLDAPGroups() ([]LDAPGroup, error) {
 		results[i] = LDAPGroup{
 			Name: group,
 		}
+
 		// fetch group's policies
 		resp, err := logical.Read("auth/ldap/groups/" + group)
 		if err == nil && resp != nil {
-			if policies, ok := resp.Data["policies"]; ok {
-				if p, ok := policies.(string); ok {
+			if raw, ok := resp.Data["policies"]; ok {
+				if policies, ok := raw.([]string); ok {
+					results[i].Policies = policies
+				} else if policies, ok := raw.(string); ok {
+					// vault v0.8.2 and lower has a different JSON response
 					results[i].Policies = strings.Split(p, ",")
 				}
 			}
@@ -70,6 +74,12 @@ func (auth AuthInfo) ListLDAPUsers() ([]LDAPUser, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// if there are no ldap users, return an empty slice
+	if _, ok := resp.Data["keys"]; !ok {
+		return []LDAPUser{}, nil
+	}
+
 	raw, ok := resp.Data["keys"].([]interface{})
 	if !ok {
 		return nil, errors.New("Failed to fetch LDAP usernames")
@@ -88,13 +98,19 @@ func (auth AuthInfo) ListLDAPUsers() ([]LDAPUser, error) {
 		results[i] = LDAPUser{
 			Name: user,
 		}
+
 		// fetch user's policies and groups
 		resp, err := logical.Read("auth/ldap/users/" + user)
 		if err != nil || resp == nil {
 			continue
 		}
+
 		if raw, ok := resp.Data["policies"]; ok {
-			if policies, ok := raw.(string); ok {
+			// vault v0.8.2 and lower has a different JSON response
+			if policies, ok := raw.([]string); ok {
+				results[i].Policies = policies
+			} else if policies, ok := raw.(string); ok {
+				// vault v0.8.2 and lower has a different JSON response
 				results[i].Policies = strings.Split(policies, ",")
 			}
 		}
