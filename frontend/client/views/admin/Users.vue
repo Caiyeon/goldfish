@@ -9,7 +9,7 @@
           <div class="tabs is-medium is-boxed is-fullwidth">
             <ul>
               <li v-bind:class="tabName === 'token' ? 'is-active' : ''"
-                v-on:click="switchTab(0, true)"
+                v-on:click="switchTab(0, false)"
                 disabled>
                 <a>Tokens</a>
               </li>

@@ -88,6 +88,10 @@
               v-on:click="cancelEdit">
               Cancel Edit
             </a>
+
+            <p v-if="editMode && currentPathType === 'Secret'" class="help is-info">
+              Shift + enter to insert multiple lines
+            </p>
           </div>
 
           <!-- data table -->
@@ -131,13 +135,22 @@
                   <!-- Editable value field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input class="input is-small" type="text" placeholder="" v-model="entry.desc">
+                      <input v-focus
+                        v-if="entry.desc.split('\n').length < 2"
+                        class="input is-small" type="text" placeholder="" v-model="entry.desc"
+                        v-on:keyup.shift.enter="entry.desc = entry.desc + '\n'"
+                        v-on:keyup.enter="$refs.newKey.focus()">
+                      <textarea v-focus
+                        v-else
+                        v-bind:rows="entry.desc.split('\n').length"
+                        class="textarea is-small" type="text" placeholder="" v-model="entry.desc">
+                      </textarea>
                     </p>
                   </td>
                   <!-- View-only -->
-                  <td v-if="!editMode && currentPathType === 'Secret'">
-                    {{ entry.desc }}
-                  </td>
+                  <td v-if="!editMode && currentPathType === 'Secret'"
+                    style="white-space: pre-wrap;"
+                    >{{ entry.desc }}</td>
 
                   <!-- Save some space for deletion button -->
                   <td width="68">

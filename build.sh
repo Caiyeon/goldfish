@@ -4,7 +4,6 @@
 # install & update npm packages
 cd frontend
 npm install
-npm update
 
 # compile frontend
 npm run build || exit 1
