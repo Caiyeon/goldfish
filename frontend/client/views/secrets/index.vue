@@ -88,6 +88,10 @@
               v-on:click="cancelEdit">
               Cancel Edit
             </a>
+
+            <p v-if="editMode && currentPathType === 'Secret'" class="help is-info">
+              Shift + enter to insert multiple lines
+            </p>
           </div>
 
           <!-- data table -->
