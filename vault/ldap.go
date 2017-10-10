@@ -112,7 +112,6 @@ func (auth AuthInfo) ListLDAPUsers() ([]LDAPUser, error) {
 		}
 
 		if raw, ok := resp.Data["policies"]; ok {
-			// vault v0.8.2 and lower has a different JSON response
 			if policies, ok := raw.([]string); ok {
 				results[i].Policies = policies
 			} else if policies, ok := raw.(string); ok {
