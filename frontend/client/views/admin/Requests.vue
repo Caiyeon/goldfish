@@ -55,8 +55,8 @@
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
                   <input class="input" type="password"
-                  placeholder="Enter an unseal token"
-                  v-model="unsealToken"
+                  placeholder="Enter an unseal key"
+                  v-model="unsealKey"
                   @keyup.enter="approve()">
                 </p>
                 <p class="control">
@@ -117,8 +117,8 @@
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
                   <input class="input" type="password"
-                  placeholder="Enter an unseal token"
-                  v-model="unsealToken"
+                  placeholder="Enter an unseal key"
+                  v-model="unsealKey"
                   @keyup.enter="approve()">
                 </p>
                 <p class="control">
@@ -197,8 +197,8 @@
               <div v-if="bConfirm" class="field has-addons">
                 <p class="control">
                   <input class="input" type="password"
-                  placeholder="Enter an unseal token"
-                  v-model="unsealToken"
+                  placeholder="Enter an unseal key"
+                  v-model="unsealKey"
                   @keyup.enter="approve()">
                 </p>
                 <p class="control">
@@ -264,7 +264,7 @@ export default {
       request: null,
       bConfirm: false,
       bReject: false,
-      unsealToken: ''
+      unsealKey: ''
     }
   },
 
@@ -290,7 +290,7 @@ export default {
       this.request = null
       this.bConfirm = false
       this.bReject = false
-      this.unsealToken = ''
+      this.unsealKey = ''
     },
 
     // requests for the request object from backend
@@ -311,11 +311,11 @@ export default {
 
     approve: function () {
       this.$http.post('/v1/request/approve?hash=' + this.searchString, {
-        unseal: this.unsealToken
+        unseal: this.unsealKey
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       }).then((response) => {
-        this.unsealToken = ''
+        this.unsealKey = ''
         this.request = response.data.result
         // notify user of progress
         if (this.request.Progress === this.request.Required) {
@@ -338,21 +338,21 @@ export default {
           if (this.request.Progress === 1) {
             this.$notify({
               title: 'Timer started',
-              message: 'Other operators have a 1 hour window to enter their unseal tokens',
+              message: 'Other operators have a 1 hour window to enter their unseal keys',
               duration: 20000,
               type: 'warning'
             })
           } else {
             this.$notify({
               title: 'Progress',
-              message: this.request.Progress.toString() + ' unseal tokens received so far',
+              message: this.request.Progress.toString() + ' unseal keys received so far',
               type: 'success'
             })
           }
         }
       })
       .catch((error) => {
-        this.unsealToken = ''
+        this.unsealKey = ''
         try {
           if (error.response.data.error.includes('Progress has been reset')) {
             this.request.Progress = 0
