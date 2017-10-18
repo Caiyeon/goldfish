@@ -228,7 +228,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(status.Progress, ShouldEqual, 0)
 
-			// supplying a fake unseal token
+			// supplying a fake unseal key
 			status, err = GenerateRootUpdate("YWJjZGVmZ2hpamtsbW5vcHFyc3Q=", status.Nonce)
 			So(err, ShouldBeNil)
 			So(status.Progress, ShouldEqual, 1)
