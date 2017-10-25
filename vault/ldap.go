@@ -56,10 +56,15 @@ func (auth AuthInfo) ListLDAPGroups() ([]LDAPGroup, error) {
 		resp, err := logical.Read("auth/ldap/groups/" + group)
 		if err == nil && resp != nil {
 			if raw, ok := resp.Data["policies"]; ok {
-				if policies, ok := raw.([]string); ok {
-					results[i].Policies = policies
+				// vault v0.8.3 and higher returns an array of strings
+				if policies, ok := raw.([]interface{}); ok {
+					for _, p := range policies {
+						if s, ok := p.(string); ok {
+							results[i].Policies = append(results[i].Policies, s)
+						}
+					}
+				// vault v0.8.2 and lower has a different JSON response
 				} else if policies, ok := raw.(string); ok {
-					// vault v0.8.2 and lower has a different JSON response
 					results[i].Policies = strings.Split(policies, ",")
 				}
 			}
@@ -112,10 +117,15 @@ func (auth AuthInfo) ListLDAPUsers() ([]LDAPUser, error) {
 		}
 
 		if raw, ok := resp.Data["policies"]; ok {
-			if policies, ok := raw.([]string); ok {
-				results[i].Policies = policies
+			// vault v0.8.3 and higher returns an array of strings
+			if policies, ok := raw.([]interface{}); ok {
+				for _, p := range policies {
+					if s, ok := p.(string); ok {
+						results[i].Policies = append(results[i].Policies, s)
+					}
+				}
+			// vault v0.8.2 and lower has a different JSON response
 			} else if policies, ok := raw.(string); ok {
-				// vault v0.8.2 and lower has a different JSON response
 				results[i].Policies = strings.Split(policies, ",")
 			}
 		}
