@@ -4,10 +4,6 @@
       <div class="content has-text-centered">
 
         <!-- NONE of these third party scripts will be in the production binaries -->
-
-        <!-- codesponsor.io -->
-        <div id="code-sponsor-widget"></div>
-
         <!-- github buttons -->
         <p class="social">
           <a>
@@ -49,12 +45,6 @@ export default {
 
   data () {
     return this.$store.state.pkg
-  },
-
-  created: function () {
-    let ckeditor = document.createElement('script')
-    ckeditor.setAttribute('src', 'https://app.codesponsor.io/scripts/KwI4KKNq6AdRGL7X-taMDA?theme=light&height=300')
-    document.head.appendChild(ckeditor)
   }
 }
 </script>
