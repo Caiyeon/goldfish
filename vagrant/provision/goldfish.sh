@@ -14,10 +14,7 @@ Restart=on-failure
 User=root
 Group=root
 
-ExecStartPre=/usr/local/go/bin/go install github.com/caiyeon/goldfish
-ExecStart=/bin/bash -c '/home/vagrant/go/bin/goldfish -config=/vagrant/config.hcl -token=\$(\
-/usr/bin/vault write -address=http://127.0.0.1:8200 -f -wrap-ttl=20m -format=json auth/approle/role/goldfish/secret-id | \
-/usr/bin/jq -r .wrap_info.token)'
+ExecStart=/usr/local/go/bin/go run /home/vagrant/go/src/github.com/caiyeon/goldfish/server.go -dev
 
 ExecReload=/bin/kill -s=SIGHUP $MAINPID
 KillSignal=SIGTERM
@@ -28,7 +25,6 @@ WantedBy=multi-user.target" > /etc/systemd/system/goldfish.service
 echo 'Launching goldfish...'
 systemctl daemon-reload
 systemctl start goldfish
-
 
 
 # Required modules
@@ -59,7 +55,6 @@ Restart=on-failure
 User=root
 Group=root
 WorkingDirectory=/home/vagrant/go/src/github.com/caiyeon/goldfish/frontend
-ExecStartPre=/usr/bin/npm update
 ExecStart=/usr/bin/npm run dev
 ExecReload=/bin/kill -s=SIGHUP \$MAINPID
 KillSignal=SIGTERM
