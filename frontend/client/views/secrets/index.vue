@@ -136,13 +136,13 @@
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
                       <input v-focus
-                        v-if="entry.desc.split('\n').length < 2"
+                        v-if="String(entry.desc).split('\n').length < 2"
                         class="input is-small" type="text" placeholder="" v-model="entry.desc"
                         v-on:keyup.shift.enter="entry.desc = entry.desc + '\n'"
                         v-on:keyup.enter="$refs.newKey.focus()">
                       <textarea v-focus
                         v-else
-                        v-bind:rows="entry.desc.split('\n').length"
+                        v-bind:rows="String(entry.desc).split('\n').length"
                         class="textarea is-small" type="text" placeholder="" v-model="entry.desc">
                       </textarea>
                     </p>
