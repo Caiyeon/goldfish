@@ -124,7 +124,7 @@
                   </td>
                   <!-- View-only -->
                   <td v-else @click="select(entry.path)">
-                    <span v-if="currentPathType === 'Secret'">
+                    <span v-if="currentPathType === 'Secret'" style="font-family: monospace;">
                       {{ entry.path }}
                     </span>
                     <a v-else @click="pushPath(currentPath + entry.path); select(entry.path)">
@@ -149,7 +149,7 @@
                   </td>
                   <!-- View-only -->
                   <td v-if="!editMode && currentPathType === 'Secret'"
-                    style="white-space: pre-wrap;"
+                    style="white-space: pre-wrap; font-family: monospace;"
                     >{{ entry.desc }}</td>
 
                   <!-- Save some space for deletion button -->
