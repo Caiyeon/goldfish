@@ -1,7 +1,7 @@
 version: '2'
 services:
   vault:
-    image: vault:0.7.3
+    image: vault:0.8.3
     stdin_open: true
     environment:
       - VAULT_DEV_ROOT_TOKEN_ID=goldfish
