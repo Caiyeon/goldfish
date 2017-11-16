@@ -14,6 +14,7 @@ import (
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/server"
 	"github.com/caiyeon/goldfish/vault"
+	"github.com/GeertJohan/go.rice"
 	"github.com/hashicorp/vault/helper/mlock"
 )
 
@@ -26,6 +27,7 @@ var (
 	nomadTokenFile string
 	printVersion   bool
 	wrappingToken  string
+	staticAssets   *rice.Box
 )
 
 func init() {
@@ -89,7 +91,13 @@ func main() {
 	}
 
 	// start listener
-	go server.StartListener(*cfg.Listener, devMode)
+	if !devMode {
+		staticAssets, err = rice.FindBox("public")
+		if err != nil {
+			log.Fatalf("[ERROR]: Static assets not found. Build them with npm first.", err.Error())
+		}
+	}
+	go server.StartListener(*cfg.Listener, staticAssets)
 	fmt.Printf(versionString + initString)
 
 	// wait for shutdown signal, and cleanup after

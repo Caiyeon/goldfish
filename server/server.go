@@ -18,7 +18,7 @@ var (
 	e *echo.Echo
 )
 
-func StartListener(listener config.ListenerConfig, devMode bool) {
+func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	if e != nil {
 		// already configured, restarting listener at runtime is not currently supported
 		return
@@ -76,8 +76,8 @@ func StartListener(listener config.ListenerConfig, devMode bool) {
 
 	// if this is production, static files must be already packed
 	// if they don't exist, exit with error
-	if devMode {
-		assetHandler := http.FileServer(rice.MustFindBox("../public").HTTPBox())
+	if assets != nil {
+		assetHandler := http.FileServer(assets.HTTPBox())
 		e.GET("/", echo.WrapHandler(assetHandler))
 		e.GET("/assets/css/*", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
 		e.GET("/assets/js/*", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
