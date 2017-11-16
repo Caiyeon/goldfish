@@ -97,7 +97,7 @@ func main() {
 	go server.StartListener(*cfg.Listener, devMode)
 
 	// wait for shutdown signal, and cleanup after
-	shutdown := make(chan os.Signal, 4)
+	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	<-shutdown
 	log.Println("\n\n==> Goldfish shutdown triggered")
