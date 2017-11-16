@@ -19,8 +19,8 @@ var (
 )
 
 func StartListener(listener config.ListenerConfig, assets *rice.Box) {
+	// already configured, restarting listener at runtime is not currently supported
 	if e != nil {
-		// already configured, restarting listener at runtime is not currently supported
 		return
 	}
 
