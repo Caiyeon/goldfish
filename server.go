@@ -56,6 +56,7 @@ func main() {
 		cfg, devVaultCh, unsealTokens, wrappingToken, err = config.LoadConfigDev()
 		log.Println("[INFO ]: Dev mode wrapping token: " + wrappingToken)
 		log.Println("[INFO ]: Dev mode unseal tokens:\n" + strings.Join(unsealTokens, "\n"))
+		fmt.Printf(devInitString)
 	} else {
 		cfg, err = config.LoadConfigFile(cfgPath)
 	}
@@ -87,14 +88,9 @@ func main() {
 		}
 	}
 
-	// display welcome message
-	if devMode {
-		fmt.Printf(devInitString)
-	}
-	fmt.Printf(versionString + initString)
-
 	// start listener
 	go server.StartListener(*cfg.Listener, devMode)
+	fmt.Printf(versionString + initString)
 
 	// wait for shutdown signal, and cleanup after
 	shutdown := make(chan os.Signal, 1)
