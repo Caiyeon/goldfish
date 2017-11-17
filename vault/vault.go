@@ -121,14 +121,16 @@ func Bootstrap(wrappingToken string) error {
 // similar to bootstrap function, but uses a raw token instead of an approle secret_id
 // highly dangerous and not recommended to be called externally unless approle is inaccessible
 func BootstrapRaw(token string) error {
+	// set server's token
+	vaultToken = token
+
 	// ensure the token has necessary rights
 	accessor, err := VerifyTokenRights(token)
 	if err != nil {
+		// revert server's token
+		vaultToken = ""
 		return err
 	}
-
-	// set package's token
-	vaultToken = token
 
 	// notify user of the accessor so it can be revoked if needed
 	log.Println("[INFO ]: Server token accessor:", accessor)
@@ -149,9 +151,6 @@ func VerifyTokenRights(token string) (accessor string, err error) {
 	if err != nil {
 		return "", err
 	}
-
-	// overwrite the returned client's potentially nonempty token
-	client.SetToken(token)
 
 	// verify server token can lookup self (this should be in default policy)
 	if resp, err := client.Auth().Token().LookupSelf(); err != nil {
