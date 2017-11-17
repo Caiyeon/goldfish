@@ -19,6 +19,12 @@ listener "tcp" {
 	# [Optional] [Default: 0] [Allowed values: 0, 1]
 	# If this is set to 1, goldfish will redirect port 80 to port 443
 	tls_autoredirect = 0
+
+	# [EXPERIMENTAL] [Optional]
+	# This is the vault pki backend path from which Goldfish will fetch its
+	# https certs from. New certificates will be requested at half-life at the same path
+	# This should be a full path. E.g. "pki/issue/<role_name>"
+	tls_pki_path = ""
 }
 
 # [Required] vault defines how goldfish should bootstrap to vault
