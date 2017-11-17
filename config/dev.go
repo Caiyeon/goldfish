@@ -171,7 +171,7 @@ func setupVault(addr, rootToken string) error {
 		"allow_subdomains":  "true",
 		"allow_baredomains": "true",
 		"allow_localhost":   "true",
-		"max_ttl":           "72h",
+		"max_ttl":           "3m",
 	}); err != nil {
 		return err
 	}

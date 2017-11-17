@@ -3,11 +3,13 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"net/http"
 	"time"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
@@ -20,8 +22,9 @@ import (
 )
 
 var (
-	e    *echo.Echo
-	cert *tls.Certificate
+	e        *echo.Echo
+	cert     *tls.Certificate
+	certLock = new(sync.RWMutex)
 )
 
 func StartListener(listener config.ListenerConfig, assets *rice.Box) {
@@ -153,10 +156,12 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 			log.Fatalln(err.Error())
 			return
 		}
+		certLock.Lock()
 		cert = c
+		certLock.Unlock()
 
 		// start background job to monitor certificate expiry and periodically renew
-		// TODO: go maintainCertificate()
+		go maintainCertificate(listener.Tls_PKI_path, strings.Split(listener.Address, ":")[0])
 
 		// start custom echo server with getcertificate function
 		e.TLSServer.TLSConfig = new(tls.Config)
@@ -185,8 +190,59 @@ func StopListener(timeout time.Duration) {
 }
 
 func GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	certLock.RLock()
+	defer certLock.RUnlock()
+
 	if cert == nil {
 		return nil, errors.New("No certificate configured.")
 	}
+
 	return cert, nil
+}
+
+func maintainCertificate(path, url string) {
+	// check the certificate's expiry date
+	certLock.RLock()
+	if cert == nil || len(cert.Certificate) == 0 {
+		return
+	}
+	x509c, err := x509.ParseCertificate(cert.Certificate[0])
+	certLock.RUnlock()
+
+	if err != nil {
+		return
+	}
+	notafter := x509c.NotAfter
+
+	// loop forever
+	for {
+		// sleep till halfway to expiry date
+		time.Sleep(notafter.Sub(time.Now())/2)
+
+		// fetch new certificate from vault
+		for {
+			if c, err := vault.FetchCertificate(path, url); err != nil {
+				log.Println("[ERROR]: Error fetching certificate from PKI backend", err.Error())
+
+			} else if len(c.Certificate) > 0 {
+				// recalculate next interval
+				x509c, err = x509.ParseCertificate(cert.Certificate[0])
+				if err == nil {
+					notafter = x509c.NotAfter
+
+					// replace certificate
+					certLock.Lock()
+					cert = c
+					certLock.Unlock()
+					log.Println("[INFO ]: Certificate replaced from PKI backend")
+
+					// break inner loop on success
+					break
+				}
+			}
+
+			// re-try in 30 minutes if failed to get certificate
+			time.Sleep(30 * time.Minute)
+		}
+	}
 }
