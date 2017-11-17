@@ -73,7 +73,7 @@ func LoadConfigDev() (*Config, chan struct{}, []string, string, error) {
 		Listener: &ListenerConfig{
 			Type:        "tcp",
 			Address:     "127.0.0.1:8000",
-			Tls_PKI_path: "sample",
+			Tls_PKI_path: "pki/issue/goldfish",
 		},
 		Vault: &VaultConfig{
 			Type:           "vault",

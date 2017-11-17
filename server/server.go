@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"time"
 	"log"
+	"strings"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
+	"github.com/caiyeon/goldfish/vault"
 	"github.com/GeertJohan/go.rice"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -21,13 +23,6 @@ var (
 	e    *echo.Echo
 	cert *tls.Certificate
 )
-
-func init() {
-	c, err := tls.X509KeyPair([]byte(certPEM), []byte(keyPEM))
-	if err == nil {
-		cert = &c
-	}
-}
 
 func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	// already configured, restarting listener at runtime is not currently supported
@@ -150,6 +145,20 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		e.Logger.Fatal(e.Start(listener.Address))
 	} else if listener.Tls_PKI_path != "" {
 		// fetch certificate from vault PKI backend
+		c, err := vault.FetchCertificate(
+			listener.Tls_PKI_path,
+			strings.Split(listener.Address, ":")[0],
+		)
+		if err != nil {
+			log.Fatalln(err.Error())
+			return
+		}
+		cert = c
+
+		// start background job to monitor certificate expiry and periodically renew
+		// TODO: go maintainCertificate()
+
+		// start custom echo server with getcertificate function
 		e.TLSServer.TLSConfig = new(tls.Config)
 		e.TLSServer.TLSConfig.GetCertificate = GetCertificate
 		e.TLSServer.Addr = listener.Address
@@ -181,11 +190,3 @@ func GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	}
 	return cert, nil
 }
-
-const certPEM = `
------BEGIN CERTIFICATE-----
------END CERTIFICATE-----`
-
-const keyPEM = `
------BEGIN PRIVATE KEY-----
------END PRIVATE KEY-----`
