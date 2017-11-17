@@ -241,7 +241,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		}
 	}
 
-	if pki, ok := m["tls_pki_path"]; ok {
+	if pki, ok := m["tls_pki_path"]; ok && pki != "" {
 		if result.Listener.Tls_cert_file != "" || result.Listener.Tls_key_file != "" {
 			return fmt.Errorf("listener.%s: tls_pki_path conflicts with tls_cert_file and tls_key_file", key)
 		}
