@@ -16,7 +16,7 @@ func FetchCertificate(path, url string) (*tls.Certificate, error) {
     resp, err := client.Logical().Write(path,
         map[string]interface{}{
             "common_name": url,
-            "format": "pem",
+            "format":      "pem",
         })
     if err != nil {
         return nil, err
