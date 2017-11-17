@@ -143,11 +143,12 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	e.POST("/v1/wrapping/unwrap", handlers.UnwrapHandler())
 
 	// start listening on configured port
+	// launch http-only listener
 	if listener.Tls_disable {
-		// launch http-only listener
 		e.Logger.Fatal(e.Start(listener.Address))
+
+	// fetch certificate from vault PKI backend
 	} else if listener.Tls_PKI_path != "" {
-		// fetch certificate from vault PKI backend
 		c, err := vault.FetchCertificate(
 			listener.Tls_PKI_path,
 			strings.Split(listener.Address, ":")[0],
@@ -168,11 +169,13 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		e.TLSServer.TLSConfig.GetCertificate = GetCertificate
 		e.TLSServer.Addr = listener.Address
 		e.Logger.Fatal(e.StartServer(e.TLSServer))
+
+	// if https is enabled, but no cert provided, try let's encrypt
 	} else if listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
-		// if https is enabled, but no cert provided, try let's encrypt
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
+
+	// launch listener in https with certificate from files on local system
 	} else {
-		// launch listener in https
 		e.Logger.Fatal(e.StartTLS(
 			listener.Address,
 			listener.Tls_cert_file,
