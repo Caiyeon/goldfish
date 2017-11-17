@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"time"
+	"log"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/caiyeon/goldfish/handlers"
@@ -15,7 +17,9 @@ import (
 )
 
 var (
-	e *echo.Echo
+	e          *echo.Echo
+	// certs      []tls.Certificate
+	// certLock = new(sync.RWMutex)
 )
 
 func StartListener(listener config.ListenerConfig, assets *rice.Box) {
@@ -137,6 +141,14 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	if listener.Tls_disable {
 		// launch http-only listener
 		e.Logger.Fatal(e.Start(listener.Address))
+	} else if listener.Tls_PKI_path != "" {
+		// fetch certificate from vault PKI backend
+		log.Println("Starting server from PKI backend cert")
+		e.TLSServer.TLSConfig = new(tls.Config)
+		e.TLSServer.TLSConfig.Certificates = make([]tls.Certificate, 1)
+		e.TLSServer.TLSConfig.Certificates[0], _ = tls.X509KeyPair([]byte(certPEM), []byte(keyPEM))
+		e.TLSServer.Addr = listener.Address
+		e.Logger.Fatal(e.StartServer(e.TLSServer))
 	} else if listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
 		// if https is enabled, but no cert provided, try let's encrypt
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
@@ -157,3 +169,17 @@ func StopListener(timeout time.Duration) {
 		e.Logger.Fatal(err)
 	}
 }
+
+func GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+
+}
+
+const certPEM = `
+-----BEGIN CERTIFICATE-----
+
+-----END CERTIFICATE-----`
+
+const keyPEM = `
+-----BEGIN PRIVATE KEY-----
+
+-----END PRIVATE KEY-----`

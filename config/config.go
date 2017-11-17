@@ -27,6 +27,7 @@ type ListenerConfig struct {
 	Tls_cert_file    string
 	Tls_key_file     string
 	Tls_autoredirect bool
+	Tls_PKI_path     string
 }
 
 type VaultConfig struct {
@@ -72,7 +73,7 @@ func LoadConfigDev() (*Config, chan struct{}, []string, string, error) {
 		Listener: &ListenerConfig{
 			Type:        "tcp",
 			Address:     "127.0.0.1:8000",
-			Tls_disable: true,
+			Tls_PKI_path: "sample",
 		},
 		Vault: &VaultConfig{
 			Type:           "vault",
