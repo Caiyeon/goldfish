@@ -24,6 +24,7 @@ listener "tcp" {
 	# This is the vault pki backend path from which Goldfish will fetch its
 	# https certs from. New certificates will be requested at half-life at the same path
 	# This should be a full path. E.g. "pki/issue/<role_name>"
+	# Note this setting _requires_ bootstrapping to be done at launch time!
 	tls_pki_path = ""
 }
 

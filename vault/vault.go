@@ -61,6 +61,9 @@ func NewVaultClient() (*api.Client, error) {
 }
 
 func NewGoldfishVaultClient() (client *api.Client, err error) {
+	if !Bootstrapped() {
+		return nil, errors.New("Goldfish is not bootstrapped with a vault client!")
+	}
 	if client, err = NewVaultClient(); err == nil {
 		client.SetToken(vaultToken)
 	}
