@@ -7,14 +7,14 @@ Description=Goldfish
 After=vault.service
 
 [Service]
-Environment='GOMAXPROCS=`nproc`' 'VAULT_TOKEN=$VAULT_ROOT_TOKEN' 'GOPATH=/home/vagrant/go'
+Environment='GOMAXPROCS=`nproc`' 'GOPATH=/home/vagrant/go'
 WorkingDirectory=/home/vagrant/go/src/github.com/caiyeon/goldfish
 
 Restart=on-failure
 User=root
 Group=root
 
-ExecStart=/usr/local/go/bin/go run /home/vagrant/go/src/github.com/caiyeon/goldfish/server.go -dev
+ExecStart=/home/vagrant/go/src/github.com/caiyeon/goldfish/goldfish -dev
 
 ExecReload=/bin/kill -s=SIGHUP $MAINPID
 KillSignal=SIGTERM

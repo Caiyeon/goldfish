@@ -25,6 +25,10 @@ go get github.com/caiyeon/goldfish
 cd $GOPATH/src/github.com/caiyeon/goldfish
 
 # switch to checkpoint branch
+git fetch origin checkpoint:checkpoint
 git checkout checkpoint
+
+# build checkpoint binary
+go build -o goldfish github.com/caiyeon/goldfish
 
 sudo chown -R vagrant $GOPATH

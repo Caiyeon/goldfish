@@ -33,7 +33,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "n1" do |n1|
     n1.vm.hostname = "goldfish"
     n1.vm.network "private_network", ip: "172.20.20.11"
-    n1.vm.network "forwarded_port", guest: 8000, host:8000
+    n1.vm.network "forwarded_port", guest: 8000, host:8000, host_ip:"172.20.20.11"
     n1.vm.network "forwarded_port", guest: 8080, host:8080
 
     # setup golang
