@@ -152,7 +152,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		c, err := vault.FetchCertificate(
 			listener.Tls_PKI_path,
 			// hardcoded due to vagrant limitations
-			strings.Split("172.20.20.11", ":")[0],
+			strings.Split(listener.Address, ":")[0],
 		)
 		if err != nil {
 			log.Fatalln(err.Error())
@@ -163,7 +163,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		certLock.Unlock()
 
 		// start background job to monitor certificate expiry and periodically renew
-		go maintainCertificate(listener.Tls_PKI_path, strings.Split("172.20.20.11", ":")[0])
+		go maintainCertificate(listener.Tls_PKI_path, strings.Split(listener.Address, ":")[0])
 
 		// start custom echo server with getcertificate function
 		e.TLSServer.TLSConfig = new(tls.Config)
