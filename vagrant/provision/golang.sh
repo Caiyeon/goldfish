@@ -24,4 +24,7 @@ echo 'Downloading goldfish...'
 go get github.com/caiyeon/goldfish
 cd $GOPATH/src/github.com/caiyeon/goldfish
 
+# switch to checkpoint branch
+git checkout checkpoint
+
 sudo chown -R vagrant $GOPATH
