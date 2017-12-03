@@ -101,21 +101,21 @@
               <!-- headers -->
               <thead>
                 <tr v-if="this.currentPathType === 'Secret'">
-                  <th>Type</th>
-                  <th>Key</th>
-                  <th>Value</th>
+                  <th @click="sortBy('type')">Type</th>
+                  <th @click="sortBy('path')">Key</th>
+                  <th @click="sortBy('desc')">Value</th>
                   <th></th>
                 </tr>
                 <tr v-if="this.currentPathType === 'Path'">
-                  <th>Type</th>
-                  <th>Subpaths</th>
+                  <th @click="sortBy('type')">Type</th>
+                  <th @click="sortBy('path')">Subpaths</th>
                   <th></th>
                 </tr>
               </thead>
 
               <!-- body -->
               <tbody>
-                <tr v-for="(entry, index) in tableData"
+                <tr v-for="(entry, index) in sortedTableData"
                 :class="selectedRows.includes(entry.path) ? 'is-selected' : ''">
                   <td width="68">
                     <span class="tag is-rounded is-pulled-left" v-bind:class="type(index)">
@@ -276,6 +276,7 @@
 
 <script>
 const querystring = require('querystring')
+const lodash = require('lodash')
 
 export default {
   data () {
@@ -290,7 +291,11 @@ export default {
       editMode: false,
       confirmDelete: [],
       selectedRows: [],
-      lastSelectedRow: 0
+      lastSelectedRow: 0,
+      sortKey: {
+        key: '',
+        order: ''
+      }
     }
   },
 
@@ -344,6 +349,13 @@ export default {
       } else {
         return {}
       }
+    },
+
+    sortedTableData: function () {
+      if (!this.tableData || this.tableData.length === 0 || this.sortKey.key === '') {
+        return this.tableData
+      }
+      return lodash.orderBy(this.tableData, [this.sortKey.key], [this.sortKey.order])
     }
   },
 
@@ -436,7 +448,7 @@ export default {
     },
 
     type: function (index) {
-      switch (this.tableData[index].type) {
+      switch (this.sortedTableData[index].type) {
         case 'Secret':
           return { 'tag': true, 'is-rounded': true, 'is-info': true }
         case 'Path':
@@ -732,6 +744,35 @@ export default {
 
       // reset selection
       this.selectedRows = []
+    },
+
+    sortBy: function (s) {
+      if (s === '') {
+        this.sortKey = {
+          key: '',
+          order: ''
+        }
+        return
+      }
+
+      if (s === this.sortKey.key) {
+        if (this.sortKey.order === '') {
+          this.sortKey.order = 'asc'
+        } else if (this.sortKey.order === 'asc') {
+          this.sortKey.order = 'desc'
+        } else {
+          // the third sort click should reset sorting
+          this.sortKey = {
+            key: '',
+            order: ''
+          }
+        }
+      } else {
+        this.sortKey = {
+          key: s,
+          order: 'asc'
+        }
+      }
     }
 
   }
