@@ -41,4 +41,29 @@ await chromeless
   .click('button[class~="delete"]')
   .wait(500)
 
+// 4. approve policy change request
+await chromeless
+  .click('a[href="#/requests"]')
+  .wait('button[class~="delete"]')
+  .click('button[class~="delete"]')
+  .wait(500)
+  .click('button[class~="delete"]')
+  .wait(500)
+  // this hash should now be valid (after the request creation above)
+  .type('dde8892ad346de84', 'input')
+  .press(13)
+  .wait(500)
+
+screenshot = await chromeless
+  .click('div p button[class*="button is-success"]')
+  .wait('input[placeholder="Enter an unseal key"]')
+  .type('not_a_real_uneal_key', 'input[placeholder="Enter an unseal key"]')
+  .press(13)
+  .wait(500)
+  .screenshot()
+console.log(screenshot)
+
+// close notification
+await chromeless.click('button[class~="delete"]').wait(500)
+
 await chromeless.end()
