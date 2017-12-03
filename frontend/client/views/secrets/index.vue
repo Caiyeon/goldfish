@@ -100,9 +100,16 @@
 
               <!-- headers -->
               <thead>
-                <tr>
+                <tr v-if="this.currentPathType === 'Secret'">
                   <th>Type</th>
-                  <th v-for="header in tableHeaders">{{ header }}</th>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th></th>
+                </tr>
+                <tr v-if="this.currentPathType === 'Path'">
+                  <th>Type</th>
+                  <th>Subpaths</th>
+                  <th></th>
                 </tr>
               </thead>
 
@@ -238,9 +245,16 @@
 
               <!-- footer only shows beyond a certain amount of data -->
               <tfoot v-show="tableData.length > 10">
-                <tr>
+                <tr v-if="this.currentPathType === 'Secret'">
                   <th>Type</th>
-                  <th v-for="header in tableHeaders">{{ header }}</th>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th></th>
+                </tr>
+                <tr v-if="this.currentPathType === 'Path'">
+                  <th>Type</th>
+                  <th>Subpaths</th>
+                  <th></th>
                 </tr>
               </tfoot>
 
@@ -330,15 +344,6 @@ export default {
       } else {
         return {}
       }
-    },
-
-    tableHeaders: function () {
-      if (this.currentPathType === 'Secret') {
-        return ['Key', 'Value', '']
-      } else if (this.currentPathType === 'Path') {
-        return ['Subpaths', '']
-      }
-      return []
     }
   },
 
