@@ -107,6 +107,37 @@ async function run() {
   // close notification
   await chromeless.click('button[class~="delete"]').wait(500)
 
+  // -------------------------------------------------------------------------------------
+  // 6. gather bulletins screenshot
+  screenshot = await chromeless
+    .click('a[href="#/bulletinboard"]')
+    .wait('article[class*="message is-success"]')
+    .wait(300)
+    .screenshot()
+  console.log(screenshot)
+
+  // 7. token creator screenshot
+  screenshot = await chromeless
+    .click('a[href="#/create-token"]')
+    .wait(1000)
+    .screenshot()
+  console.log(screenshot)
+
+  // 8. tokens screenshot
+  screenshot = await chromeless
+    .click('a[href="#/users"]')
+    // load 300 tokens
+    .wait('div > a[class="pagination-next"]')
+    .wait(500)
+    .click('div > a[class="pagination-next"]')
+    // wait for the table to load results from server
+    .wait('tbody > tr')
+    // open up the info panel for a better screenshot
+    .click('a[class="pagination-previous"]')
+    .wait(500)
+    .screenshot()
+  console.log(screenshot)
+
   await chromeless.end()
 }
 
