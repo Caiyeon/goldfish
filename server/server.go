@@ -142,13 +142,42 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	e.POST("/v1/wrapping/wrap", handlers.WrapHandler())
 	e.POST("/v1/wrapping/unwrap", handlers.UnwrapHandler())
 
-	// start listening on configured port
-	// launch http-only listener
+	// case: no tls, http only
 	if listener.Tls_disable {
 		e.Logger.Fatal(e.Start(listener.Address))
+		return
+	}
 
-	// fetch certificate from vault PKI backend
-	} else if listener.Tls_PKI_path != "" {
+	// if this is the demo instance, using lets encrypt for certificate
+	if listener.Tls_PKI_path == "" && listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
+		e.Logger.Fatal(e.StartAutoTLS(":443"))
+		return
+	}
+
+	// case: https
+	e.TLSServer.TLSConfig = new(tls.Config)
+	e.TLSServer.TLSConfig.MinVersion = tls.VersionTLS12
+	e.TLSServer.TLSConfig.PreferServerCipherSuites = true
+	e.TLSServer.TLSConfig.CipherSuites = []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+	}
+
+	// if loading certificate from local machine
+	if listener.Tls_PKI_path == "" {
+		c, err := tls.LoadX509KeyPair(listener.Tls_cert_file, listener.Tls_key_file)
+		if err != nil {
+			log.Fatalln(err.Error())
+			return
+		}
+		certLock.Lock()
+		cert = &c
+		certLock.Unlock()
+	} else {
+		// if loading certificate from PKI backend
 		c, err := vault.FetchCertificate(
 			listener.Tls_PKI_path,
 			strings.Split(listener.Address, ":")[0],
@@ -163,25 +192,13 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 
 		// start background job to monitor certificate expiry and periodically renew
 		go maintainCertificate(listener.Tls_PKI_path, strings.Split(listener.Address, ":")[0])
-
-		// start custom echo server with getcertificate function
-		e.TLSServer.TLSConfig = new(tls.Config)
-		e.TLSServer.TLSConfig.GetCertificate = GetCertificate
-		e.TLSServer.Addr = listener.Address
-		e.Logger.Fatal(e.StartServer(e.TLSServer))
-
-	// if https is enabled, but no cert provided, try let's encrypt
-	} else if listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
-		e.Logger.Fatal(e.StartAutoTLS(":443"))
-
-	// launch listener in https with certificate from files on local system
-	} else {
-		e.Logger.Fatal(e.StartTLS(
-			listener.Address,
-			listener.Tls_cert_file,
-			listener.Tls_key_file,
-		))
 	}
+
+	// configure certificate load function and listen on https
+	e.TLSServer.TLSConfig.GetCertificate = GetCertificate
+	e.TLSServer.Addr = listener.Address
+	e.Logger.Fatal(e.StartServer(e.TLSServer))
+	return
 }
 
 func StopListener(timeout time.Duration) {
