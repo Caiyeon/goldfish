@@ -167,14 +167,14 @@ See https://github.com/Caiyeon/goldfish/wiki for details
 Required Arguments:
 
   -config=config.hcl      The deployment config file
-                          See github.com/caiyeon/goldfish/config/sample.hcl
+                          See https://github.com/Caiyeon/goldfish/blob/master/config/sample.hcl
                           for a full list of options
 
 Optional Arguments:
 
   -token=<uuid>           A wrapping token which contains a secret_id
                           Can be provided after launch, on Login page
-                          Generate with 'vault write -f transit/keys/goldfish'
+                          Generate with 'vault write -f -wrap-ttl=5m auth/approle/role/goldfish/secret-id'
 
   -nomad-token-file       A path to a file containing a raw token.
                           Not recommended unless approle is unavailable,
