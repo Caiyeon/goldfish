@@ -27,6 +27,7 @@ type ListenerConfig struct {
 	Tls_cert_file    string
 	Tls_key_file     string
 	Tls_autoredirect bool
+	Tls_PKI_path     string
 }
 
 type VaultConfig struct {
@@ -73,6 +74,8 @@ func LoadConfigDev() (*Config, chan struct{}, []string, string, error) {
 			Type:        "tcp",
 			Address:     "127.0.0.1:8000",
 			Tls_disable: true,
+			// // to use PKI for certs, set tls_disable to false, and uncomment:
+			// Tls_PKI_path: "pki/issue/goldfish",
 		},
 		Vault: &VaultConfig{
 			Type:           "vault",
@@ -192,6 +195,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		"tls_cert_file",
 		"tls_key_file",
 		"tls_autoredirect",
+		"tls_pki_path",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
@@ -235,6 +239,16 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		} else if redirect != "0" {
 			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1", key)
 		}
+	}
+
+	if pki, ok := m["tls_pki_path"]; ok && pki != "" {
+		if result.Listener.Tls_cert_file != "" || result.Listener.Tls_key_file != "" {
+			return fmt.Errorf("listener.%s: tls_pki_path conflicts with tls_cert_file and tls_key_file", key)
+		}
+		if !strings.Contains(pki, "issue") {
+			return fmt.Errorf("listener.%s: tls_pki_path must be a full pki issuing path", key)
+		}
+		result.Listener.Tls_PKI_path = pki
 	}
 
 	return nil

@@ -20,41 +20,34 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", inline: "\
     echo 'Installing dependencies...'
     sudo apt-get update
-    sudo apt-get install -y unzip curl git jq make
+    sudo apt-get install -y unzip curl git jq make"
 
-    echo 'Installing rsub & rmate for sublime remote access'
-    sudo wget https://raw.github.com/aurora/rmate/master/rmate -O /usr/local/bin/rsub
-    sudo chmod a+x /usr/local/bin/rsub"
+	# uncomment this to install rmate with remote sublime access
+	# config.vm.provision "shell", inline: "\
+	# 	echo 'Installing remote sublime...'
+	# 	sudo wget https://raw.githubusercontent.com/aurora/rmate/master/rmate -O /usr/local/bin/rsub
+  #   sudo chmod a+x /usr/local/bin/rsub"
 
-  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+  config.vm.synced_folder ".", "/vagrant"
 
   config.vm.define "n1" do |n1|
     n1.vm.hostname = "goldfish"
     n1.vm.network "private_network", ip: "172.20.20.11"
     n1.vm.network "forwarded_port", guest: 8000, host:8000
-    n1.vm.network "forwarded_port", guest: 8080, host:8001
+    n1.vm.network "forwarded_port", guest: 8080, host:8080
 
     # setup golang
     n1.vm.provision :shell, path: "provision/golang.sh"
 
-    # setup and launch vault
-    n1.vm.provision :shell, path: "provision/vault.sh", env: {
-      "VAULT_ROOT_TOKEN" => "goldfish"
-    }
+    # install and launch goldfish (as systemd services)
+    n1.vm.provision :shell, path: "provision/goldfish.sh"
 
-    # provide vault with required and optional data
-    n1.vm.provision :shell, path: "provision/required.sh", env: {
-      "VAULT_ROOT_TOKEN" => "goldfish"
-    }
-    n1.vm.provision :shell, path: "provision/optional.sh", env: {
-      "VAULT_ROOT_TOKEN" => "goldfish"
-    }
-
-    # install and launch goldfish
-    n1.vm.provision :shell, path: "provision/goldfish.sh", env: {
-      "VAULT_ROOT_TOKEN" => "goldfish"
-    }
-
+		n1.vm.provision :shell, inline: "\
+			echo 'Setting vault dev server env vars...'
+			cat /home/vagrant/.profile | grep 'VAULT_ADDR' || \
+			echo 'export VAULT_ADDR=http://127.0.0.1:8200' >> /home/vagrant/.profile
+			cat /home/vagrant/.profile | grep 'VAULT_TOKEN' || \
+			echo 'export VAULT_TOKEN=goldfish' >> /home/vagrant/.profile"
   end
 
 end

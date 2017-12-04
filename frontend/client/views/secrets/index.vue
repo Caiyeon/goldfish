@@ -50,13 +50,18 @@
             </a>
             <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
               class="button is-warning is-small is-marginless"
-              v-on:click="selectedRows = []">
+              v-on:click="selectedRows = []; confirmDeleteAll = false">
               Cancel Selection
             </a>
-            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteAll === false"
+              class="button is-danger is-small is-marginless"
+              v-on:click="confirmDeleteAll = true">
+              Delete Selection
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteAll === true"
               class="button is-danger is-small is-marginless"
               v-on:click="deleteSelection()">
-              Delete Selection
+              Really Delete {{selectedRows.length}} Secrets?
             </a>
 
             <!-- Actions on current secret -->
@@ -100,15 +105,22 @@
 
               <!-- headers -->
               <thead>
-                <tr>
-                  <th>Type</th>
-                  <th v-for="header in tableHeaders">{{ header }}</th>
+                <tr v-if="this.currentPathType === 'Secret'">
+                  <th @click="sortBy('type')">Type</th>
+                  <th @click="sortBy('path')">Key</th>
+                  <th @click="sortBy('desc')">Value</th>
+                  <th></th>
+                </tr>
+                <tr v-if="this.currentPathType === 'Path'">
+                  <th @click="sortBy('type')">Type</th>
+                  <th @click="sortBy('path')">Subpaths</th>
+                  <th></th>
                 </tr>
               </thead>
 
               <!-- body -->
               <tbody>
-                <tr v-for="(entry, index) in tableData"
+                <tr v-for="(entry, index) in sortedTableData"
                 :class="selectedRows.includes(entry.path) ? 'is-selected' : ''">
                   <td width="68">
                     <span class="tag is-rounded is-pulled-left" v-bind:class="type(index)">
@@ -119,15 +131,23 @@
                   <!-- Editable key field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input class="input is-small" type="text" placeholder="" v-model="entry.path">
+                      <input class="input is-small" type="text"
+                      placeholder="" v-model="entry.path" style="font-family: monospace;">
                     </p>
                   </td>
                   <!-- View-only -->
                   <td v-else @click="select(entry.path)">
-                    <span v-if="currentPathType === 'Secret'">
+                    <span
+                      v-if="currentPathType === 'Secret'"
+                      style="font-family: monospace;"
+                    >
                       {{ entry.path }}
                     </span>
-                    <a v-else @click="pushPath(currentPath + entry.path); select(entry.path)">
+                    <a
+                      v-else
+                      @click="pushPath(currentPath + entry.path); select(entry.path)"
+                      style="font-family: monospace;"
+                    >
                       {{ entry.path }}
                     </a>
                   </td>
@@ -135,21 +155,23 @@
                   <!-- Editable value field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input v-focus
-                        v-if="entry.desc.split('\n').length < 2"
+                      <input style="font-family: monospace;"
+                        v-focus
+                        v-if="String(entry.desc).split('\n').length < 2"
                         class="input is-small" type="text" placeholder="" v-model="entry.desc"
                         v-on:keyup.shift.enter="entry.desc = entry.desc + '\n'"
                         v-on:keyup.enter="$refs.newKey.focus()">
-                      <textarea v-focus
+                      <textarea style="font-family: monospace;"
+                        v-focus
                         v-else
-                        v-bind:rows="entry.desc.split('\n').length"
+                        v-bind:rows="String(entry.desc).split('\n').length"
                         class="textarea is-small" type="text" placeholder="" v-model="entry.desc">
                       </textarea>
                     </p>
                   </td>
                   <!-- View-only -->
                   <td v-if="!editMode && currentPathType === 'Secret'"
-                    style="white-space: pre-wrap;"
+                    style="white-space: pre-wrap; font-family: monospace;"
                     >{{ entry.desc }}</td>
 
                   <!-- Save some space for deletion button -->
@@ -238,9 +260,16 @@
 
               <!-- footer only shows beyond a certain amount of data -->
               <tfoot v-show="tableData.length > 10">
-                <tr>
+                <tr v-if="this.currentPathType === 'Secret'">
                   <th>Type</th>
-                  <th v-for="header in tableHeaders">{{ header }}</th>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th></th>
+                </tr>
+                <tr v-if="this.currentPathType === 'Path'">
+                  <th>Type</th>
+                  <th>Subpaths</th>
+                  <th></th>
                 </tr>
               </tfoot>
 
@@ -262,6 +291,7 @@
 
 <script>
 const querystring = require('querystring')
+const lodash = require('lodash')
 
 export default {
   data () {
@@ -275,8 +305,13 @@ export default {
       newValue: '',
       editMode: false,
       confirmDelete: [],
+      confirmDeleteAll: false,
       selectedRows: [],
-      lastSelectedRow: 0
+      lastSelectedRow: 0,
+      sortKey: {
+        key: '',
+        order: ''
+      }
     }
   },
 
@@ -332,13 +367,11 @@ export default {
       }
     },
 
-    tableHeaders: function () {
-      if (this.currentPathType === 'Secret') {
-        return ['Key', 'Value', '']
-      } else if (this.currentPathType === 'Path') {
-        return ['Subpaths', '']
+    sortedTableData: function () {
+      if (!this.tableData || this.tableData.length === 0 || this.sortKey.key === '') {
+        return this.tableData
       }
-      return []
+      return lodash.orderBy(this.tableData, [this.sortKey.key], [this.sortKey.order])
     }
   },
 
@@ -431,7 +464,7 @@ export default {
     },
 
     type: function (index) {
-      switch (this.tableData[index].type) {
+      switch (this.sortedTableData[index].type) {
         case 'Secret':
           return { 'tag': true, 'is-rounded': true, 'is-info': true }
         case 'Path':
@@ -682,6 +715,8 @@ export default {
       if (entry.endsWith('/')) {
         return
       }
+      // reset delete confirmation
+      this.confirmDeleteAll = false
       // otherwise, select the entry (or unselect it if it already is selected)
       if (this.selectedRows.includes(entry)) {
         this.unselect(entry)
@@ -727,6 +762,35 @@ export default {
 
       // reset selection
       this.selectedRows = []
+    },
+
+    sortBy: function (s) {
+      if (s === '') {
+        this.sortKey = {
+          key: '',
+          order: ''
+        }
+        return
+      }
+
+      if (s === this.sortKey.key) {
+        if (this.sortKey.order === '') {
+          this.sortKey.order = 'asc'
+        } else if (this.sortKey.order === 'asc') {
+          this.sortKey.order = 'desc'
+        } else {
+          // the third sort click should reset sorting
+          this.sortKey = {
+            key: '',
+            order: ''
+          }
+        }
+      } else {
+        this.sortKey = {
+          key: s,
+          order: 'asc'
+        }
+      }
     }
 
   }

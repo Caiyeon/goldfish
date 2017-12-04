@@ -57,7 +57,7 @@
               <div v-if="type === 'Token'" class="field">
                 <p class="control has-icons-left">
                   <input class="input" type="password" placeholder="Vault Token" v-model="ID">
-                  <span class="icon is-small">
+                  <span class="icon is-small is-left">
                     <i class="fa fa-lock"></i>
                   </span>
                 </p>
@@ -68,7 +68,7 @@
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="text" placeholder="Vault Username" v-model="ID">
-                    <span class="icon is-small">
+                    <span class="icon is-small is-left">
                       <i class="fa fa-user-circle-o"></i>
                     </span>
                   </p>
@@ -76,7 +76,7 @@
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="password" placeholder="Vault Password" v-model="password">
-                    <span class="icon is-small">
+                    <span class="icon is-small is-left">
                       <i class="fa fa-lock"></i>
                     </span>
                   </p>
@@ -87,7 +87,7 @@
               <div v-if="type === 'Github'" class="field">
                 <p class="control has-icons-left">
                   <input class="input" type="password" placeholder="Github Access Token" v-model="ID">
-                  <span class="icon is-small">
+                  <span class="icon is-small is-left">
                     <i class="fa fa-lock"></i>
                   </span>
                 </p>
@@ -98,7 +98,7 @@
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="text" placeholder="Username" v-model="ID">
-                    <span class="icon is-small">
+                    <span class="icon is-small is-left">
                       <i class="fa fa-user-circle-o"></i>
                     </span>
                   </p>
@@ -106,7 +106,7 @@
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="password" placeholder="Password" v-model="password">
-                    <span class="icon is-small">
+                    <span class="icon is-small is-left">
                       <i class="fa fa-lock"></i>
                     </span>
                   </p>
@@ -118,7 +118,7 @@
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="text" placeholder="Username" v-model="ID">
-                    <span class="icon is-small">
+                    <span class="icon is-small is-left">
                       <i class="fa fa-user-circle-o"></i>
                     </span>
                   </p>
@@ -126,7 +126,7 @@
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="password" placeholder="Password" v-model="password">
-                    <span class="icon is-small">
+                    <span class="icon is-small is-left">
                       <i class="fa fa-lock"></i>
                     </span>
                   </p>

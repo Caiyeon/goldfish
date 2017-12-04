@@ -106,7 +106,7 @@ Seriously, the instructions fit on one screen!
 ## Developing Goldfish
 
 #### Running locally
-You'll need go (v1.8), nodejs (v6), and npm (v5)
+You'll need go (v1.9), nodejs (v6), and npm (v5)
 
 ```bash
 # hashicorp vault ui
@@ -141,7 +141,13 @@ cd goldfish/vagrant
 # this will take awhile
 vagrant up --provision
 
-# open up localhost:8001 in chrome on your local machine. You can login with token 'goldfish'
+# go to localhost:8080 on your local machine and login with token 'goldfish'
+
+# changes to frontend .vue files will be hot-reloaded
+# to force a full reload for the frontend, ssh into the machine and run
+#     `sudo systemctl restart goldfish_frontend.service`
+# to recompile and re-run the backend, ssh into the machine and run
+#     `sudo systemctl restart goldfish.service`
 ```
 
 
@@ -149,9 +155,7 @@ vagrant up --provision
 <!--
 -->
 ## Development
-Goldfish is in very active development:
-
-![](screenshots/Pulse.png)
+Goldfish is in very active development.
 
 Pull requests and feature requests are welcome. Feel free to suggest new workflows by opening issues.
 
