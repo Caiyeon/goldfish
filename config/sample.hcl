@@ -12,7 +12,7 @@ listener "tcp" {
 	# set to 1 to redirect port 80 to 443 (hard-coded port numbers)
 	tls_autoredirect = 0
 
-	# One of the following is required (unless tls_disable == 1):
+	# One (and only one!) of the following is required (unless tls_disable == 1):
 
 	# [Option 1] the certificate file
 	tls_cert_file    = "cert.cert"
