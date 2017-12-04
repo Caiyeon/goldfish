@@ -65,13 +65,6 @@ Seriously, the instructions fit on one screen!
 * [x] **DONE!** Resource dependency chain
 	- E.g. Will removing a particular policy affect current users?
 	- Will removing a mount or secret path affect current users?
-* [ ] Certificate management panel
-	- If vault is a certificate authority, there should be a user-friendly panel of details and statistics
-* [ ] Moving root tokens away from the human eye
-	- More root operations like mount tuning should also be done via request & approval basis, like policy changes
-* [ ] Database management panel
-	- Vault 0.7.3 allows for multiple db connections per backend, but lacks a management system
-
 
 
 <!--
@@ -81,7 +74,7 @@ Seriously, the instructions fit on one screen!
 ![](screenshots/Login.png)
 
 
-![](screenshots/Policy_request_approve.png)
+![](screenshots/PolicyRequest.png)
 
 
 ![](screenshots/BulletinBoard.png)
@@ -91,9 +84,6 @@ Seriously, the instructions fit on one screen!
 
 
 ![](screenshots/Users.png)
-
-
-![](screenshots/Policies.png)
 
 
 
