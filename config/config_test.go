@@ -327,12 +327,6 @@ func TestConfigParser(t *testing.T) {
 		So(resp.Standby, ShouldBeFalse)
 	})
 
-	Convey("Loading valid custom config", t, func() {
-		cfg, err := LoadConfigFile("sample.hcl")
-		So(err, ShouldBeNil)
-		So(cfg, ShouldResemble, sampleParsedConfig)
-	})
-
 	Convey("Loading invalid custom config - no file specified", t, func() {
 		cfg, err := LoadConfigFile("")
 		So(err, ShouldNotBeNil)
