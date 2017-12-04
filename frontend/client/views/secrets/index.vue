@@ -126,15 +126,23 @@
                   <!-- Editable key field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input class="input is-small" type="text" placeholder="" v-model="entry.path">
+                      <input class="input is-small" type="text"
+                      placeholder="" v-model="entry.path" style="font-family: monospace;">
                     </p>
                   </td>
                   <!-- View-only -->
                   <td v-else @click="select(entry.path)">
-                    <span v-if="currentPathType === 'Secret'" style="font-family: monospace;">
+                    <span 
+                      v-if="currentPathType === 'Secret'"
+                      style="font-family: monospace;"
+                    >
                       {{ entry.path }}
                     </span>
-                    <a v-else @click="pushPath(currentPath + entry.path); select(entry.path)">
+                    <a
+                      v-else
+                      @click="pushPath(currentPath + entry.path); select(entry.path)"
+                      style="font-family: monospace;"
+                    >
                       {{ entry.path }}
                     </a>
                   </td>
@@ -142,12 +150,14 @@
                   <!-- Editable value field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input v-focus
+                      <input style="font-family: monospace;"
+                        v-focus
                         v-if="String(entry.desc).split('\n').length < 2"
                         class="input is-small" type="text" placeholder="" v-model="entry.desc"
                         v-on:keyup.shift.enter="entry.desc = entry.desc + '\n'"
                         v-on:keyup.enter="$refs.newKey.focus()">
-                      <textarea v-focus
+                      <textarea style="font-family: monospace;"
+                        v-focus
                         v-else
                         v-bind:rows="String(entry.desc).split('\n').length"
                         class="textarea is-small" type="text" placeholder="" v-model="entry.desc">
