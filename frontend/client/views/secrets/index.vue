@@ -50,13 +50,18 @@
             </a>
             <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
               class="button is-warning is-small is-marginless"
-              v-on:click="selectedRows = []">
+              v-on:click="selectedRows = []; confirmDeleteAll = false">
               Cancel Selection
             </a>
-            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteAll === false"
+              class="button is-danger is-small is-marginless"
+              v-on:click="confirmDeleteAll = true">
+              Delete Selection
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteAll === true"
               class="button is-danger is-small is-marginless"
               v-on:click="deleteSelection()">
-              Delete Selection
+              Really Delete {{selectedRows.length}} Secrets?
             </a>
 
             <!-- Actions on current secret -->
@@ -132,7 +137,7 @@
                   </td>
                   <!-- View-only -->
                   <td v-else @click="select(entry.path)">
-                    <span 
+                    <span
                       v-if="currentPathType === 'Secret'"
                       style="font-family: monospace;"
                     >
@@ -300,6 +305,7 @@ export default {
       newValue: '',
       editMode: false,
       confirmDelete: [],
+      confirmDeleteAll: false,
       selectedRows: [],
       lastSelectedRow: 0,
       sortKey: {
@@ -709,6 +715,8 @@ export default {
       if (entry.endsWith('/')) {
         return
       }
+      // reset delete confirmation
+      this.confirmDeleteAll = false
       // otherwise, select the entry (or unselect it if it already is selected)
       if (this.selectedRows.includes(entry)) {
         this.unselect(entry)
