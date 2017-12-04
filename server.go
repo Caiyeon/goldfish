@@ -100,63 +100,11 @@ func main() {
 	go server.StartListener(*cfg.Listener, staticAssets)
 	fmt.Printf(versionString + initString)
 
-<<<<<<< HEAD
-	// instantiate echo web server
-	e := echo.New()
-	e.HideBanner = true
-	e.Server.ReadTimeout = 10 * time.Second
-	e.Server.WriteTimeout = 2 * time.Minute
-
-	// setup middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.BodyLimit("32M"))
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: 5,
-	}))
-
-	// prevent caching by client (e.g. Safari)
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			return next(c)
-		}
-	})
-
-	// unless explicitly disabled, some extra https configurations need to be set
-	if !cfg.Listener.Tls_disable {
-		// add extra security headers
-		e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
-			XSSProtection:         "1; mode=block",
-			ContentTypeNosniff:    "nosniff",
-			XFrameOptions:         "SAMEORIGIN",
-			ContentSecurityPolicy: "default-src 'self' blob: 'unsafe-inline' buttons.github.io api.github.com;",
-		}))
-
-		// if redirect is set, forward port 80 to port 443
-		if cfg.Listener.Tls_autoredirect {
-			e.Pre(middleware.HTTPSRedirect())
-			go func(c *echo.Echo) {
-				e.Logger.Fatal(e.Start(":80"))
-			}(e)
-		}
-
-		// if cert file and key file are not provided, try using let's encrypt
-		if cfg.Listener.Tls_cert_file == "" && cfg.Listener.Tls_key_file == "" {
-			e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
-			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(cfg.Listener.Address)
-			e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
-				Code: 301,
-			}))
-		}
-	}
-=======
 	// wait for shutdown signal, and cleanup after
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	<-shutdown
 	log.Println("\n\n==> Goldfish shutdown triggered")
->>>>>>> 3438d8fb2b1dfb2b701807a06417aa73cba84684
 
 	// shut down vault dev server, if it was initialized
 	if devVaultCh != nil {
