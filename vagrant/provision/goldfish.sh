@@ -30,9 +30,8 @@ systemctl start goldfish
 # Required modules
 echo 'Installing nodejs and npm...'
 sudo apt-get purge -y nodejs npm
-curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 sudo apt-get install -y nodejs
-sudo npm install npm@5 -g
 echo Nodejs version:
 nodejs -v
 echo NPM version:
@@ -42,7 +41,9 @@ echo 'Installing node modules...'
 cd /home/vagrant/go/src/github.com/caiyeon/goldfish/frontend
 sudo npm install -g cross-env
 sudo npm install
+sudo npm install chromeless
 
+# run chromeless script and ship screenshots to original folder
 
 
 # Frontend with hot reload
