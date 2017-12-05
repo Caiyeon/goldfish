@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 # Specify a custom Vagrant box for the demo
-DEMO_BOX_NAME =  ENV['DEMO_BOX_NAME'] || "debian/jessie64"
+DEMO_BOX_NAME =  ENV['DEMO_BOX_NAME'] || "debian/contrib-jessie64"
 
 # Vagrantfile API/syntax version.
 # NB: Don't touch unless you know what you're doing!
@@ -28,7 +28,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	# 	sudo wget https://raw.githubusercontent.com/aurora/rmate/master/rmate -O /usr/local/bin/rsub
   #   sudo chmod a+x /usr/local/bin/rsub"
 
-  config.vm.synced_folder ".", "/vagrant"
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
 
   config.vm.define "n1" do |n1|
     n1.vm.hostname = "goldfish"

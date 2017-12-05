@@ -41,10 +41,23 @@ echo 'Installing node modules...'
 cd /home/vagrant/go/src/github.com/caiyeon/goldfish/frontend
 sudo npm install -g cross-env
 sudo npm install
+
+# ------------------------------------
+# ------------------------------------
+# run chromeless script and ship screenshots to original folder
 sudo npm install chromeless
 
-# run chromeless script and ship screenshots to original folder
+# install google chrome
+wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i google-chrome*.deb || sudo apt-get install -f -y
 
+# setup env vars and launch chrome in headless mode
+export CHROME_PATH='/usr/bin/google-chrome'
+google-chrome --remote-debugging-port=9222 --disable-gpu --headless --no-sandbox &
+
+# run chromeless script
+node chromeless.js
+cp /tmp/*.png /vagrant/
 
 # Frontend with hot reload
 echo 'Setting for goldfish frontend as system service with hot reload...'
