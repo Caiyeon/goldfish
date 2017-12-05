@@ -195,14 +195,27 @@ export default {
     // parses current package info vs latest stable release to detect if an update is available
     updateAvailable: function () {
       if (this.latestRelease && this.latestRelease.tag_name) {
-        var currVersions = this.pkginfo.version.split('v').pop().split('-')[0].split('.')
-        var newVersions = this.latestRelease.tag_name.split('v').pop().split('-')[0].split('.')
-        if (newVersions[0] > currVersions[0]) {
+        // split curr version into 3 numbers
+        var curr = this.pkginfo.version
+        if (curr.substr(0, 1) === 'v') {
+          curr = curr.substr(1)
+        }
+        var currV = curr.split('-')[0].split('.').map(Number)
+
+        // split new version into 3 numbers
+        var newest = this.latestRelease.tag_name
+        if (newest.substr(0, 1) === 'v') {
+          newest = newest.substr(1)
+        }
+        var newestV = newest.split('-')[0].split('.').map(Number)
+
+        // convert string numbers into ints and compare according to rank
+        if (newestV[0] > currV[0]) {
           return true
-        } else if (newVersions[0] === currVersions[0]) {
-          if (newVersions[1] > currVersions[1]) {
+        } else if (newestV[0] === currV[0]) {
+          if (newestV[1] > currV[1]) {
             return true
-          } else if (newVersions[1] === currVersions[1] && newVersions[2] > currVersions[2]) {
+          } else if (newestV[1] === currV[1] && newestV[2] > currV[2]) {
             return true
           }
         }
