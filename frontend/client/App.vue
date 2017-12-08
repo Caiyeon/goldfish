@@ -73,6 +73,10 @@ html {
   background-color: whitesmoke;
 }
 
+input, textarea, table td {
+  font-family: monospace;
+}
+
 .nprogress-container {
   position: fixed !important;
   width: 100%;
