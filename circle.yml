@@ -22,9 +22,8 @@ test:
         # compile frontend static folder from scratch
         elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
           cd frontend
-          nvm install v6.11.1
+          nvm install v8.2.0
           sudo -E env "PATH=$PATH" npm install -g cross-env
-          sudo -E env "PATH=$PATH" npm install -g npm@5
           npm link webpack
           rm -rf node_modules
           npm cache clean --force
