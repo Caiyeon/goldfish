@@ -109,14 +109,9 @@
 </template>
 
 <script>
-import Tooltip from 'vue-bulma-tooltip'
 const querystring = require('querystring')
 
 export default {
-  components: {
-    Tooltip
-  },
-
   data () {
     return {
       plaintext: '',
