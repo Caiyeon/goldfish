@@ -1,0 +1,31 @@
+{
+  "author": {
+    "name": "Fangdun Cai",
+    "email": "cfddream@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/vue-bulma/notification/issues"
+  },
+  "description": "Notification component for Vue Bulma",
+  "homepage": "https://github.com/vue-bulma/notification#readme",
+  "keywords": [
+    "vue",
+    "bulma",
+    "vue-bulma",
+    "vue-bulma-component",
+    "vue-bulma-notification",
+    "notification"
+  ],
+  "license": "MIT",
+  "main": "src/Notification.vue",
+  "name": "vue-bulma-notification",
+  "peerDependencies": {
+    "bulma": ">=0.2",
+    "vue": ">=2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vue-bulma/notification.git"
+  },
+  "version": "1.1.1"
+}

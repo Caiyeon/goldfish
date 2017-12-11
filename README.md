@@ -92,7 +92,7 @@ Seriously, the instructions fit on one screen!
 ## Developing Goldfish
 
 #### Running locally
-You'll need go (v1.9), nodejs (v6), and npm (v5)
+You'll need go (v1.9), nodejs (v8.2), and npm (v5)
 
 ```bash
 # hashicorp vault ui

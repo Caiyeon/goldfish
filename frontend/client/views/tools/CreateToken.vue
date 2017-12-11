@@ -364,7 +364,7 @@
 </template>
 
 <script>
-import VbSwitch from 'vue-bulma-switch'
+import VbSwitch from '../vue_bulma_modules/vue-bulma-switch'
 
 export default {
   components: {

@@ -330,9 +330,21 @@
       </div>
     </div>
 
-    <modal :visible="showModal" :title="selectedItemTitle" :info="selectedItemInfo" @close="closeModalBasic"></modal>
+    <modal
+      :visible="showModal"
+      :title="selectedItemTitle"
+      :info="selectedItemInfo"
+      :infoIsJSON="true"
+      @close="closeModalBasic">
+    </modal>
 
-    <confirmModal :visible="showDeleteModal" :title="confirmDeletionTitle" :info="selectedItemInfo" @close="closeDeleteModal" @confirmed="deleteItem(selectedIndex)"></confirmModal>
+    <confirmModal
+      :visible="showDeleteModal"
+      :title="confirmDeletionTitle"
+      :info="selectedItemInfo"
+      @close="closeDeleteModal"
+      @confirmed="deleteItem(selectedIndex)">
+    </confirmModal>
 
   </div>
 </template>
@@ -425,13 +437,13 @@ export default {
 
     selectedItemTitle: function () {
       if (this.selectedIndex !== -1) {
-        return String(this.tableData[this.selectedIndex][this.tableColumns[0]])
+        return 'Details'
       }
       return ''
     },
     selectedItemInfo: function () {
       if (this.selectedIndex !== -1) {
-        return 'This modal panel is under construction'
+        return JSON.stringify(this.tableData[this.selectedIndex], null, '\t')
       }
       return ''
     },

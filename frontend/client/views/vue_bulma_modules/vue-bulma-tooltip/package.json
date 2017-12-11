@@ -1,0 +1,35 @@
+{
+  "author": {
+    "name": "Fangdun Cai",
+    "email": "cfddream@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/vue-bulma/tooltip/issues"
+  },
+  "dependencies": {
+    "classnames": "2.2.5",
+    "hint.css": "2.4.1"
+  },
+  "description": "Tooltip Component for Vue Bulma",
+  "homepage": "https://github.com/vue-bulma/tooltip#readme",
+  "keywords": [
+    "vue",
+    "bulma",
+    "vue-bulma",
+    "vue-bulma-component",
+    "vue-bulma-tooltip",
+    "tooltip"
+  ],
+  "license": "MIT",
+  "main": "src/index.js",
+  "name": "vue-bulma-tooltip",
+  "peerDependencies": {
+    "bulma": ">=0.2",
+    "vue": ">=2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vue-bulma/tooltip.git"
+  },
+  "version": "1.0.4"
+}
