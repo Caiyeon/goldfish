@@ -5,8 +5,18 @@
         <div class="media-content">
           <div class="content">
             <p>
-              <strong>{{ title }}</strong>
-              <br>{{ info }}
+
+              <article v-if="infoIsJSON" class="message is-primary">
+                <div class="message-header">
+                  {{ title }}:
+                </div>
+                <pre v-highlightjs="info"><code class="javascript"></code></pre>
+              </article>
+
+              <article v-else>
+                <strong>{{ title }}</strong>
+                <br>{{ info }}
+              </article>
             </p>
           </div>
         </div>
@@ -26,7 +36,8 @@ export default {
   props: {
     visible: Boolean,
     title: String,
-    info: String
+    info: String,
+    infoIsJSON: Boolean
   },
 
   methods: {
