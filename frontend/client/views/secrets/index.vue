@@ -50,15 +50,15 @@
             </a>
             <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0"
               class="button is-warning is-small is-marginless"
-              v-on:click="selectedRows = []; confirmDeleteAll = false">
+              v-on:click="selectedRows = []; confirmDeleteSecrets = false">
               Cancel Selection
             </a>
-            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteAll === false"
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteSecrets === false"
               class="button is-danger is-small is-marginless"
-              v-on:click="confirmDeleteAll = true">
+              v-on:click="confirmDeleteSecrets = true">
               Delete Selection
             </a>
-            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteAll === true"
+            <a v-if="editMode === false && currentPathType === 'Path' && selectedRows.length !== 0 && confirmDeleteSecrets === true"
               class="button is-danger is-small is-marginless"
               v-on:click="deleteSelection()">
               Really Delete {{selectedRows.length}} Secrets?
@@ -71,12 +71,12 @@
               :disabled="displayJSON">
               Edit Secret
             </a>
-            <a v-if="editMode === false && currentPathType === 'Secret' && confirmDeleteAll === false"
+            <a v-if="editMode === false && currentPathType === 'Secret' && confirmDeleteSecrets === false"
               class="button is-danger is-small is-marginless"
-              v-on:click="confirmDeleteAll = true">
+              v-on:click="confirmDeleteSecrets = true">
               Delete Secret
             </a>
-            <a v-if="editMode === false && currentPathType === 'Secret' && confirmDeleteAll === true"
+            <a v-if="editMode === false && currentPathType === 'Secret' && confirmDeleteSecrets === true"
               class="button is-danger is-small is-marginless"
               v-on:click="deleteSecret(currentPath)">
               Confirm Deletion
@@ -310,7 +310,7 @@ export default {
       newValue: '',
       editMode: false,
       confirmDelete: [],
-      confirmDeleteAll: false,
+      confirmDeleteSecrets: false,
       selectedRows: [],
       lastSelectedRow: 0,
       sortKey: {
@@ -721,7 +721,7 @@ export default {
         return
       }
       // reset delete confirmation
-      this.confirmDeleteAll = false
+      this.confirmDeleteSecrets = false
       // otherwise, select the entry (or unselect it if it already is selected)
       if (this.selectedRows.includes(entry)) {
         this.unselect(entry)
