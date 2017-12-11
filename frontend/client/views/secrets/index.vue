@@ -296,7 +296,7 @@
 
 <script>
 const querystring = require('querystring')
-const lodash = require('lodash')
+const _ = require('lodash')
 
 export default {
   data () {
@@ -376,7 +376,7 @@ export default {
       if (!this.tableData || this.tableData.length === 0 || this.sortKey.key === '') {
         return this.tableData
       }
-      return lodash.orderBy(this.tableData, [this.sortKey.key], [this.sortKey.order])
+      return _.orderBy(this.tableData, [this.sortKey.key], [this.sortKey.order])
     }
   },
 
