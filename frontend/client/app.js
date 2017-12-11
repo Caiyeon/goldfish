@@ -7,7 +7,7 @@ import router from './router'
 import store from './store'
 import * as filters from './filters'
 import { TOGGLE_SIDEBAR } from 'vuex-store/mutation-types'
-import Notification from 'vue-bulma-notification'
+import Notification from './views/vue_bulma_modules/vue-bulma-notification'
 import Message from 'vue-bulma-message'
 import hljs from 'highlight.js'
 

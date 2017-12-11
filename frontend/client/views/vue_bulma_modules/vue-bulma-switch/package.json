@@ -1,0 +1,31 @@
+{
+  "author": {
+    "name": "Fangdun Cai",
+    "email": "cfddream@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/vue-bulma/switch/issues"
+  },
+  "description": "Switch component for Vue Bulma",
+  "homepage": "https://github.com/vue-bulma/switch#readme",
+  "keywords": [
+    "vue",
+    "bulma",
+    "vue-bulma",
+    "vue-bulma-component",
+    "vue-bulma-switch",
+    "switch"
+  ],
+  "license": "MIT",
+  "main": "src/Switch.vue",
+  "name": "vue-bulma-switch",
+  "peerDependencies": {
+    "bulma": ">=0.3",
+    "vue": ">=2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vue-bulma/switch.git"
+  },
+  "version": "1.0.5"
+}

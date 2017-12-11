@@ -1,0 +1,32 @@
+@import '~bulma/sass/utilities/functions';
+@import '~bulma/sass/utilities/initial-variables';
+@import '~bulma/sass/utilities/derived-variables';
+
+$hintPrefix: 'tooltip--';
+$hintFontFamily: $family-sans-serif;
+$hintTextShadowDarkenAmount: 0;
+$hintWarningColor: $warning;
+$hintInfoColor: $info;
+$hintSuccessColor: $success;
+
+@import '~hint.css/src/hint';
+
+.tooltip--warning:after {
+  color: $warning-invert;
+}
+
+.#{$hintPrefix}primary {
+	@include hint-type($primary);
+}
+
+.#{$hintPrefix}danger {
+	@include hint-type($danger);
+}
+
+.#{$hintPrefix}rounded:after {
+  border-radius: $radius;
+}
+
+[class*="#{$hintPrefix}"]:after {
+  box-shadow: 0 2px 3px rgba(17, 17, 17, 0.1), 0 0 0 1px rgba(17, 17, 17, 0.1);
+}

@@ -265,7 +265,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '~bulma/sass/utilities/variables';
+// @import '~bulma/sass/utilities/variables';
 
 .app-navbar {
   position: fixed;
