@@ -62,9 +62,9 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
 			XFrameOptions:         "SAMEORIGIN",
-			ContentSecurityPolicy: "default-src 'self' blob: https://api.github.com/repos/caiyeon/goldfish/*"
-				+ " script-src 'sha384-QjNZU2ByzsAjE18nb0QwG3LztNQyQL8Or1fOu4fz8GGFgRFn2+ESBHRFAjpLsPc8'" // buttons.github.io
-				+ " style-src 'sha384-ZxI1gNQ0gMMQqgalGQWHHMjRhCxHZ6HlOCdYMc0yWaWD/KnXUA/69/vw0NyGl7KA'", // buttons.github.io
+			ContentSecurityPolicy: "default-src 'self' blob: https://api.github.com/repos/caiyeon/goldfish/*;" +
+				" script-src 'sha384-QjNZU2ByzsAjE18nb0QwG3LztNQyQL8Or1fOu4fz8GGFgRFn2+ESBHRFAjpLsPc8';" + // buttons.github.io
+				" style-src 'sha384-ZxI1gNQ0gMMQqgalGQWHHMjRhCxHZ6HlOCdYMc0yWaWD/KnXUA/69/vw0NyGl7KA';", // buttons.github.io
 		}))
 
 		// if auto-redirect is set, forward port 80 to port 443
