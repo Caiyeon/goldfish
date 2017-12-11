@@ -71,10 +71,15 @@
               :disabled="displayJSON">
               Edit Secret
             </a>
-            <a v-if="editMode === false && currentPathType === 'Secret'"
+            <a v-if="editMode === false && currentPathType === 'Secret' && confirmDeleteAll === false"
+              class="button is-danger is-small is-marginless"
+              v-on:click="confirmDeleteAll = true">
+              Delete Secret
+            </a>
+            <a v-if="editMode === false && currentPathType === 'Secret' && confirmDeleteAll === true"
               class="button is-danger is-small is-marginless"
               v-on:click="deleteSecret(currentPath)">
-              Delete Secret
+              Confirm Deletion
             </a>
             <a v-if="editMode === false && currentPathType === 'Secret'"
               class="button is-info is-small is-marginless"
