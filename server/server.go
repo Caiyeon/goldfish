@@ -62,7 +62,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 			XSSProtection:         "1; mode=block",
 			ContentTypeNosniff:    "nosniff",
 			XFrameOptions:         "SAMEORIGIN",
-			ContentSecurityPolicy: "default-src 'self' https://api.github.com/repos/caiyeon/goldfish",
+			ContentSecurityPolicy: "default-src 'self' blob: https://api.github.com/repos/caiyeon/goldfish",
 		}))
 
 		// if auto-redirect is set, forward port 80 to port 443
