@@ -333,7 +333,7 @@
           <div v-if="selectedRole && selectedRoleDetails" class="field">
             <label class="label">Selected role: {{selectedRole}}</label>
             <article class="message is-info">
-              <pre v-highlightjs="JSON.stringify(selectedRoleDetails, null, '    ')"><code class="javascript"></code></pre>
+              <pre class="is-paddingless" v-highlightjs="JSON.stringify(selectedRoleDetails, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
@@ -341,7 +341,7 @@
           <div v-if="createdToken" class="field">
             <label class="label">Created token:</label>
             <article class="message is-success">
-              <pre v-highlightjs="JSON.stringify(createdToken, null, '    ')"><code class="javascript"></code></pre>
+              <pre class="is-paddingless" v-highlightjs="JSON.stringify(createdToken, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 
@@ -349,7 +349,7 @@
           <div class="field">
             <label class="label">Payload preview:</label>
             <article class="message is-primary">
-              <pre v-highlightjs="JSON.stringify(payloadJSON, null, '    ')"><code class="javascript"></code></pre>
+              <pre class="is-paddingless" v-highlightjs="JSON.stringify(payloadJSON, null, '    ')"><code class="javascript"></code></pre>
             </article>
           </div>
 

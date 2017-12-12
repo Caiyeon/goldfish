@@ -1,4 +1,4 @@
-<template>
+pre class="is-paddingless" v-highlightjs<template>
   <div>
     <div class="tile is-ancestor">
       <div class="tile is-parent is-vertical">
@@ -74,7 +74,7 @@
                   <div class="message-header">
                     {{request.Proposed ? 'Current policy rules' : 'Will be deleted!'}}
                   </div>
-                  <pre v-highlightjs="request.Previous"><code class="ruby"></code></pre>
+                  <pre class="is-paddingless" v-highlightjs="request.Previous"><code class="ruby"></code></pre>
                 </article>
               </div>
 
@@ -83,10 +83,12 @@
                   <div class="message-header">
                   {{request.Previous ? 'Proposed policy rules' : 'Will be created!'}}
                   </div>
-                  <pre v-highlightjs="request.Proposed"><code class="ruby"></code></pre>
+                  <pre  class="is-paddingless" v-highlightjs="request.Proposed"><code class="ruby"></code></pre>
                 </article>
               </div>
             </div>
+
+
           </article>
 
           <!-- Request type: github -->
@@ -155,7 +157,7 @@
                     <div class="message-header">
                       Current policy rules
                     </div>
-                    <pre v-highlightjs="details.Previous"><code class="ruby"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="details.Previous"><code class="ruby"></code></pre>
                   </article>
                 </div>
 
@@ -164,7 +166,7 @@
                     <div class="message-header">
                     Proposed policy rules
                     </div>
-                    <pre v-highlightjs="details.Proposed"><code class="ruby"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="details.Proposed"><code class="ruby"></code></pre>
                   </article>
                 </div>
               </div>
@@ -238,12 +240,12 @@
               <div class="columns">
                 <div class="column">
                   <article class="message is-primary">
-                    <pre v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
                   </article>
                 </div>
                 <div class="column">
                   <article v-if="request.CreateResponse" class="message is-primary">
-                    <pre v-highlightjs="JSON.stringify(request.CreateResponse.wrap_info, null, '    ')"><code class="javascript"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="JSON.stringify(request.CreateResponse.wrap_info, null, '    ')"><code class="javascript"></code></pre>
                   </article>
                 </div>
               </div>

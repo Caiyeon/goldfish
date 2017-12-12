@@ -10,7 +10,7 @@
                 <div class="message-header">
                   {{ title }}:
                 </div>
-                <pre v-highlightjs="info"><code class="javascript"></code></pre>
+                <pre class="is-paddingless" v-highlightjs="info"><code class="javascript"></code></pre>
               </article>
 
               <article v-else>
