@@ -28,14 +28,17 @@ pre class="is-paddingless" v-highlightjs<template>
             </div>
             <div class="field">
               <div class="control">
-                <label class="label">Highlight:</label>
                 <label class="radio">
                   <input type="radio" v-model="show" value="syntax">
-                  Syntax
+                  HCL-syntax Highlight
                 </label>
                 <label class="radio">
-                  <input type="radio" v-model="show" value="diff">
-                  Diff
+                  <input type="radio" v-model="show" value="diffSingle">
+                  Single-column Diff
+                </label>
+                <label class="radio">
+                  <input type="radio" v-model="show" value="diffDouble">
+                  Double-column Diff
                 </label>
               </div>
             </div>
@@ -102,7 +105,7 @@ pre class="is-paddingless" v-highlightjs<template>
             </div>
 
             <!-- diff via jsdiff and diff2html -->
-            <div v-if="show === 'diff'" v-html="diff"></div>
+            <div v-if="show === 'diffSingle' || show === 'diffDouble'" v-html="diff"></div>
           </article>
 
           <!-- Request type: github -->
@@ -187,7 +190,7 @@ pre class="is-paddingless" v-highlightjs<template>
             </div>
 
             <!-- diff via jsdiff and diff2html -->
-            <div v-if="show === 'diff'" v-html="diff"></div>
+            <div v-if="(show === 'diffSingle' || show === 'diffDouble') && request.Progress !== request.Required" v-html="diff"></div>
           </article>
 
           <!-- Request type: token -->
@@ -311,18 +314,34 @@ export default {
       if (!this.request || this.show === 'syntax') {
         return ''
       }
+
+      let format = 'line-by-line'
+      if (this.show === 'diffDouble') {
+        format = 'side-by-side'
+      }
+
       if (this.request['Previous'] && this.request['Proposed']) {
-        let diff = jsdiff.createPatch(this.request.PolicyName, this.request.Previous, this.request.Proposed, '', '', {context: 10000})
-        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: 'line-by-line', matching: 'lines'})
+        let diff = jsdiff.createPatch(
+          this.request.PolicyName,
+          this.request.Previous || '',
+          this.request.Proposed || '',
+          '', '', {context: 10000}
+        )
+        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: format, matching: 'lines'})
       }
       if (this.request['Changes'] && this.request.Changes.length > 0) {
         let diff = ''
         for (var policy in this.request.Changes) {
           if (this.request.Changes.hasOwnProperty(policy)) {
-            diff = diff + jsdiff.createPatch(policy, this.request.Previous, this.request.Proposed, '', '', {context: 10000})
+            diff = diff + jsdiff.createPatch(
+              policy,
+              this.request.Previous || '',
+              this.request.Proposed || '',
+              '', '', {context: 10000}
+            )
           }
         }
-        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: 'line-by-line', matching: 'lines'})
+        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: format, matching: 'lines'})
       }
       return ''
     }
