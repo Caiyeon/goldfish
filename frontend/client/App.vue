@@ -65,6 +65,8 @@ $fa-font-path: '~font-awesome/fonts/';
 
 @import '~highlight.js/styles/github.css';
 
+@import '~diff2html/dist/diff2html.css';
+
 pre > code {
   font-size: 16px;
 }

@@ -67,7 +67,7 @@ pre class="is-paddingless" v-highlightjs<template>
               </div>
             </div>
 
-            <!-- Request details -->
+            <!-- syntax-highlighted diff -->
             <div class="columns">
               <div v-if="request.Previous" class="column">
                 <article class="message is-primary" :class="request.Proposed ? '' : 'is-danger'">
@@ -88,7 +88,8 @@ pre class="is-paddingless" v-highlightjs<template>
               </div>
             </div>
 
-
+            <!-- diff via jsdiff and diff2html -->
+            <div v-if="showDiff" v-html="diff"></div>
           </article>
 
           <!-- Request type: github -->
@@ -131,7 +132,7 @@ pre class="is-paddingless" v-highlightjs<template>
               </div>
             </div>
 
-            <!-- Request details -->
+            <!-- syntax-highlighted diff -->
             <div class="box"
             v-if="request.Progress !== request.Required"
             v-for="(details, policy) in request.Changes">
@@ -171,6 +172,9 @@ pre class="is-paddingless" v-highlightjs<template>
                 </div>
               </div>
             </div>
+
+            <!-- diff via jsdiff and diff2html -->
+            <div v-if="showDiff" v-html="diff"></div>
           </article>
 
           <!-- Request type: token -->
@@ -259,6 +263,9 @@ pre class="is-paddingless" v-highlightjs<template>
 </template>
 
 <script>
+const jsdiff = require('diff')
+const diff2html = require('diff2html').Diff2Html
+
 export default {
   data () {
     return {
@@ -266,7 +273,8 @@ export default {
       request: null,
       bConfirm: false,
       bReject: false,
-      unsealKey: ''
+      unsealKey: '',
+      showDiff: false
     }
   },
 
@@ -284,6 +292,26 @@ export default {
         return {}
       }
       return this.request.CreateRequest
+    },
+
+    diff: function () {
+      if (!this.request) {
+        return ''
+      }
+      if (this.request['Previous'] && this.request['Proposed']) {
+        let diff = jsdiff.createPatch(this.request.PolicyName, this.request.Previous, this.request.Proposed, '', '', {context: 10000})
+        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: 'line-by-line', matching: 'lines'})
+      }
+      if (this.request['Changes'] && this.request.Changes.length > 0) {
+        let diff = ''
+        for (var policy in this.request.Changes) {
+          if (this.request.Changes.hasOwnProperty(policy)) {
+            diff = diff + jsdiff.createPatch(policy, this.request.Previous, this.request.Proposed, '', '', {context: 10000})
+          }
+        }
+        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: 'line-by-line', matching: 'lines'})
+      }
+      return ''
     }
   },
 

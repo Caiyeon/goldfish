@@ -36,6 +36,8 @@
     "bulma": "^0.6.1",
     "chromeless": "^1.3.0",
     "classnames": "^2.2.5",
+    "diff": "^3.4.0",
+    "diff2html": "^2.3.2",
     "font-awesome": "4.7.0",
     "github-buttons": "git+https://github.com/ntkme/github-buttons.git",
     "highlight.js": "^9.12.0",
