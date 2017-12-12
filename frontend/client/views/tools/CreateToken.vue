@@ -266,7 +266,7 @@
               :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
               @click="createToken()"
               :disabled="selectedPolicies.length === 0
-              || this.payloadJSON.metadata === 'INVALID JSON'
+              || this.payloadJSON.meta === 'INVALID JSON'
               || (this.selectedRole !== '' && this.bOrphan)">
                 Create {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
@@ -278,7 +278,7 @@
               :class="selectedPolicies.indexOf('root') > -1 ? 'is-danger' : ''"
               @click="createTokenRequest()"
               :disabled="selectedPolicies.length === 0
-              || this.payloadJSON.metadata === 'INVALID JSON'
+              || this.payloadJSON.meta === 'INVALID JSON'
               || (this.selectedRole !== '' && this.bOrphan)">
                 Request {{selectedPolicies.indexOf('root') > -1 ? 'Root' : ''}} Token
               </button>
@@ -325,6 +325,13 @@
             <article class="message is-warning">
               <div class="message-body">
                 <strong>Warning: Wrapping is selected but no wrapttl is given</strong>
+              </div>
+            </article>
+          </div>
+          <div v-if="this.payloadJSON.meta === 'INVALID JSON'" class="field">
+            <article class="message is-warning">
+              <div class="message-body">
+                <strong>Warning: metadata is not valid JSON!</strong>
               </div>
             </article>
           </div>
