@@ -29,7 +29,7 @@ func (auth AuthInfo) ListLDAPGroups() ([]LDAPGroup, error) {
 	}
 
 	// if there are no ldap groups, return an empty slice
-	if _, ok := resp.Data["keys"]; !ok {
+	if resp == nil || resp.Data == nil {
 		return []LDAPGroup{}, nil
 	}
 
@@ -87,7 +87,7 @@ func (auth AuthInfo) ListLDAPUsers() ([]LDAPUser, error) {
 	}
 
 	// if there are no ldap users, return an empty slice
-	if _, ok := resp.Data["keys"]; !ok {
+	if resp == nil || resp.Data == nil {
 		return []LDAPUser{}, nil
 	}
 
