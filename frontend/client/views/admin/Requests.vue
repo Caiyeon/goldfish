@@ -26,6 +26,19 @@ pre class="is-paddingless" v-highlightjs<template>
                 </a>
               </p>
             </div>
+            <div class="field">
+              <div class="control">
+                <label class="label">Highlight:</label>
+                <label class="radio">
+                  <input type="radio" v-model="show" value="syntax">
+                  Syntax
+                </label>
+                <label class="radio">
+                  <input type="radio" v-model="show" value="diff">
+                  Diff
+                </label>
+              </div>
+            </div>
           </div>
 
           <!-- Request type: policy -->
@@ -68,7 +81,7 @@ pre class="is-paddingless" v-highlightjs<template>
             </div>
 
             <!-- syntax-highlighted diff -->
-            <div class="columns">
+            <div v-if="show === 'syntax'" class="columns">
               <div v-if="request.Previous" class="column">
                 <article class="message is-primary" :class="request.Proposed ? '' : 'is-danger'">
                   <div class="message-header">
@@ -89,7 +102,7 @@ pre class="is-paddingless" v-highlightjs<template>
             </div>
 
             <!-- diff via jsdiff and diff2html -->
-            <div v-if="showDiff" v-html="diff"></div>
+            <div v-if="show === 'diff'" v-html="diff"></div>
           </article>
 
           <!-- Request type: github -->
@@ -134,7 +147,7 @@ pre class="is-paddingless" v-highlightjs<template>
 
             <!-- syntax-highlighted diff -->
             <div class="box"
-            v-if="request.Progress !== request.Required"
+            v-if="show === 'syntax' && request.Progress !== request.Required"
             v-for="(details, policy) in request.Changes">
               <!-- policy name title and status tag -->
               <nav class="level">
@@ -174,7 +187,7 @@ pre class="is-paddingless" v-highlightjs<template>
             </div>
 
             <!-- diff via jsdiff and diff2html -->
-            <div v-if="showDiff" v-html="diff"></div>
+            <div v-if="show === 'diff'" v-html="diff"></div>
           </article>
 
           <!-- Request type: token -->
@@ -274,7 +287,7 @@ export default {
       bConfirm: false,
       bReject: false,
       unsealKey: '',
-      showDiff: false
+      show: 'syntax'
     }
   },
 
@@ -295,7 +308,7 @@ export default {
     },
 
     diff: function () {
-      if (!this.request) {
+      if (!this.request || this.show === 'syntax') {
         return ''
       }
       if (this.request['Previous'] && this.request['Proposed']) {
