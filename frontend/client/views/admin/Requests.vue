@@ -30,15 +30,15 @@ pre class="is-paddingless" v-highlightjs<template>
               <div class="control">
                 <label class="radio">
                   <input type="radio" v-model="show" value="syntax">
-                  HCL-syntax Highlight
+                  Highlight syntax
                 </label>
                 <label class="radio">
                   <input type="radio" v-model="show" value="diffSingle">
-                  Single-column Diff
+                  Line-by-line diff
                 </label>
                 <label class="radio">
                   <input type="radio" v-model="show" value="diffDouble">
-                  Double-column Diff
+                  Side-by-side diff
                 </label>
               </div>
             </div>
