@@ -53,6 +53,11 @@ func (auth AuthInfo) PolicyCapabilities(policyName, path string) ([]string, erro
 		return []string{}, err
 	}
 
+	// the "root" policy is unchangeable and unremovable, so short circuit
+	if policyName == "root" {
+		return []string{api.RootCapability}, nil
+	}
+
 	// fetch policy rules
 	rules, err := client.Sys().GetPolicy(policyName)
 	if err != nil {
