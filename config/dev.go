@@ -24,6 +24,12 @@ import (
 	credRadius "github.com/hashicorp/vault/builtin/credential/radius"
 	credUserpass "github.com/hashicorp/vault/builtin/credential/userpass"
 
+	physAzure "github.com/hashicorp/vault/physical/azure"
+	physConsul "github.com/hashicorp/vault/physical/consul"
+	physFile "github.com/hashicorp/vault/physical/file"
+	physGCS "github.com/hashicorp/vault/physical/gcs"
+	physInmem "github.com/hashicorp/vault/physical/inmem"
+
 	"github.com/hashicorp/vault/builtin/logical/aws"
 	"github.com/hashicorp/vault/builtin/logical/cassandra"
 	"github.com/hashicorp/vault/builtin/logical/consul"
@@ -43,6 +49,7 @@ import (
 	"github.com/hashicorp/vault/command"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/meta"
+	"github.com/hashicorp/vault/physical"
 	"github.com/mitchellh/cli"
 )
 
@@ -285,6 +292,17 @@ func initDevVaultCore() (string, chan struct{}) {
 		},
 		ShutdownCh: shutdownCh,
 		SighupCh:   command.MakeSighupCh(),
+		PhysicalBackends: map[string]physical.Factory{
+			"azure":                  physAzure.NewAzureBackend,
+			"consul":                 physConsul.NewConsulBackend,
+			"file":                   physFile.NewFileBackend,
+			"file_transactional":     physFile.NewTransactionalFileBackend,
+			"gcs":                    physGCS.NewGCSBackend,
+			"inmem":                  physInmem.NewInmem,
+			"inmem_ha":               physInmem.NewInmemHA,
+			"inmem_transactional":    physInmem.NewTransactionalInmem,
+			"inmem_transactional_ha": physInmem.NewTransactionalInmemHA,
+		},
 	}).Run([]string{
 		"-dev",
 		"-dev-listen-address=127.0.0.1:8200",

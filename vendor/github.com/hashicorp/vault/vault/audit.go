@@ -79,6 +79,13 @@ func (c *Core) enableAudit(entry *MountEntry) error {
 		}
 		entry.UUID = entryUUID
 	}
+	if entry.Accessor == "" {
+		accessor, err := c.generateMountAccessor("audit_" + entry.Type)
+		if err != nil {
+			return err
+		}
+		entry.Accessor = accessor
+	}
 	viewPath := auditBarrierPrefix + entry.UUID + "/"
 	view := NewBarrierView(c.barrier, viewPath)
 
@@ -177,37 +184,47 @@ func (c *Core) loadAudits() error {
 		}
 		c.audit = auditTable
 	}
+
+	var needPersist bool
+	if c.audit == nil {
+		c.audit = defaultAuditTable()
+		needPersist = true
+	}
+
 	if rawLocal != nil {
 		if err := jsonutil.DecodeJSON(rawLocal.Value, localAuditTable); err != nil {
 			c.logger.Error("core: failed to decode local audit table", "error", err)
 			return errLoadAuditFailed
 		}
-		c.audit.Entries = append(c.audit.Entries, localAuditTable.Entries...)
+		if localAuditTable != nil && len(localAuditTable.Entries) > 0 {
+			c.audit.Entries = append(c.audit.Entries, localAuditTable.Entries...)
+		}
 	}
 
-	// Done if we have restored the audit table
-	if c.audit != nil {
-		needPersist := false
+	// Upgrade to typed auth table
+	if c.audit.Type == "" {
+		c.audit.Type = auditTableType
+		needPersist = true
+	}
 
-		// Upgrade to typed auth table
-		if c.audit.Type == "" {
-			c.audit.Type = auditTableType
+	// Upgrade to table-scoped entries
+	for _, entry := range c.audit.Entries {
+		if entry.Table == "" {
+			entry.Table = c.audit.Type
 			needPersist = true
 		}
-
-		// Upgrade to table-scoped entries
-		for _, entry := range c.audit.Entries {
-			if entry.Table == "" {
-				entry.Table = c.audit.Type
-				needPersist = true
+		if entry.Accessor == "" {
+			accessor, err := c.generateMountAccessor("audit_" + entry.Type)
+			if err != nil {
+				return err
 			}
+			entry.Accessor = accessor
+			needPersist = true
 		}
+	}
 
-		if !needPersist {
-			return nil
-		}
-	} else {
-		c.audit = defaultAuditTable()
+	if !needPersist {
+		return nil
 	}
 
 	if err := c.persistAudit(c.audit, false); err != nil {
@@ -394,9 +411,12 @@ func (c *Core) newAuditBackend(entry *MountEntry, view logical.Storage, conf map
 
 		if c.logger.IsDebug() {
 			c.logger.Debug("audit: adding reload function", "path", entry.Path)
+			if entry.Options != nil {
+				c.logger.Debug("audit: file backend options", "path", entry.Path, "file_path", entry.Options["file_path"])
+			}
 		}
 
-		c.reloadFuncs[key] = append(c.reloadFuncs[key], func(map[string]string) error {
+		c.reloadFuncs[key] = append(c.reloadFuncs[key], func(map[string]interface{}) error {
 			if c.logger.IsInfo() {
 				c.logger.Info("audit: reloading file audit backend", "path", entry.Path)
 			}
@@ -404,6 +424,18 @@ func (c *Core) newAuditBackend(entry *MountEntry, view logical.Storage, conf map
 		})
 
 		c.reloadFuncsLock.Unlock()
+	case "socket":
+		if c.logger.IsDebug() {
+			if entry.Options != nil {
+				c.logger.Debug("audit: socket backend options", "path", entry.Path, "address", entry.Options["address"], "socket type", entry.Options["socket_type"])
+			}
+		}
+	case "syslog":
+		if c.logger.IsDebug() {
+			if entry.Options != nil {
+				c.logger.Debug("audit: syslog backend options", "path", entry.Path, "facility", entry.Options["facility"], "tag", entry.Options["tag"])
+			}
+		}
 	}
 
 	return be, err
@@ -492,6 +524,10 @@ func (a *AuditBroker) LogRequest(auth *logical.Auth, req *logical.Request, heade
 		}
 
 		ret = retErr.ErrorOrNil()
+
+		if ret != nil {
+			metrics.IncrCounter([]string{"audit", "log_request_failure"}, 1.0)
+		}
 	}()
 
 	// All logged requests must have an identifier
@@ -550,6 +586,10 @@ func (a *AuditBroker) LogResponse(auth *logical.Auth, req *logical.Request,
 		}
 
 		ret = retErr.ErrorOrNil()
+
+		if ret != nil {
+			metrics.IncrCounter([]string{"audit", "log_response_failure"}, 1.0)
+		}
 	}()
 
 	headers := req.Headers

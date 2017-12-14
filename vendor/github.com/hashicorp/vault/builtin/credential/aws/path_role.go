@@ -28,12 +28,14 @@ iam or ec2 and cannot be changed after role creation.`,
 			"bound_ami_id": {
 				Type: framework.TypeString,
 				Description: `If set, defines a constraint on the EC2 instances that they should be
-using the AMI ID specified by this parameter.`,
+using the AMI ID specified by this parameter. This is only applicable when auth_type is ec2
+or inferred_entity_type is ec2_instance.`,
 			},
 			"bound_account_id": {
 				Type: framework.TypeString,
 				Description: `If set, defines a constraint on the EC2 instances that the account ID
-in its identity document to match the one specified by this parameter.`,
+in its identity document to match the one specified by this parameter. This is only
+applicable when auth_type is ec2 or inferred_entity_type is ec2_instance.`,
 			},
 			"bound_iam_principal_arn": {
 				Type: framework.TypeString,
@@ -43,8 +45,8 @@ auth_type is iam.`,
 			"bound_region": {
 				Type: framework.TypeString,
 				Description: `If set, defines a constraint on the EC2 instances that the region in
-its identity document to match the one specified by this parameter. Only applicable when
-auth_type is ec2.`,
+its identity document to match the one specified by this parameter. This is only
+applicable when auth_type is ec2.`,
 			},
 			"bound_iam_role_arn": {
 				Type: framework.TypeString,
@@ -52,17 +54,17 @@ auth_type is ec2.`,
 that it must match the IAM role ARN specified by this parameter.
 The value is prefix-matched (as though it were a glob ending in
 '*').  The configured IAM user or EC2 instance role must be allowed
-to execute the 'iam:GetInstanceProfile' action if this is
-specified. This is only checked when auth_type is
-ec2.`,
+to execute the 'iam:GetInstanceProfile' action if this is specified. This is
+only applicable when auth_type is ec2 or inferred_entity_type is
+ec2_instance.`,
 			},
 			"bound_iam_instance_profile_arn": {
 				Type: framework.TypeString,
 				Description: `If set, defines a constraint on the EC2 instances to be associated
 with an IAM instance profile ARN which has a prefix that matches
 the value specified by this parameter. The value is prefix-matched
-(as though it were a glob ending in '*'). This is only checked when
-auth_type is ec2.`,
+(as though it were a glob ending in '*'). This is only applicable when
+auth_type is ec2 or inferred_entity_type is ec2_instance.`,
 			},
 			"resolve_aws_unique_ids": {
 				Type:    framework.TypeBool,
@@ -94,13 +96,15 @@ inferred_entity_type is set, the region to assume the inferred entity exists in.
 				Type: framework.TypeString,
 				Description: `
 If set, defines a constraint on the EC2 instance to be associated with the VPC
-ID that matches the value specified by this parameter.`,
+ID that matches the value specified by this parameter. This is only applicable
+when auth_type is ec2 or inferred_entity_type is ec2_instance.`,
 			},
 			"bound_subnet_id": {
 				Type: framework.TypeString,
 				Description: `
 If set, defines a constraint on the EC2 instance to be associated with the
-subnet ID that matches the value specified by this parameter.`,
+subnet ID that matches the value specified by this parameter. This is only
+applicable when auth_type is ec2 or inferred_entity_type is ec2_instance.`,
 			},
 			"role_tag": {
 				Type:    framework.TypeString,
@@ -115,7 +119,9 @@ is only allowed if auth_type is ec2.`,
 				Type:    framework.TypeDurationSecond,
 				Default: 0,
 				Description: `
-If set, indicates that the token generated using this role should never expire. The token should be renewed within the duration specified by this value. At each renewal, the token's TTL will be set to the value of this parameter.`,
+If set, indicates that the token generated using this role should never expire.
+The token should be renewed within the duration specified by this value. At
+each renewal, the token's TTL will be set to the value of this parameter.`,
 			},
 			"ttl": {
 				Type:    framework.TypeDurationSecond,
@@ -129,7 +135,7 @@ to 0, in which case the value will fallback to the system/mount defaults.`,
 				Description: "The maximum allowed lifetime of tokens issued using this role.",
 			},
 			"policies": {
-				Type:        framework.TypeString,
+				Type:        framework.TypeCommaStringSlice,
 				Default:     "default",
 				Description: "Policies to be set on tokens issued using this role.",
 			},
@@ -144,9 +150,13 @@ previously-remembered time. Use with caution. This is only checked when
 auth_type is ec2.`,
 			},
 			"disallow_reauthentication": {
-				Type:        framework.TypeBool,
-				Default:     false,
-				Description: "If set, only allows a single token to be granted per instance ID. In order to perform a fresh login, the entry in whitelist for the instance ID needs to be cleared using 'auth/aws-ec2/identity-whitelist/<instance_id>' endpoint.",
+				Type:    framework.TypeBool,
+				Default: false,
+				Description: `If set, only allows a single token to be granted per
+        instance ID. In order to perform a fresh login, the entry in whitelist
+        for the instance ID needs to be cleared using
+        'auth/aws-ec2/identity-whitelist/<instance_id>' endpoint. This is only
+        applicable when auth_type is ec2.`,
 			},
 		},
 
@@ -318,7 +328,8 @@ func (b *backend) upgradeRoleEntry(s logical.Storage, roleEntry *awsRoleEntry) (
 	if roleEntry.AuthType == iamAuthType &&
 		roleEntry.ResolveAWSUniqueIDs &&
 		roleEntry.BoundIamPrincipalARN != "" &&
-		roleEntry.BoundIamPrincipalID == "" {
+		roleEntry.BoundIamPrincipalID == "" &&
+		!strings.HasSuffix(roleEntry.BoundIamPrincipalARN, "*") {
 		principalId, err := b.resolveArnToUniqueIDFunc(s, roleEntry.BoundIamPrincipalARN)
 		if err != nil {
 			return false, err
@@ -493,14 +504,17 @@ func (b *backend) pathRoleCreateUpdate(
 		// This allows the user to sumbit an update with the same ARN to force Vault
 		// to re-resolve the ARN to the unique ID, in case an entity was deleted and
 		// recreated
-		if roleEntry.ResolveAWSUniqueIDs {
+		if roleEntry.ResolveAWSUniqueIDs && !strings.HasSuffix(roleEntry.BoundIamPrincipalARN, "*") {
 			principalID, err := b.resolveArnToUniqueIDFunc(req.Storage, principalARN)
 			if err != nil {
 				return logical.ErrorResponse(fmt.Sprintf("failed updating the unique ID of ARN %#v: %#v", principalARN, err)), nil
 			}
 			roleEntry.BoundIamPrincipalID = principalID
+		} else {
+			// Need to handle the case where we're switching from a non-wildcard principal to a wildcard principal
+			roleEntry.BoundIamPrincipalID = ""
 		}
-	} else if roleEntry.ResolveAWSUniqueIDs && roleEntry.BoundIamPrincipalARN != "" {
+	} else if roleEntry.ResolveAWSUniqueIDs && roleEntry.BoundIamPrincipalARN != "" && !strings.HasSuffix(roleEntry.BoundIamPrincipalARN, "*") {
 		// we're turning on resolution on this role, so ensure we update it
 		principalID, err := b.resolveArnToUniqueIDFunc(req.Storage, roleEntry.BoundIamPrincipalARN)
 		if err != nil {
@@ -622,11 +636,11 @@ func (b *backend) pathRoleCreateUpdate(
 		return logical.ErrorResponse("at least be one bound parameter should be specified on the role"), nil
 	}
 
-	policiesStr, ok := data.GetOk("policies")
+	policiesRaw, ok := data.GetOk("policies")
 	if ok {
-		roleEntry.Policies = policyutil.ParsePolicies(policiesStr.(string))
+		roleEntry.Policies = policyutil.ParsePolicies(policiesRaw)
 	} else if req.Operation == logical.CreateOperation {
-		roleEntry.Policies = []string{"default"}
+		roleEntry.Policies = []string{}
 	}
 
 	disallowReauthenticationBool, ok := data.GetOk("disallow_reauthentication")
@@ -647,6 +661,10 @@ func (b *backend) pathRoleCreateUpdate(
 		roleEntry.AllowInstanceMigration = allowInstanceMigrationBool.(bool)
 	} else if req.Operation == logical.CreateOperation && roleEntry.AuthType == ec2AuthType {
 		roleEntry.AllowInstanceMigration = data.Get("allow_instance_migration").(bool)
+	}
+
+	if roleEntry.AllowInstanceMigration && roleEntry.DisallowReauthentication {
+		return logical.ErrorResponse("cannot specify both disallow_reauthentication=true and allow_instance_migration=true"), nil
 	}
 
 	var resp logical.Response

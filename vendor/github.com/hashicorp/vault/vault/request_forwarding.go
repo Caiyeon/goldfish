@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,6 +22,7 @@ import (
 const (
 	clusterListenerAcceptDeadline = 500 * time.Millisecond
 	heartbeatInterval             = 30 * time.Second
+	requestForwardingALPN         = "req_fw_sb-act_v1"
 )
 
 // Starts the listeners and servers necessary to handle forwarded requests
@@ -44,7 +46,7 @@ func (c *Core) startForwarding() error {
 	}
 
 	// The server supports all of the possible protos
-	tlsConfig.NextProtos = []string{"h2", "req_fw_sb-act_v1"}
+	tlsConfig.NextProtos = []string{"h2", requestForwardingALPN}
 
 	// Create our RPC server and register the request handler server
 	c.clusterParamsLock.Lock()
@@ -120,13 +122,19 @@ func (c *Core) startForwarding() error {
 
 				// Accept the connection
 				conn, err := tlsLn.Accept()
-				if conn != nil {
-					// Always defer although it may be closed ahead of time
-					defer conn.Close()
-				}
 				if err != nil {
+					if err, ok := err.(net.Error); ok && !err.Timeout() {
+						c.logger.Debug("core: non-timeout error accepting on cluster port", "error", err)
+					}
+					if conn != nil {
+						conn.Close()
+					}
 					continue
 				}
+				if conn == nil {
+					continue
+				}
+				defer conn.Close()
 
 				// Type assert to TLS connection and handshake to populate the
 				// connection state
@@ -136,27 +144,31 @@ func (c *Core) startForwarding() error {
 					if c.logger.IsDebug() {
 						c.logger.Debug("core: error handshaking cluster connection", "error", err)
 					}
-					if conn != nil {
-						conn.Close()
-					}
+					tlsConn.Close()
 					continue
 				}
 
 				switch tlsConn.ConnectionState().NegotiatedProtocol {
-				case "req_fw_sb-act_v1":
+				case requestForwardingALPN:
 					if !ha {
-						conn.Close()
+						tlsConn.Close()
 						continue
 					}
 
-					c.logger.Trace("core: got req_fw_sb-act_v1 connection")
-					go fws.ServeConn(conn, &http2.ServeConnOpts{
-						Handler: c.rpcServer,
-					})
+					c.logger.Trace("core: got request forwarding connection")
+					c.clusterParamsLock.RLock()
+					rpcServer := c.rpcServer
+					c.clusterParamsLock.RUnlock()
+					go func() {
+						fws.ServeConn(tlsConn, &http2.ServeConnOpts{
+							Handler: rpcServer,
+						})
+						tlsConn.Close()
+					}()
 
 				default:
 					c.logger.Debug("core: unknown negotiated protocol on cluster port")
-					conn.Close()
+					tlsConn.Close()
 					continue
 				}
 			}
@@ -226,7 +238,7 @@ func (c *Core) refreshRequestForwardingConnection(clusterAddr string) error {
 	// the TLS state.
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	c.rpcClientConn, err = grpc.DialContext(ctx, clusterURL.Host,
-		grpc.WithDialer(c.getGRPCDialer("req_fw_sb-act_v1", "", nil)),
+		grpc.WithDialer(c.getGRPCDialer(requestForwardingALPN, "", nil)),
 		grpc.WithInsecure(), // it's not, we handle it in the dialer
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time: 2 * heartbeatInterval,
@@ -295,9 +307,7 @@ func (c *Core) ForwardRequest(req *http.Request) (int, http.Header, []byte, erro
 	if resp.HeaderEntries != nil {
 		header = make(http.Header)
 		for k, v := range resp.HeaderEntries {
-			for _, j := range v.Values {
-				header.Add(k, j)
-			}
+			header[k] = v.Values
 		}
 	}
 
@@ -352,12 +362,23 @@ func (s *forwardedRequestRPCServer) ForwardRequest(ctx context.Context, freq *fo
 	// meets the interface requirements.
 	w := forwarding.NewRPCResponseWriter()
 
-	s.handler.ServeHTTP(w, req)
+	resp := &forwarding.Response{}
 
-	resp := &forwarding.Response{
-		StatusCode: uint32(w.StatusCode()),
-		Body:       w.Body().Bytes(),
+	runRequest := func() {
+		defer func() {
+			// Logic here comes mostly from the Go source code
+			if err := recover(); err != nil {
+				const size = 64 << 10
+				buf := make([]byte, size)
+				buf = buf[:runtime.Stack(buf, false)]
+				s.core.logger.Error("forwarding: panic serving request", "path", req.URL.Path, "error", err, "stacktrace", buf)
+			}
+		}()
+		s.handler.ServeHTTP(w, req)
 	}
+	runRequest()
+	resp.StatusCode = uint32(w.StatusCode())
+	resp.Body = w.Body().Bytes()
 
 	header := w.Header()
 	if header != nil {
