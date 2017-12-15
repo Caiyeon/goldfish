@@ -337,12 +337,12 @@ export default {
       }
       if (this.request['Changes'] && this.request.Changes.length > 0) {
         let diff = ''
-        for (var policy in this.request.Changes) {
+        for (const policy in this.request.Changes) {
           if (this.request.Changes.hasOwnProperty(policy)) {
             diff = diff + jsdiff.createPatch(
               policy,
-              this.request.Previous || '',
-              this.request.Proposed || '',
+              this.request.Changes[policy].Previous || '',
+              this.request.Proposed[policy].Proposed || '',
               '', '', {context: 10000}
             )
           }
