@@ -10,7 +10,7 @@ module "goldfish" {
 
     # deployment config variables
     wrapping_token = "See wiki for how to generate this"
-    goldfish_version = "v0.5.1"
+    goldfish_version = "v0.8.0"
     listener = {
         address = ":443"
         tls_cert_file = ""
