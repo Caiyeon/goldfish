@@ -73,7 +73,7 @@ func CreateGithubRequest(auth *vault.AuthInfo, raw map[string]interface{}) (*Git
 		conf.GithubRepo,
 		conf.GithubTargetBranch,
 		conf.GithubPoliciesPath,
-		vault.GithubCurrentCommit,
+		"",
 		r.CommitHash,
 	)
 	if err != nil {

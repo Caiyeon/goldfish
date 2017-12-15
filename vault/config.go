@@ -26,18 +26,15 @@ type RuntimeConfig struct {
 	GithubRepoOwner    string
 	GithubRepo         string
 	GithubPoliciesPath string
-	GithubTargetBranch string
 
 	// fields that goldfish will write
 	LastUpdated         string `hash:"ignore"`
-	GithubCurrentCommit string
 }
 
 var (
 	conf                       = RuntimeConfig{}
 	configLock                 = new(sync.RWMutex)
 	configHash          uint64 = 0
-	GithubCurrentCommit        = ""
 )
 
 func GetConfig() RuntimeConfig {
@@ -68,9 +65,6 @@ func loadConfigFromVault(path string) error {
 	} else {
 		return err
 	}
-
-	// the local copy of current commit is the source of truth
-	temp.GithubCurrentCommit = GithubCurrentCommit
 
 	// improperly formed slack webhooks are not allowed
 	if !strings.HasPrefix(temp.SlackWebhook, "https://hooks.slack.com/services") {
