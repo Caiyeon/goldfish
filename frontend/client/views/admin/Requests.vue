@@ -1,4 +1,4 @@
-<template>
+pre class="is-paddingless" v-highlightjs<template>
   <div>
     <div class="tile is-ancestor">
       <div class="tile is-parent is-vertical">
@@ -25,6 +25,22 @@
                   Search
                 </a>
               </p>
+            </div>
+            <div class="field">
+              <div class="control">
+                <label class="radio">
+                  <input type="radio" v-model="show" value="syntax">
+                  Highlight syntax
+                </label>
+                <label class="radio">
+                  <input type="radio" v-model="show" value="diffSingle">
+                  Line-by-line diff
+                </label>
+                <label class="radio">
+                  <input type="radio" v-model="show" value="diffDouble">
+                  Side-by-side diff
+                </label>
+              </div>
             </div>
           </div>
 
@@ -67,14 +83,14 @@
               </div>
             </div>
 
-            <!-- Request details -->
-            <div class="columns">
+            <!-- syntax-highlighted diff -->
+            <div v-if="show === 'syntax'" class="columns">
               <div v-if="request.Previous" class="column">
                 <article class="message is-primary" :class="request.Proposed ? '' : 'is-danger'">
                   <div class="message-header">
                     {{request.Proposed ? 'Current policy rules' : 'Will be deleted!'}}
                   </div>
-                  <pre v-highlightjs="request.Previous"><code class="ruby"></code></pre>
+                  <pre class="is-paddingless" v-highlightjs="request.Previous"><code class="ruby"></code></pre>
                 </article>
               </div>
 
@@ -83,10 +99,13 @@
                   <div class="message-header">
                   {{request.Previous ? 'Proposed policy rules' : 'Will be created!'}}
                   </div>
-                  <pre v-highlightjs="request.Proposed"><code class="ruby"></code></pre>
+                  <pre  class="is-paddingless" v-highlightjs="request.Proposed"><code class="ruby"></code></pre>
                 </article>
               </div>
             </div>
+
+            <!-- diff via jsdiff and diff2html -->
+            <div v-if="show === 'diffSingle' || show === 'diffDouble'" v-html="diff"></div>
           </article>
 
           <!-- Request type: github -->
@@ -129,9 +148,9 @@
               </div>
             </div>
 
-            <!-- Request details -->
+            <!-- syntax-highlighted diff -->
             <div class="box"
-            v-if="request.Progress !== request.Required"
+            v-if="show === 'syntax' && request.Progress !== request.Required"
             v-for="(details, policy) in request.Changes">
               <!-- policy name title and status tag -->
               <nav class="level">
@@ -155,7 +174,7 @@
                     <div class="message-header">
                       Current policy rules
                     </div>
-                    <pre v-highlightjs="details.Previous"><code class="ruby"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="details.Previous"><code class="ruby"></code></pre>
                   </article>
                 </div>
 
@@ -164,11 +183,14 @@
                     <div class="message-header">
                     Proposed policy rules
                     </div>
-                    <pre v-highlightjs="details.Proposed"><code class="ruby"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="details.Proposed"><code class="ruby"></code></pre>
                   </article>
                 </div>
               </div>
             </div>
+
+            <!-- diff via jsdiff and diff2html -->
+            <div v-if="(show === 'diffSingle' || show === 'diffDouble') && request.Progress !== request.Required" v-html="diff"></div>
           </article>
 
           <!-- Request type: token -->
@@ -238,12 +260,12 @@
               <div class="columns">
                 <div class="column">
                   <article class="message is-primary">
-                    <pre v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="JSON.stringify(tokenRequestPreview, null, '    ')"><code class="javascript"></code></pre>
                   </article>
                 </div>
                 <div class="column">
                   <article v-if="request.CreateResponse" class="message is-primary">
-                    <pre v-highlightjs="JSON.stringify(request.CreateResponse.wrap_info, null, '    ')"><code class="javascript"></code></pre>
+                    <pre class="is-paddingless" v-highlightjs="JSON.stringify(request.CreateResponse.wrap_info, null, '    ')"><code class="javascript"></code></pre>
                   </article>
                 </div>
               </div>
@@ -257,6 +279,9 @@
 </template>
 
 <script>
+const jsdiff = require('diff')
+const diff2html = require('diff2html').Diff2Html
+
 export default {
   data () {
     return {
@@ -264,7 +289,8 @@ export default {
       request: null,
       bConfirm: false,
       bReject: false,
-      unsealKey: ''
+      unsealKey: '',
+      show: 'syntax'
     }
   },
 
@@ -288,6 +314,42 @@ export default {
         return {}
       }
       return this.request.CreateRequest
+    },
+
+    diff: function () {
+      if (!this.request || this.show === 'syntax') {
+        return ''
+      }
+
+      let format = 'line-by-line'
+      if (this.show === 'diffDouble') {
+        format = 'side-by-side'
+      }
+
+      if (this.request['Previous'] && this.request['Proposed']) {
+        let diff = jsdiff.createPatch(
+          this.request.PolicyName,
+          this.request.Previous || '',
+          this.request.Proposed || '',
+          '', '', {context: 10000}
+        )
+        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: format, matching: 'lines'})
+      }
+      if (this.request['Changes'] && this.request.Changes.length > 0) {
+        let diff = ''
+        for (var policy in this.request.Changes) {
+          if (this.request.Changes.hasOwnProperty(policy)) {
+            diff = diff + jsdiff.createPatch(
+              policy,
+              this.request.Previous || '',
+              this.request.Proposed || '',
+              '', '', {context: 10000}
+            )
+          }
+        }
+        return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: format, matching: 'lines'})
+      }
+      return ''
     }
   },
 

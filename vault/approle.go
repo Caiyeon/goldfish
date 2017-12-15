@@ -29,6 +29,11 @@ func (auth AuthInfo) ListApproleRoles() ([]Role, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if resp == nil || resp.Data == nil {
+		return []Role{}, nil
+	}
+
 	rolenames, ok := resp.Data["keys"].([]interface{})
 	if !ok {
 		return nil, errors.New("Failed to convert response")

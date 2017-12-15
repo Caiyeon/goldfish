@@ -24,6 +24,11 @@ func (auth AuthInfo) ListUserpassUsers() ([]UserpassUser, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if resp == nil || resp.Data == nil {
+		return []UserpassUser{}, nil
+	}
+
 	usernames, ok := resp.Data["keys"].([]interface{})
 	if !ok {
 		return nil, errors.New("Failed to convert response")

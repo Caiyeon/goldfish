@@ -354,11 +354,11 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(resp, ShouldResemble, []LDAPGroup{
 				LDAPGroup{
 					Name:     "engineers",
-					Policies: []string{"default", "foobar"},
+					Policies: []string{"foobar"},
 				},
 				LDAPGroup{
 					Name:     "scientists",
-					Policies: []string{"bar", "default", "foo"},
+					Policies: []string{"bar", "foo"},
 				},
 			})
 
@@ -367,7 +367,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(resp2, ShouldResemble, []LDAPUser{
 				LDAPUser{
 					Name:     "tesla",
-					Policies: []string{"default", "zoobar"},
+					Policies: []string{"zoobar"},
 					Groups:   []string{"engineers"},
 				},
 			})

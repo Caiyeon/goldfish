@@ -285,7 +285,7 @@
             <div class="message-header">
               JSON:
             </div>
-            <pre v-highlightjs="JSON.stringify(constructedPayload, null, '    ')"><code class="javascript"></code></pre>
+            <pre class="is-paddingless" v-highlightjs="JSON.stringify(constructedPayload, null, '    ')"><code class="javascript"></code></pre>
           </article>
 
         </article>

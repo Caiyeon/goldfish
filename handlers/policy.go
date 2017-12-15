@@ -54,3 +54,27 @@ func DeletePolicy() echo.HandlerFunc {
 		})
 	}
 }
+
+func PolicyCapabilities() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
+		defer auth.Clear()
+
+		// fetch results
+		result, err := auth.PolicyCapabilities(
+			c.QueryParam("policy"),
+			c.QueryParam("path"),
+		)
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": result,
+		})
+	}
+}

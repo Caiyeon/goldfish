@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/meta"
+	"github.com/posener/complete"
 )
 
 // MountCommand is a Command that mounts a new mount.
@@ -14,13 +15,14 @@ type MountCommand struct {
 }
 
 func (c *MountCommand) Run(args []string) int {
-	var description, path, defaultLeaseTTL, maxLeaseTTL string
+	var description, path, defaultLeaseTTL, maxLeaseTTL, pluginName string
 	var local, forceNoCache bool
 	flags := c.Meta.FlagSet("mount", meta.FlagSetDefault)
 	flags.StringVar(&description, "description", "", "")
 	flags.StringVar(&path, "path", "", "")
 	flags.StringVar(&defaultLeaseTTL, "default-lease-ttl", "", "")
 	flags.StringVar(&maxLeaseTTL, "max-lease-ttl", "", "")
+	flags.StringVar(&pluginName, "plugin-name", "", "")
 	flags.BoolVar(&forceNoCache, "force-no-cache", false, "")
 	flags.BoolVar(&local, "local", false, "")
 	flags.Usage = func() { c.Ui.Error(c.Help()) }
@@ -39,8 +41,13 @@ func (c *MountCommand) Run(args []string) int {
 	mountType := args[0]
 
 	// If no path is specified, we default the path to the backend type
+	// or use the plugin name if it's a plugin backend
 	if path == "" {
-		path = mountType
+		if mountType == "plugin" {
+			path = pluginName
+		} else {
+			path = mountType
+		}
 	}
 
 	client, err := c.Client()
@@ -57,6 +64,7 @@ func (c *MountCommand) Run(args []string) int {
 			DefaultLeaseTTL: defaultLeaseTTL,
 			MaxLeaseTTL:     maxLeaseTTL,
 			ForceNoCache:    forceNoCache,
+			PluginName:      pluginName,
 		},
 		Local: local,
 	}
@@ -67,9 +75,14 @@ func (c *MountCommand) Run(args []string) int {
 		return 2
 	}
 
+	mountTypeOutput := fmt.Sprintf("'%s'", mountType)
+	if mountType == "plugin" {
+		mountTypeOutput = fmt.Sprintf("plugin '%s'", pluginName)
+	}
+
 	c.Ui.Output(fmt.Sprintf(
-		"Successfully mounted '%s' at '%s'!",
-		mountType, path))
+		"Successfully mounted %s at '%s'!",
+		mountTypeOutput, path))
 
 	return 0
 }
@@ -112,10 +125,40 @@ Mount Options:
                                  not affect caching of the underlying encrypted
                                  data storage.
 
+  -plugin-name                   Name of the plugin to mount based from the name 
+                                 in the plugin catalog.
+
   -local                         Mark the mount as a local mount. Local mounts
                                  are not replicated nor (if a secondary)
                                  removed by replication.
-
 `
 	return strings.TrimSpace(helpText)
+}
+
+func (c *MountCommand) AutocompleteArgs() complete.Predictor {
+	// This list does not contain deprecated backends
+	return complete.PredictSet(
+		"aws",
+		"consul",
+		"pki",
+		"transit",
+		"ssh",
+		"rabbitmq",
+		"database",
+		"totp",
+		"plugin",
+	)
+
+}
+
+func (c *MountCommand) AutocompleteFlags() complete.Flags {
+	return complete.Flags{
+		"-description":       complete.PredictNothing,
+		"-path":              complete.PredictNothing,
+		"-default-lease-ttl": complete.PredictNothing,
+		"-max-lease-ttl":     complete.PredictNothing,
+		"-force-no-cache":    complete.PredictNothing,
+		"-plugin-name":       complete.PredictNothing,
+		"-local":             complete.PredictNothing,
+	}
 }

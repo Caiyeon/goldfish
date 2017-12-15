@@ -120,6 +120,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 
 	e.GET("/v1/policy", handlers.GetPolicy())
 	e.DELETE("/v1/policy", handlers.DeletePolicy())
+	e.GET("/v1/policy-capabilities", handlers.PolicyCapabilities())
 
 	e.GET("/v1/request", handlers.GetRequest())
 	e.POST("/v1/request/add", handlers.AddRequest())

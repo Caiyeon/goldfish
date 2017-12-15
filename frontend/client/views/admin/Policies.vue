@@ -41,13 +41,13 @@
                     <input class="input" type="text"
                     :placeholder ="search.regex ?
                       'Filter by policy details' :
-                      'foo/bar matches foo/*'"
+                      'e.g. \'secret/foo/bar\''"
                     v-model="search.str"
-                    @keyup.enter="filterByDetails()">
+                    @keyup.enter="search.regex ? filterPoliciesByRegex() : filterPoliciesByPath()">
                   </p>
                   <p class="control">
                     <button class="button is-info"
-                    @click="filterByDetails()"
+                    @click="search.regex ? filterPoliciesByRegex() : filterPoliciesByPath()"
                     :class="loading ? 'is-loading' : ''">
                       Search
                     </button>
@@ -68,6 +68,7 @@
               <thead>
                 <tr>
                   <th>Policy Name</th>
+                  <td v-if="search.searched">Capabilities</td>
                 </tr>
               </thead>
               <tbody>
@@ -77,6 +78,17 @@
                     :class="entry === 'root' ? 'is-danger': ''"
                     @click="getPolicyRules(entry)">
                       {{entry}}</a>
+                  </td>
+                  <td v-if="search.searched">
+                    <div v-if="search.found[entry]" class="tags">
+                      <span
+                        class="tag is-rounded"
+                        v-for="capability in search.found[entry]"
+                        :class="colorCode(capability)"
+                      >
+                        {{capability}}
+                      </span>
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="bNewPolicy">
@@ -162,7 +174,7 @@ export default {
       nameFilter: '',
       search: {
         str: '',
-        found: [],
+        found: {},
         searched: 0,
         regex: false
       },
@@ -188,20 +200,24 @@ export default {
       return this.$store.getters.session
     },
     filteredPolicies: function () {
-      if (this.nameFilter) {
-        // filter by name
-        var filter = this.nameFilter
-        return this.policies.filter(
+      let policies = this.policies
+
+      // if a search has been done, only filter searched policies
+      if (this.search.searched) {
+        policies = Object.keys(this.search.found)
+      }
+
+      // if a plain filter is active, further filter policies
+      if (this.nameFilter !== '') {
+        let filter = this.nameFilter
+        policies = policies.filter(
           function (policy) {
             return policy.includes(filter)
           }
         )
       }
-      if (this.search.searched) {
-        // filter by policy details
-        return this.search.found
-      }
-      return this.policies
+
+      return policies
     }
   },
 
@@ -235,23 +251,34 @@ export default {
       })
     },
 
-    filterByDetails: function () {
+    filterPoliciesByRegex: function () {
       if (this.search.str === '') {
         return
       }
-      this.search.found = []
+
+      // ensure the search string is valid regex
+      try {
+        RegExp(this.search.str)
+      } catch (e) {
+        this.$notify({
+          title: 'Error',
+          message: 'Not a valid regex string!',
+          type: 'warning'
+        })
+        return
+      }
+
+      this.search.found = {}
       this.search.searched = 0
       this.loading = this.policies.length
 
       // crawl through each policy
-      for (var i = 0; i < this.policies.length; i++) {
-        let policyName = this.policies[i]
-        this.$http.get('/v1/policy?policy=' + policyName, {
+      for (const policy of this.policies) {
+        this.$http.get('/v1/policy?policy=' + encodeURIComponent(policy), {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
-          var searchString = this.search.regex ? this.search.str : this.makeRegex(this.search.str)
-          if (response.data.result.match(searchString)) {
-            this.search.found.push(policyName)
+          if (response.data.result.match(this.search.str)) {
+            this.search.found[policy] = []
           }
           this.search.searched++
           this.loading = this.loading - 1 || false
@@ -261,6 +288,56 @@ export default {
           this.search.searched++
           this.loading = this.loading - 1 || false
         })
+      }
+    },
+
+    filterPoliciesByPath: function () {
+      if (this.search.str === '') {
+        return
+      }
+      this.search.found = {}
+      this.search.searched = 0
+      this.loading = this.policies.length
+
+      // for each policy, check capabilities on path (i.e. search string)
+      for (const policy of this.policies) {
+        this.$http.get('/v1/policy-capabilities?policy=' + encodeURIComponent(policy) +
+        '&path=' + encodeURIComponent(this.search.str), {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        }).then((response) => {
+          // add any non-'deny' policies to the found list
+          if (response.data.result[0] !== 'deny') {
+            this.search.found[policy] = response.data.result
+          }
+          this.search.searched++
+          this.loading = this.loading - 1 || false
+        })
+        .catch((error) => {
+          // notify user of any errors
+          this.$onError(error)
+          this.search.searched++
+          this.loading = this.loading - 1 || false
+        })
+      }
+    },
+
+    colorCode: function (capability) {
+      switch (capability) {
+        case 'root':
+        case 'sudo':
+          return 'is-danger'
+
+        case 'read':
+        case 'list':
+          return 'is-primary'
+
+        case 'update':
+        case 'create':
+        case 'delete':
+          return 'is-info'
+
+        default:
+          return 'is-warning'
       }
     },
 
@@ -334,35 +411,8 @@ export default {
       .catch((error) => {
         this.$onError(error)
       })
-    },
-
-    makeRegex: function (str) {
-      var lastSlash = str.lastIndexOf('/')
-      if (lastSlash === -1) {
-        // if slash doesn't exist, match 'foo', 'foo*', 'fo*', 'f*', '*'
-        var lastWord = str
-        var returnString = '"(' + str
-        for (var i = str.length + 1; i > 0; i--) {
-          returnString += '|' + lastWord + '\\*'
-          lastWord = lastWord.substring(0, i - 2)
-        }
-      } else {
-      // if slash does exist, match 'foo/bar', 'foo/bar*', 'foo/ba*', 'foo/b*', 'foo/*'
-        lastWord = str.substring(lastSlash + 1, str.length)
-        if (lastWord === '') {
-          var replaced = str.replace('/', '\\/')
-          return '"(' + replaced + '|' + replaced + '\\*)"'
-        }
-        returnString = '"' + str.substring(0, lastSlash)
-        returnString = returnString.replace('/', '\\/') + '\\/(' + lastWord
-        for (i = lastWord.length + 1; i > 0; i--) {
-          returnString += '|' + lastWord + '\\*'
-          lastWord = lastWord.substring(0, i - 2)
-        }
-      }
-      // prefix and suffix return with double quotes to ensure it matches the full path only
-      return returnString + ')"'
     }
+
   }
 }
 
