@@ -41,13 +41,13 @@
                     <input class="input" type="text"
                     :placeholder ="search.regex ?
                       'Filter by policy details' :
-                      'foo/bar matches foo/*'"
+                      'e.g. \'secret/foo/bar\''"
                     v-model="search.str"
-                    @keyup.enter="filterPoliciesByPath()">
+                    @keyup.enter="search.regex ? filterPoliciesByRegex() : filterPoliciesByPath()">
                   </p>
                   <p class="control">
                     <button class="button is-info"
-                    @click="filterPoliciesByPath()"
+                    @click="search.regex ? filterPoliciesByRegex() : filterPoliciesByPath()"
                     :class="loading ? 'is-loading' : ''">
                       Search
                     </button>
@@ -251,23 +251,21 @@ export default {
       })
     },
 
-    filterByDetails: function () {
+    filterPoliciesByRegex: function () {
       if (this.search.str === '') {
         return
       }
-      this.search.found = []
+      this.search.found = {}
       this.search.searched = 0
       this.loading = this.policies.length
 
       // crawl through each policy
-      for (var i = 0; i < this.policies.length; i++) {
-        let policyName = this.policies[i]
-        this.$http.get('/v1/policy?policy=' + policyName, {
+      for (const policy of this.policies) {
+        this.$http.get('/v1/policy?policy=' + policy, {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
-          var searchString = this.search.regex ? this.search.str : this.makeRegex(this.search.str)
-          if (response.data.result.match(searchString)) {
-            this.search.found.push(policyName)
+          if (response.data.result.match(this.search.str)) {
+            this.search.found[policy] = []
           }
           this.search.searched++
           this.loading = this.loading - 1 || false
@@ -399,35 +397,8 @@ export default {
       .catch((error) => {
         this.$onError(error)
       })
-    },
-
-    makeRegex: function (str) {
-      var lastSlash = str.lastIndexOf('/')
-      if (lastSlash === -1) {
-        // if slash doesn't exist, match 'foo', 'foo*', 'fo*', 'f*', '*'
-        var lastWord = str
-        var returnString = '"(' + str
-        for (var i = str.length + 1; i > 0; i--) {
-          returnString += '|' + lastWord + '\\*'
-          lastWord = lastWord.substring(0, i - 2)
-        }
-      } else {
-      // if slash does exist, match 'foo/bar', 'foo/bar*', 'foo/ba*', 'foo/b*', 'foo/*'
-        lastWord = str.substring(lastSlash + 1, str.length)
-        if (lastWord === '') {
-          var replaced = str.replace('/', '\\/')
-          return '"(' + replaced + '|' + replaced + '\\*)"'
-        }
-        returnString = '"' + str.substring(0, lastSlash)
-        returnString = returnString.replace('/', '\\/') + '\\/(' + lastWord
-        for (i = lastWord.length + 1; i > 0; i--) {
-          returnString += '|' + lastWord + '\\*'
-          lastWord = lastWord.substring(0, i - 2)
-        }
-      }
-      // prefix and suffix return with double quotes to ensure it matches the full path only
-      return returnString + ')"'
     }
+
   }
 }
 
