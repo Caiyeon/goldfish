@@ -255,6 +255,19 @@ export default {
       if (this.search.str === '') {
         return
       }
+
+      // ensure the search string is valid regex
+      try {
+        RegExp(this.search.str)
+      } catch (e) {
+        this.$notify({
+          title: 'Error',
+          message: 'Not a valid regex string!',
+          type: 'warning'
+        })
+        return
+      }
+
       this.search.found = {}
       this.search.searched = 0
       this.loading = this.policies.length
