@@ -261,7 +261,7 @@ export default {
 
       // crawl through each policy
       for (const policy of this.policies) {
-        this.$http.get('/v1/policy?policy=' + policy, {
+        this.$http.get('/v1/policy?policy=' + encodeURIComponent(policy), {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           if (response.data.result.match(this.search.str)) {
@@ -288,7 +288,8 @@ export default {
 
       // for each policy, check capabilities on path (i.e. search string)
       for (const policy of this.policies) {
-        this.$http.get('/v1/policy-capabilities?policy=' + policy + '&path=' + this.search.str, {
+        this.$http.get('/v1/policy-capabilities?policy=' + encodeURIComponent(policy) +
+        '&path=' + encodeURIComponent(this.search.str), {
           headers: {'X-Vault-Token': this.session ? this.session.token : ''}
         }).then((response) => {
           // add any non-'deny' policies to the found list
