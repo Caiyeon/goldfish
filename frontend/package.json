@@ -39,7 +39,6 @@
     "diff": "^3.4.0",
     "diff2html": "^2.3.2",
     "font-awesome": "4.7.0",
-    "github-buttons": "git+https://github.com/ntkme/github-buttons.git",
     "highlight.js": "^9.12.0",
     "hint.css": "^2.4.1",
     "lodash": "^4.17.4",
