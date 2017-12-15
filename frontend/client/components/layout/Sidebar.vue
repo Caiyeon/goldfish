@@ -166,7 +166,6 @@ export default {
     &:not(.is-angle) {
       position: relative;
       right: 3px;
-      top: -1px;
     }
   }
 
