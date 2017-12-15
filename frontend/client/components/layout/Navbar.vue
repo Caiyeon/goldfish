@@ -78,6 +78,13 @@
 
           <!-- rightside -->
           <div class="navbar-end">
+            <div class="navbar-item" v-if="holidaySeasons">
+              <div class="tags has-addons">
+                <span class="tag is-success"><i class="fa fa-gift"></i>&nbsp;&nbsp;Happy Holidays!</span>
+                <span class="tag is-danger">Happy New Years!&nbsp;&nbsp;<i class="fa fa-smile-o"></i></span>
+              </div>
+            </div>
+
             <div class="navbar-item" v-if="updateAvailable">
               <div class="tags has-addons">
                 <a class="tag is-primary" :href="latestRelease['html_url']" target="_blank">Update Available</a>
@@ -221,6 +228,15 @@ export default {
         }
       }
       return false
+    },
+
+    // computed client-side only :)
+    holidaySeasons: function () {
+      return moment().isBetween(
+        moment('22/12/2017', 'DD/MM/YYYY'),
+        moment('3/1/2018', 'DD/MM/YYYY'),
+        'days', '[]'
+      )
     }
   },
 

@@ -110,15 +110,22 @@
 
               <!-- headers -->
               <thead>
-                <tr v-if="this.currentPathType === 'Secret'">
-                  <th @click="sortBy('type')">Type</th>
-                  <th @click="sortBy('path')">Key</th>
-                  <th @click="sortBy('desc')">Value</th>
-                  <th></th>
-                </tr>
-                <tr v-if="this.currentPathType === 'Path'">
-                  <th @click="sortBy('type')">Type</th>
-                  <th @click="sortBy('path')">Subpaths</th>
+                <tr>
+                  <th @click="sortBy('type')">
+                    Type
+                    <i v-if="sortKey.key === 'type' && sortKey.order === 'asc'" class="fa fa-caret-down"></i>
+                    <i v-if="sortKey.key === 'type' && sortKey.order === 'desc'" class="fa fa-caret-up"></i>
+                  </th>
+                  <th @click="sortBy('path')">
+                    {{currentPathType === 'Secret' ? 'Key' : 'Subpaths'}}
+                    <i v-if="sortKey.key === 'path' && sortKey.order === 'asc'" class="fa fa-caret-down"></i>
+                    <i v-if="sortKey.key === 'path' && sortKey.order === 'desc'" class="fa fa-caret-up"></i>
+                  </th>
+                  <th v-if="currentPathType === 'Secret'" @click="sortBy('desc')">
+                    Value
+                    <i v-if="sortKey.key === 'desc' && sortKey.order === 'asc'" class="fa fa-caret-down"></i>
+                    <i v-if="sortKey.key === 'desc' && sortKey.order === 'desc'" class="fa fa-caret-up"></i>
+                  </th>
                   <th></th>
                 </tr>
               </thead>

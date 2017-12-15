@@ -165,7 +165,9 @@
                   <td width="34">
                   <span class="icon">
                     <a @click="openModalBasic(index)">
-                      <i class="fa fa-info"></i>
+                      <span class="icon has-text-info">
+                        <i class="fa fa-info-circle"></i>
+                      </span>
                     </a>
                   </span>
                   </td>
@@ -207,7 +209,9 @@
                   <td width="34">
                     <span class="icon">
                       <a @click="openModalBasic(index)">
-                        <i class="fa fa-info"></i>
+                        <span class="icon has-text-info">
+                          <i class="fa fa-info-circle"></i>
+                        </span>
                       </a>
                     </span>
                   </td>
@@ -243,7 +247,9 @@
                   <td width="34">
                     <span class="icon">
                       <a @click="openModalBasic(index)">
-                        <i class="fa fa-info"></i>
+                        <span class="icon has-text-info">
+                          <i class="fa fa-info-circle"></i>
+                        </span>
                       </a>
                     </span>
                   </td>
@@ -766,9 +772,5 @@ export default {
 
   .fa-trash-o {
     color: red;
-  }
-
-  .fa-info {
-    color: lightskyblue;
   }
 </style>

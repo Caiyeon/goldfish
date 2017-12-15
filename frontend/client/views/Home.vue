@@ -10,7 +10,7 @@
       <strong>{{ description }}</strong>
     </p>
 
-    <p>Uses VueJS 2.4 and Bulma CSS 0.5!</p>
+    <p>Uses VueJS 2.4 and Bulma CSS 0.6!</p>
   </div>
 </template>
 
