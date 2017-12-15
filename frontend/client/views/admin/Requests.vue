@@ -335,14 +335,14 @@ export default {
         )
         return diff2html.getPrettyHtml(diff, {inputFormat: 'diff', outputFormat: format, matching: 'lines'})
       }
-      if (this.request['Changes'] && this.request.Changes.length > 0) {
+      if (this.request['Changes']) {
         let diff = ''
         for (const policy in this.request.Changes) {
           if (this.request.Changes.hasOwnProperty(policy)) {
             diff = diff + jsdiff.createPatch(
               policy,
               this.request.Changes[policy].Previous || '',
-              this.request.Proposed[policy].Proposed || '',
+              this.request.Changes[policy].Proposed || '',
               '', '', {context: 10000}
             )
           }
