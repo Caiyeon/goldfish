@@ -19,15 +19,16 @@ import (
 )
 
 var (
-	cfg            *config.Config
-	cfgPath        string
-	devMode        bool
-	devVaultCh     chan struct{}
-	err            error
-	nomadTokenFile string
-	printVersion   bool
-	wrappingToken  string
-	staticAssets   *rice.Box
+	cfg              *config.Config
+	cfgPath          string
+	devMode          bool
+	devVaultCh       chan struct{}
+	err              error
+	nomadTokenFile   string
+	printVersion     bool
+	wrappingToken    string
+	wrappedTokenFile string
+	staticAssets     *rice.Box
 )
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 	flag.BoolVar(&printVersion, "version", false, "Display goldfish's version and exit")
 	flag.StringVar(&wrappingToken, "token", "", "Token generated from approle (must be wrapped!)")
 	flag.StringVar(&nomadTokenFile, "nomad-token-file", "", "If you are using Nomad, this file should contain a secret_id")
+	flag.StringVar(&wrappedTokenFile, "wrapped-token-file", "", "Token which can unwrap an authorized Vault Token response")
 	flag.StringVar(&cfgPath, "config", "", "The path of the deployment config HCL file")
 }
 
@@ -86,6 +88,14 @@ func main() {
 			log.Fatalf("[ERROR]: Could not read token file: %s", err.Error())
 		}
 		if err := vault.BootstrapRaw(string(raw)); err != nil {
+			log.Fatalf("[ERROR]: Bootstrapping goldfish: %s", err.Error())
+		}
+	} else if wrappedTokenFile != "" {
+		raw, err := ioutil.ReadFile(wrappedTokenFile)
+		if err != nil {
+			log.Fatalf("[ERROR]: Could not read wrapped token file: %s", err.Error())
+		}
+		if err := vault.BootstrapWrapped(string(raw)); err != nil {
 			log.Fatalf("[ERROR]: Bootstrapping goldfish: %s", err.Error())
 		}
 	}

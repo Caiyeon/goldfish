@@ -118,6 +118,32 @@ func Bootstrap(wrappingToken string) error {
 	return BootstrapRaw(resp.Auth.ClientToken)
 }
 
+func BootstrapWrapped(wrappedToken string) error {
+	if wrappedToken == "" {
+		return errors.New("Wrapped token must be provided")
+	}
+
+	client, err := NewVaultClient()
+	if err != nil {
+		return err
+	}
+
+	// make a raw unwrap call. This will use the token as a header
+	client.SetToken(wrappedToken)
+	resp, err := client.Logical().Unwrap("")
+	if err != nil {
+		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
+	}
+	if resp == nil {
+		return errors.New("Vault response was nil. Please revoke token.\n" +
+			"If your vault cert is self-signed, you'll need to enable tls_skip_verify in goldfish config.")
+	}
+
+	// BootstrapRaw will verify that the token is privileged and
+	// will also setup background processes
+	return BootstrapRaw(resp.Auth.ClientToken)
+}
+
 // similar to bootstrap function, but uses a raw token instead of an approle secret_id
 // highly dangerous and not recommended to be called externally unless approle is inaccessible
 func BootstrapRaw(token string) error {
