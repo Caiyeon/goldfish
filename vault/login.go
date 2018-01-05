@@ -45,8 +45,16 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 
 	// if logging in for the first time with these auth backends
 	if t == "userpass" || t == "ldap" || t == "github" || t == "okta" {
-		// fetch a client token by logging. Auth backend is hardcoded for now
-		resp, err := client.Logical().Write("auth/" + t + "/login/" + auth.ID,
+		// fetch a client token by writing to vault auth backend
+		loginPath := "auth/" + t + "/login/" + auth.ID
+
+		// if auth has a different backend name, use that
+		if auth.Path != "" {
+			loginPath = "auth/" + auth.Path + "/login/" + auth.ID
+		}
+
+		resp, err := client.Logical().Write(
+			loginPath,
 			map[string]interface{}{
 				key: auth.Pass,
 			})

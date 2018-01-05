@@ -10,9 +10,10 @@ import (
 )
 
 type AuthInfo struct {
-	Type string `json:"Type" form:"Type" query:"Type"`
+	Type string `json:"type" form:"Type" query:"Type"`
 	ID   string `json:"ID" form:"ID" query:"ID"`
 	Pass string `json:"password" form:"Password" query:"Password"`
+	Path string `json:"path" form:"Path" query:"Path"`
 }
 
 var (
