@@ -432,8 +432,8 @@ export default {
         // to avoid ambiguity, current session should be purged when new login fails
         this.logout()
         this.$onError(error)
-        if (this.bCustomPath && error.response.status === 400
-          && error.response.data.error === 'Vault:  missing client token') {
+        if (this.bCustomPath && error.response.status === 400 &&
+          error.response.data.error === 'Vault:  missing client token') {
           this.$notify({
             title: 'Custom path?',
             message: 'If the custom path does not exist, vault will respond with error 400',
