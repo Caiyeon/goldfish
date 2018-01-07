@@ -37,6 +37,10 @@ type VaultConfig struct {
 	Runtime_config  string
 	Approle_login   string
 	Approle_id      string
+	CA_cert			string
+	CA_path			string
+	Client_cert		string
+	Client_key		string
 }
 
 func LoadConfigFile(path string) (*Config, error) {
@@ -266,6 +270,10 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		"runtime_config",
 		"approle_login",
 		"approle_id",
+		"ca_cert",
+		"ca_path",
+		"client_cert",
+		"client_key",
 	}
 	if err := checkHCLKeys(vault.Val, valid); err != nil {
 		return fmt.Errorf("vault.%s: %s", key, err.Error())
@@ -318,5 +326,28 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		result.Vault.Approle_id = "goldfish"
 	}
 
+	if cacert, ok := m["ca_cert"]; ok && cacert != "" {
+		result.Vault.CA_cert = cacert
+	} else {
+		result.Vault.CA_cert = ""
+	}
+
+	if capath, ok := m["ca_path"]; ok && capath != "" {
+		result.Vault.CA_path = capath
+	} else {
+		result.Vault.CA_path = ""
+	}
+
+	if clientcert, ok := m["client_cert"]; ok && clientcert != "" {
+		result.Vault.Client_cert = clientcert
+	} else {
+		result.Vault.Client_cert = ""
+	}
+
+	if clientkey, ok := m["client_key"]; ok && clientkey != "" {
+		result.Vault.Client_key = clientkey
+	} else {
+		result.Vault.Client_key = ""
+	}
 	return nil
 }
