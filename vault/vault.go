@@ -47,6 +47,8 @@ func NewVaultClient() (*api.Client, error) {
 	err := config.ConfigureTLS(
 		&api.TLSConfig{
 			Insecure: vaultConfig.Tls_skip_verify,
+			CACert: vaultConfig.CA_cert,
+			CAPath: vaultConfig.CA_path,
 		},
 	)
 	if err != nil {
