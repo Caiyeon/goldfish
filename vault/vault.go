@@ -155,9 +155,16 @@ func Bootstrap(wrappingToken string) error {
 
 	// lock in token
 	vaultTokenLock.Lock()
-	defer vaultTokenLock.Unlock()
-
 	vaultToken = potentialToken
+	vaultTokenLock.Unlock()
+
+	// load runtime config
+	if err := loadConfigFromVault(vaultConfig.Runtime_config); err != nil {
+		vaultTokenLock.Lock()
+		vaultToken = ""
+		vaultTokenLock.Unlock()
+		return err
+	}
 
 	// notify user of the accessor so it can be revoked if needed
 	log.Println("[INFO ]: Successfully bootstrapped. Server token accessor:", acc)
@@ -187,9 +194,16 @@ func BootstrapRaw(token string) error {
 
 	// lock in token
 	vaultTokenLock.Lock()
-	defer vaultTokenLock.Unlock()
-
 	vaultToken = token
+	vaultTokenLock.Unlock()
+
+	// load runtime config
+	if err := loadConfigFromVault(vaultConfig.Runtime_config); err != nil {
+		vaultTokenLock.Lock()
+		vaultToken = ""
+		vaultTokenLock.Unlock()
+		return err
+	}
 
 	// notify user of the accessor so it can be revoked if needed
 	log.Println("[INFO ]: Server token accessor:", acc)

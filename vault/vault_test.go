@@ -164,7 +164,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			Convey("Number of accessors should increase", func() {
 				accessors, err := rootAuth.GetTokenAccessors()
 				So(err, ShouldBeNil)
-				So(len(accessors), ShouldEqual, 3)
+				So(len(accessors), ShouldEqual, 4)
 
 				_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, true, "", "")
 				So(err, ShouldBeNil)
