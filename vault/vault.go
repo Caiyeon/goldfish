@@ -18,10 +18,13 @@ type AuthInfo struct {
 }
 
 var (
-	vaultConfig    config.VaultConfig
-	vaultToken     string
-	vaultTokenLock = new(sync.RWMutex)
-	errorChannel   = make(chan error, 1)
+	vaultConfig          config.VaultConfig
+	vaultToken           string
+	vaultTokenLock       = new(sync.RWMutex)
+
+	errorChannel         = make(chan error, 1)
+	stopChannelConfig    = make(chan struct{}, 1)
+	stopChannelRenew     = make(chan struct{}, 1)
 )
 
 func init() {
@@ -42,11 +45,21 @@ func Bootstrapped() bool {
 	return vaultToken != ""
 }
 
-// TODO: stop background renewal processes
 func unbootstrap() {
+	if !Bootstrapped() {
+		return
+	}
+
+	// clear token
 	vaultTokenLock.Lock()
 	defer vaultTokenLock.Unlock()
 	vaultToken = ""
+
+	// stop background processes
+	go func() {
+		stopChannelConfig <- struct{}{}
+		stopChannelRenew <- struct{}{}
+	}()
 }
 
 func SetConfig(c *config.VaultConfig) {
@@ -265,14 +278,24 @@ func LoadRuntimeConfig(configPath string) error {
 func loadConfigEvery(interval time.Duration, configPath string) {
 	for {
 		time.Sleep(interval)
-		errorChannel <- loadConfigFromVault(configPath)
+		select {
+			default:
+				errorChannel <- loadConfigFromVault(configPath)
+			case <-stopChannelConfig:
+				return
+		}
 	}
 }
 
 func renewServerTokenEvery(interval time.Duration) {
 	for {
 		time.Sleep(interval)
-		errorChannel <- renewServerToken()
+		select {
+			default:
+				errorChannel <- renewServerToken()
+			case <-stopChannelRenew:
+				return
+		}
 	}
 }
 
