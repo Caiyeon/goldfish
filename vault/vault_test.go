@@ -28,7 +28,7 @@ func TestGoldfishWrapper(t *testing.T) {
 	Convey("Testing bootstrap functions", t, func() {
 		Convey("Reusing the server's own token as raw token", func() {
 			temp := vaultToken
-			Unbootstrap()
+			unbootstrap()
 			err = BootstrapRaw(temp)
 			So(err, ShouldBeNil)
 		})
@@ -49,7 +49,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			So(secret, ShouldNotBeNil)
 			So(secret.WrapInfo, ShouldNotBeNil)
 
-			Unbootstrap()
+			unbootstrap()
 			err = Bootstrap(secret.WrapInfo.Token)
 			So(err, ShouldBeNil)
 		})

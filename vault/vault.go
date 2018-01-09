@@ -43,7 +43,7 @@ func Bootstrapped() bool {
 }
 
 // TODO: stop background renewal processes
-func Unbootstrap() {
+func unbootstrap() {
 	vaultTokenLock.Lock()
 	defer vaultTokenLock.Unlock()
 	vaultToken = ""
