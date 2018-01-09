@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"time"
+	"sync"
 
 	"github.com/caiyeon/goldfish/config"
 	"github.com/hashicorp/vault/api"
@@ -17,9 +18,10 @@ type AuthInfo struct {
 }
 
 var (
-	vaultConfig  config.VaultConfig
-	vaultToken   string
-	errorChannel = make(chan error, 1)
+	vaultConfig    config.VaultConfig
+	vaultToken     string
+	vaultTokenLock = new(sync.RWMutex)
+	errorChannel   = make(chan error, 1)
 )
 
 func init() {
@@ -35,6 +37,8 @@ func init() {
 }
 
 func Bootstrapped() bool {
+	vaultTokenLock.RLock()
+	defer vaultTokenLock.RUnlock()
 	return vaultToken != ""
 }
 
@@ -65,137 +69,162 @@ func NewVaultClient() (*api.Client, error) {
 
 func NewGoldfishVaultClient() (client *api.Client, err error) {
 	if !Bootstrapped() {
-		return nil, errors.New("Goldfish is not bootstrapped with a vault client!")
+		return nil, errors.New("Goldfish is not bootstrapped yet!")
 	}
+
 	if client, err = NewVaultClient(); err == nil {
+		vaultTokenLock.RLock()
+		defer vaultTokenLock.RUnlock()
 		client.SetToken(vaultToken)
 	}
 	return client, err
 }
 
 func Bootstrap(wrappingToken string) error {
+	if Bootstrapped() {
+		return errors.New("Already bootstrapped. Re-bootstrapping is not supported at the moment.")
+	}
 	if wrappingToken == "" {
 		return errors.New("Wrapping token must be provided")
 	}
 
+	// unwrap token
 	client, err := NewVaultClient()
 	if err != nil {
 		return err
 	}
-
-	// make a raw unwrap call. This will use the token as a header
 	client.SetToken(wrappingToken)
+
 	resp, err := client.Logical().Unwrap("")
 	if err != nil {
 		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
 	}
 	if resp == nil {
-		return errors.New("Vault response was nil. Please revoke token.\n" +
-			"If your vault cert is self-signed, you'll need to enable tls_skip_verify in goldfish config.")
+		return errors.New("Vault response was nil.\n" +
+			"If your vault cert is self-signed, you need to enable tls_skip_verify in goldfish config.")
 	}
 
-	// verify that a secret_id was wrapped
-	var secretID string
-	err = errors.New("Could not find secret_id in wrapped token. Was it wrapped properly?")
-	if raw, ok := resp.Data["secret_id"]; ok {
-		if secretID, ok = raw.(string); ok {
-			err = nil
+	var potentialToken string
+
+	// if this is an approle secret_id:
+	if resp.Data != nil {
+		// parse secret_id
+		raw, ok := resp.Data["secret_id"]
+		if !ok {
+			return errors.New("Could not find secret_id in wrapped token. Was it wrapped properly?")
 		}
+		secretID, ok := raw.(string)
+		if !ok {
+			return errors.New("Could not assert secret_id as string. Was it wrapped properly?")
+		}
+
+		// login with approle
+		resp2, err := client.Logical().Write(vaultConfig.Approle_login,
+			map[string]interface{}{
+				"role_id":   vaultConfig.Approle_id,
+				"secret_id": secretID,
+			})
+		if err != nil {
+			return err
+		}
+		if resp2 == nil || resp2.Auth == nil {
+			return errors.New("Error fetching client token in approle login. Is the role configured properly?")
+		}
+		potentialToken = resp2.Auth.ClientToken
+
+	// if this is a regular wrapped token (not approle)
+	} else if resp.Auth != nil {
+		potentialToken = resp.Auth.ClientToken
+
+	} else {
+		return errors.New("Wrapped secret is neither approle nor token. Aborting.")
 	}
+
+	// verify token has sufficient rights
+	acc, err := VerifyTokenRights(potentialToken)
 	if err != nil {
 		return err
 	}
 
-	// fetch vault token with secret_id
-	resp, err = client.Logical().Write(vaultConfig.Approle_login,
-		map[string]interface{}{
-			"role_id":   vaultConfig.Approle_id,
-			"secret_id": secretID,
-		})
-	if err != nil {
-		return err
-	}
+	// lock in token
+	vaultTokenLock.Lock()
+	defer vaultTokenLock.Unlock()
 
-	// BootstrapRaw will verify that the token is privileged and
-	// will also setup background processes
-	return BootstrapRaw(resp.Auth.ClientToken)
-}
+	vaultToken = potentialToken
 
-func BootstrapWrapped(wrappedToken string) error {
-	if wrappedToken == "" {
-		return errors.New("Wrapped token must be provided")
-	}
+	// notify user of the accessor so it can be revoked if needed
+	log.Println("[INFO ]: Successfully bootstrapped. Server token accessor:", acc)
 
-	client, err := NewVaultClient()
-	if err != nil {
-		return err
-	}
+	// start background processes for renewing settings and server token
+	go loadConfigEvery(time.Minute, vaultConfig.Runtime_config)
+	go renewServerTokenEvery(time.Hour)
 
-	// make a raw unwrap call. This will use the token as a header
-	client.SetToken(wrappedToken)
-	resp, err := client.Logical().Unwrap("")
-	if err != nil {
-		return errors.New("Failed to unwrap provided token, revoke it if possible\nReason:" + err.Error())
-	}
-	if resp == nil {
-		return errors.New("Vault response was nil. Please revoke token.\n" +
-			"If your vault cert is self-signed, you'll need to enable tls_skip_verify in goldfish config.")
-	}
-
-	// BootstrapRaw will verify that the token is privileged and
-	// will also setup background processes
-	return BootstrapRaw(resp.Auth.ClientToken)
+	return nil
 }
 
 // similar to bootstrap function, but uses a raw token instead of an approle secret_id
 // highly dangerous and not recommended to be called externally unless approle is inaccessible
 func BootstrapRaw(token string) error {
-	// set server's token
-	vaultToken = token
+	if Bootstrapped() {
+		return errors.New("Already bootstrapped. Re-bootstrapping is not supported at the moment.")
+	}
+	if token == "" {
+		return errors.New("No token provided")
+	}
 
 	// ensure the token has necessary rights
-	accessor, err := VerifyTokenRights(token)
+	acc, err := VerifyTokenRights(token)
 	if err != nil {
-		// revert server's token
-		vaultToken = ""
 		return err
 	}
+
+	// lock in token
+	vaultTokenLock.Lock()
+	defer vaultTokenLock.Unlock()
+
+	vaultToken = token
 
 	// notify user of the accessor so it can be revoked if needed
-	log.Println("[INFO ]: Server token accessor:", accessor)
+	log.Println("[INFO ]: Server token accessor:", acc)
 
-	// launch background processes
-	if err := LoadRuntimeConfig(vaultConfig.Runtime_config); err != nil {
-		// reset package token
-		vaultToken = ""
-		return err
-	}
+	// start background processes for renewing settings and server token
+	go loadConfigEvery(time.Minute, vaultConfig.Runtime_config)
+	go renewServerTokenEvery(time.Hour)
 
 	return nil
 }
 
 // check to ensure server's token has basic rights, and is able to read config path
 func VerifyTokenRights(token string) (accessor string, err error) {
-	client, err := NewGoldfishVaultClient()
+	client, err := NewVaultClient()
 	if err != nil {
 		return "", err
 	}
+	client.SetToken(token)
 
-	// verify server token can lookup self (this should be in default policy)
+	// verify token can lookup self (this should be in default policy)
 	if resp, err := client.Auth().Token().LookupSelf(); err != nil {
-		return "", err
+		return "", errors.New("Could not lookup self. Goldfish requires default policy. Error: " + err.Error())
 	} else if resp == nil {
-		return "", errors.New("Could not lookup self... response from vault was nil")
+		return "", errors.New("Could not lookup self. Goldfish requires default policy. Response from vault was nil")
 	} else {
 		// if lookup succeeded, record the token's accessor
 		accessor = resp.Data["accessor"].(string)
 	}
 
-	// verify that the client token is renewable
+	// verify token is renewable
 	if resp, err := client.Auth().Token().RenewSelf(0); err != nil {
-		return "", err
+		return "", errors.New("Could not renew token. Goldfish requires a renewable role/token. Error: " + err.Error())
 	} else if resp == nil {
-		return "", errors.New("Could not renew token... response from vault was nil")
+		return "", errors.New("Could not renew token. Goldfish requires a renewable role/token. Response from vault was nil")
+	}
+
+	// verify token can read runtime settings
+	resp, err := client.Logical().Read(vaultConfig.Runtime_config)
+	if err != nil {
+		return "", errors.New("Could not read runtime settings. Error: " + err.Error())
+	} else if resp == nil {
+		return "", errors.New("Could not read runtime settings. Vault response was nil. Error: " + err.Error())
 	}
 
 	// good enough
