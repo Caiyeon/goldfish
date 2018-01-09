@@ -90,8 +90,8 @@ func TestGoldfishWrapper(t *testing.T) {
 		// secrets
 		Convey("Writing secrets should work", func() {
 			resp, err := rootAuth.WriteSecret("secret/bulletins/testbulletin",
-				"{\"title\": \"Message title\", \"message\": \"Message body\","+
-					"\"type\": \"is-success\"}",
+				"{\"title\": \"Message title\", \"message\": \"Message body\"," +
+				"\"type\": \"is-success\"}",
 			)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
