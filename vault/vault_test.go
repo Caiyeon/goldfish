@@ -27,7 +27,30 @@ func TestGoldfishWrapper(t *testing.T) {
 
 	Convey("Testing bootstrap functions", t, func() {
 		Convey("Reusing the server's own token as raw token", func() {
-			err = BootstrapRaw(vaultToken)
+			temp := vaultToken
+			Unbootstrap()
+			err = BootstrapRaw(temp)
+			So(err, ShouldBeNil)
+		})
+		Convey("Bootstrapping via non-approle token", func() {
+			rootAuth := &AuthInfo{ID: "goldfish", Type: "token"}
+
+			// create a non-approle wrapped token
+			temp := true
+			secret, err := rootAuth.CreateToken(
+				&api.TokenCreateRequest{
+					Policies: []string{"default", "goldfish"},
+					Renewable: &temp,
+				},
+				false, "", "5m",
+			)
+
+			So(err, ShouldBeNil)
+			So(secret, ShouldNotBeNil)
+			So(secret.WrapInfo, ShouldNotBeNil)
+
+			Unbootstrap()
+			err = Bootstrap(secret.WrapInfo.Token)
 			So(err, ShouldBeNil)
 		})
 	})
