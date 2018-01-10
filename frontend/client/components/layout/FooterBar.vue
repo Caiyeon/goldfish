@@ -1,6 +1,6 @@
 <template>
   <footer class="footer">
-    <div class="container">
+    <div class="container is-fluid is-marginless">
       <div class="content has-text-centered">
         <p><span class="icon"><i class="fa fa-code"></i></span> with <span class="icon"><i class="fa fa-heart"></i></span> by <a href="https://github.com/caiyeon">caiyeon</a></p>
         <p>
