@@ -15,6 +15,7 @@
 
 </div>
 
+
 ## What is this?
 
 [Goldfish](https://vault-ui.io) is a HashiCorp Vault UI
@@ -166,6 +167,12 @@ Backend:
 
 See: [Architecture](https://github.com/Caiyeon/goldfish/wiki/Architecture)
 
+
+<!--
+-->
+## Sponsored by
+
+![](screenshots/DO_Logo_Horizontal_Blue.png)
 
 
 <!--
