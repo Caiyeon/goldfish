@@ -323,8 +323,8 @@ export default {
       selectedRows: [],
       lastSelectedRow: 0,
       sortKey: {
-        key: '',
-        order: ''
+        key: 'path',
+        order: 'asc'
       }
     }
   },
