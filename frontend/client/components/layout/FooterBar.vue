@@ -10,7 +10,17 @@
           licensed under
           <a :href="'https://github.com/' + repository + '/blob/master/LICENSE'">{{ license }}</a>
         </p>
+
         <p>Frontend boilerplate made by <a href="https://github.com/fundon">fundon</a></p>
+
+        <br>
+        <p>Sponsored by:</p>
+        <p>
+          <a href="https://www.digitalocean.com" target="_blank">
+          <img width="200"
+            src="~assets/DO_Logo_Horizontal_Blue.png" :alt="description">
+          </a>
+        </p>
 
       </div>
     </div>
