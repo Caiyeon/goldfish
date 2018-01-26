@@ -113,18 +113,18 @@
                 <tr>
                   <th @click="sortBy('type')">
                     Type
-                    <i v-if="sortKey.key === 'type' && sortKey.order === 'asc'" class="fa fa-caret-down"></i>
-                    <i v-if="sortKey.key === 'type' && sortKey.order === 'desc'" class="fa fa-caret-up"></i>
+                    <i v-if="sortKey.key === 'type' && sortKey.order === 'asc'" class="fa fa-caret-up"></i>
+                    <i v-if="sortKey.key === 'type' && sortKey.order === 'desc'" class="fa fa-caret-down"></i>
                   </th>
                   <th @click="sortBy('path')">
                     {{currentPathType === 'Secret' ? 'Key' : 'Subpaths'}}
-                    <i v-if="sortKey.key === 'path' && sortKey.order === 'asc'" class="fa fa-caret-down"></i>
-                    <i v-if="sortKey.key === 'path' && sortKey.order === 'desc'" class="fa fa-caret-up"></i>
+                    <i v-if="sortKey.key === 'path' && sortKey.order === 'asc'" class="fa fa-caret-up"></i>
+                    <i v-if="sortKey.key === 'path' && sortKey.order === 'desc'" class="fa fa-caret-down"></i>
                   </th>
                   <th v-if="currentPathType === 'Secret'" @click="sortBy('desc')">
                     Value
-                    <i v-if="sortKey.key === 'desc' && sortKey.order === 'asc'" class="fa fa-caret-down"></i>
-                    <i v-if="sortKey.key === 'desc' && sortKey.order === 'desc'" class="fa fa-caret-up"></i>
+                    <i v-if="sortKey.key === 'desc' && sortKey.order === 'asc'" class="fa fa-caret-up"></i>
+                    <i v-if="sortKey.key === 'desc' && sortKey.order === 'desc'" class="fa fa-caret-down"></i>
                   </th>
                   <th></th>
                 </tr>
