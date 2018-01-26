@@ -7,7 +7,7 @@ variable "wrapping_token" {
 variable "goldfish_version" {
     type = "string"
     description = "Version of goldfish to deploy"
-    default = "v0.5.1"
+    default = "v0.8.0"
 }
 
 # configure how goldfish will listen to requests

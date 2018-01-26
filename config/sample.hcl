@@ -48,6 +48,15 @@ vault {
 	# [Optional] [Default: "goldfish"]
 	# You can omit this if you already customized the approle ID to be 'goldfish'
 	approle_id      = "goldfish"
+
+	# [Optional] [Default: ""]
+	# If provided, goldfish will use this CA cert to verify Vault's certificate
+	# This should be a path to a PEM-encoded CA cert file
+	ca_cert         = ""
+
+	# [Optional] [Default: ""]
+	# See above. This should be a path to a directory instead of a single cert
+	ca_path         = ""
 }
 
 # [Optional] [Default: 0] [Allowed values: 0, 1]

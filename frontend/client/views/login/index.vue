@@ -53,6 +53,16 @@
                 </div>
               </div>
 
+              <!-- Custom login path -->
+              <div v-if="bCustomPath && type !== 'Token'" class="field">
+                <p class="control has-icons-left">
+                  <input class="input" type="text" placeholder="Mount name e.g. 'ldap2'" v-model="customPath">
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-tasks"></i>
+                  </span>
+                </p>
+              </div>
+
               <!-- Token login form -->
               <div v-if="type === 'Token'" class="field">
                 <p class="control has-icons-left">
@@ -130,6 +140,15 @@
                       <i class="fa fa-lock"></i>
                     </span>
                   </p>
+                </div>
+              </div>
+
+              <div v-if="type !== 'Token'" class="field">
+                <div class="control">
+                  <label class="checkbox">
+                    <input type="checkbox" v-model="bCustomPath">
+                    Custom path
+                  </label>
                 </div>
               </div>
 
@@ -280,7 +299,9 @@ export default {
       goldfishHealthData: {},
       goldfishHealthLoading: false,
       secretID: '',
-      bootstrapLoading: false
+      bootstrapLoading: false,
+      bCustomPath: false,
+      customPath: ''
     }
   },
 
@@ -375,9 +396,10 @@ export default {
 
     login: function () {
       this.$http.post('/v1/login', {
-        Type: this.type.toLowerCase(),
+        type: this.type.toLowerCase(),
         id: this.ID,
-        Password: this.password
+        password: this.password,
+        path: this.bCustomPath ? this.customPath.trim('/') : ''
       }, {
         headers: {'X-Vault-Token': this.session ? this.session.token : ''}
       })
@@ -418,6 +440,15 @@ export default {
         // to avoid ambiguity, current session should be purged when new login fails
         this.logout()
         this.$onError(error)
+        if (this.bCustomPath && error.response.status === 400 &&
+          error.response.data.error === 'Vault:  missing client token') {
+          this.$notify({
+            title: 'Custom path?',
+            message: 'If the custom path does not exist, vault will respond with error 400',
+            type: 'warning',
+            duration: 10000
+          })
+        }
       })
     },
 
@@ -431,6 +462,8 @@ export default {
     clearFormData: function () {
       this.ID = ''
       this.password = ''
+      this.bCustomPath = false
+      this.customPath = ''
     },
 
     renewLogin: function () {

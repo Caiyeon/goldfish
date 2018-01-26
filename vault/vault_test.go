@@ -27,7 +27,30 @@ func TestGoldfishWrapper(t *testing.T) {
 
 	Convey("Testing bootstrap functions", t, func() {
 		Convey("Reusing the server's own token as raw token", func() {
-			err = BootstrapRaw(vaultToken)
+			temp := vaultToken
+			unbootstrap()
+			err = BootstrapRaw(temp)
+			So(err, ShouldBeNil)
+		})
+		Convey("Bootstrapping via non-approle token", func() {
+			rootAuth := &AuthInfo{ID: "goldfish", Type: "token"}
+
+			// create a non-approle wrapped token
+			temp := true
+			secret, err := rootAuth.CreateToken(
+				&api.TokenCreateRequest{
+					Policies: []string{"default", "goldfish"},
+					Renewable: &temp,
+				},
+				false, "", "5m",
+			)
+
+			So(err, ShouldBeNil)
+			So(secret, ShouldNotBeNil)
+			So(secret.WrapInfo, ShouldNotBeNil)
+
+			unbootstrap()
+			err = Bootstrap(secret.WrapInfo.Token)
 			So(err, ShouldBeNil)
 		})
 	})
@@ -67,8 +90,8 @@ func TestGoldfishWrapper(t *testing.T) {
 		// secrets
 		Convey("Writing secrets should work", func() {
 			resp, err := rootAuth.WriteSecret("secret/bulletins/testbulletin",
-				"{\"title\": \"Message title\", \"message\": \"Message body\","+
-					"\"type\": \"is-success\"}",
+				"{\"title\": \"Message title\", \"message\": \"Message body\"," +
+				"\"type\": \"is-success\"}",
 			)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
@@ -141,7 +164,7 @@ func TestGoldfishWrapper(t *testing.T) {
 			Convey("Number of accessors should increase", func() {
 				accessors, err := rootAuth.GetTokenAccessors()
 				So(err, ShouldBeNil)
-				So(len(accessors), ShouldEqual, 3)
+				So(len(accessors), ShouldEqual, 4)
 
 				_, err = rootAuth.CreateToken(&api.TokenCreateRequest{}, true, "", "")
 				So(err, ShouldBeNil)

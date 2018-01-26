@@ -1,6 +1,6 @@
 <template>
   <footer class="footer">
-    <div class="container">
+    <div class="container is-fluid is-marginless">
       <div class="content has-text-centered">
 
         <!-- general description -->
