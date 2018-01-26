@@ -223,6 +223,7 @@
                     <p class="control">
                     <input v-focus
                       class="input is-small"
+                      style="font-family: monospace;"
                       type="text"
                       ref="newKey"
                       placeholder="Add a key"
@@ -237,6 +238,7 @@
                     <p class="control">
                     <input
                       class="input is-small"
+                      style="font-family: monospace;"
                       type="text"
                       placeholder="Add a value"
                       v-model="newValue"
