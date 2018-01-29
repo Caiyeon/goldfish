@@ -18,7 +18,7 @@
         <p>
           <a href="https://www.digitalocean.com" target="_blank">
           <img width="200"
-            src="~assets/DO_Logo_Horizontal_Blue.png" :alt="description">
+            src="~assets/DO_Logo_Horizontal_Blue.svg" alt="DigitalOcean">
           </a>
         </p>
 
