@@ -210,6 +210,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		"tls_autoredirect",
 		"certificate",
 		"pki_certificate",
+		"lets_encrypt",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
@@ -283,11 +284,12 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		}
 
 		// parse the provided certificate option
-		list, ok := listener.Val.(*ast.ObjectList)
+		obj, ok := listener.Val.(*ast.ObjectType)
 		if !ok {
-			return fmt.Errorf("listener.%s: no root object found %d", key, len(listener.Keys))
+			return fmt.Errorf("listener.%s: no child objects found, but expected certificates", key)
 		}
 
+		list := obj.List
 		if object := list.Filter("certificate"); len(object.Items) > 1 {
 			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
 		} else if len(object.Items) == 1 {
@@ -299,7 +301,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 
 		if object := list.Filter("pki_certificate"); len(object.Items) > 1 {
 			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
-		} else {
+		} else if len(object.Items) == 1 {
 			result.Listener.Pki_cert = &Pki_certificate{}
 			if err := parsePkiCertificate(result.Listener.Pki_cert, object.Items[0]); err != nil {
 				return fmt.Errorf("listener.%s: %s", key, err.Error())
@@ -308,7 +310,7 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 
 		if object := list.Filter("lets_encrypt"); len(object.Items) > 1 {
 			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
-		} else {
+		} else if len(object.Items) == 1 {
 			if err := parseLetsEncrypt(&result.Listener.Lets_encrypt_address, object.Items[0]); err != nil {
 				return fmt.Errorf("listener.%s: %s", key, err.Error())
 			}
@@ -399,7 +401,7 @@ func parseLetsEncrypt(result *string, certificate *ast.ObjectItem) error {
 	}
 
 	var temp map[string]string
-	if err := hcl.DecodeObject(&result, certificate.Val); err != nil {
+	if err := hcl.DecodeObject(&temp, certificate.Val); err != nil {
 		return fmt.Errorf("lets_encrypt.%s: %s", key, err.Error())
 	}
 

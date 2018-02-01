@@ -277,6 +277,43 @@ func TestConfigParser(t *testing.T) {
 		So(cfg, ShouldBeNil)
 	})
 
+	Convey("Providing a full pki certificate config", t, func() {
+		cfg, err := ParseConfig(`
+			listener "tcp" {
+				address          = "127.0.0.1:8000"
+				pki_certificate "pki" {
+					pki_path    = "pki/issue/<role_name>"
+					common_name = "goldfish.vault.service"
+					alt_names   = ["goldfish.vault.srv", "goldfish.vault.ui.service"]
+					ip_sans     = ["127.0.0.1", "172.0.0.1", "10.0.0.1"]
+				}
+			}
+			vault {
+				address          = "http://127.0.0.1:8200"
+			}
+			`)
+		So(err, ShouldBeNil)
+		So(cfg, ShouldNotBeNil)
+	})
+
+	Convey("Providing a Let's Encrypt configuration should work", t, func() {
+		cfg, err := ParseConfig(`
+			listener "tcp" {
+				address          = "127.0.0.1:8000"
+				lets_encrypt "example" {
+					address = "vault-ui.io"
+				}
+			}
+			vault {
+				address          = "http://127.0.0.1:8200"
+			}
+			`)
+		So(err, ShouldBeNil)
+		So(cfg, ShouldNotBeNil)
+		So(cfg.Listener, ShouldNotBeNil)
+		So(cfg.Listener.Lets_encrypt_address, ShouldEqual, "vault-ui.io")
+	})
+
 	Convey("Starting up a dev vault", t, func() {
 		cfg, shutdownCh, _, secretID, err := LoadConfigDev()
 		So(err, ShouldBeNil)
