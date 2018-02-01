@@ -258,13 +258,16 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 	}
 
 	cert_options := []string{"certificate", "pki_certificate", "lets_encrypt"}
+
 	if result.Listener.Tls_disable {
 		for _, opt := range cert_options {
 			if _, exists := temp[opt]; exists {
 				return fmt.Errorf("listener.%s: tls_disable conflicts with %s", key, opt)
 			}
 		}
-	} else {
+	}
+
+	if !result.Listener.Tls_disable {
 		cert_count := 0
 		for _, opt := range cert_options {
 			if _, exists := temp[opt]; exists {
@@ -277,34 +280,13 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		if cert_count < 1 {
 			return fmt.Errorf("listener.%s: tls is enabled but no certificate option is provided", key)
 		}
-	}
 
-	// check for configuration conflicts
-	if result.Listener.Tls_disable {
-		if result.Listener.Tls_autoredirect {
-			return fmt.Errorf("listener.%s: tls_autoredirect conflicts with tls_disable", key)
-		}
-
-		// list, ok := listener.Val.(*ast.ObjectList)
-		// if ok {
-		// 	if object := list.Filter("certificate"); len(object.Items) > 0 {
-		// 		return fmt.Errorf("listener.%s: tls is disabled, but certificate is in config file", key)
-		// 	}
-		// 	if object := list.Filter("pki_certificate"); len(object.Items) > 0 {
-		// 		return fmt.Errorf("listener.%s: tls is disabled, but pki_certificate is in config file", key)
-		// 	}
-		// 	if object := list.Filter("lets_encrypt"); len(object.Items) > 0 {
-		// 		return fmt.Errorf("listener.%s: tls is disabled, but lets_encrypt is in config file", key)
-		// 	}
-		// }
-	}
-
-	if !result.Listener.Tls_disable {
 		// parse the provided certificate option
 		list, ok := listener.Val.(*ast.ObjectList)
 		if !ok {
 			return fmt.Errorf("listener.%s: no root object found %d", key, len(listener.Keys))
 		}
+
 		if object := list.Filter("certificate"); len(object.Items) > 1 {
 			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
 		} else if len(object.Items) == 1 {
