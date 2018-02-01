@@ -184,12 +184,19 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 
 	// if loading certificate from vault pki
 	if listener.Pki_cert != nil {
-		c, err := vault.FetchCertificate(
-			listener.Pki_cert.Pki_path,
-			listener.Pki_cert.Common_name,
-			// listener.Pki_cert.Alt_names,
-			// listener.Pki_cert.Ip_sans,
-		)
+		// construct body for pki generation
+		body := map[string]interface{}{
+			"common_name": listener.Pki_cert.Common_name,
+			"format": "pem",
+		}
+		if len(listener.Pki_cert.Alt_names) > 0 {
+			body["alt_names"] = strings.Join(listener.Pki_cert.Alt_names, ",")
+		}
+		if len(listener.Pki_cert.Ip_sans) > 0 {
+			body["ip_sans"] = strings.Join(listener.Pki_cert.Ip_sans, ",")
+		}
+
+		c, err := vault.FetchCertificate(listener.Pki_cert.Pki_path, body)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
@@ -199,12 +206,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		certLock.Unlock()
 
 		// start background job to monitor certificate expiry and periodically renew
-		go maintainCertificate(
-			listener.Pki_cert.Pki_path,
-			listener.Pki_cert.Common_name,
-			// listener.Pki_cert.Alt_names,
-			// listener.Pki_cert.Ip_sans,
-		)
+		go maintainCertificate(listener.Pki_cert.Pki_path, body)
 	}
 
 	// configure certificate load function and listen on https

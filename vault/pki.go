@@ -5,7 +5,7 @@ import (
     "errors"
 )
 
-func FetchCertificate(path, url string) (*tls.Certificate, error) {
+func FetchCertificate(path string, body map[string]interface{}) (*tls.Certificate, error) {
     // initialize a client with goldfish's token
     client, err := NewGoldfishVaultClient()
     if err != nil {
@@ -13,11 +13,7 @@ func FetchCertificate(path, url string) (*tls.Certificate, error) {
     }
 
     // write to pki role path
-    resp, err := client.Logical().Write(path,
-        map[string]interface{}{
-            "common_name": url,
-            "format":      "pem",
-        })
+    resp, err := client.Logical().Write(path, body)
     if err != nil {
         return nil, err
     }
