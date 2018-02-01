@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/caiyeon/goldfish/config"
@@ -235,7 +236,7 @@ func GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	return cert, nil
 }
 
-func maintainCertificate(path, url string) {
+func maintainCertificate(path string, body map[string]interface{}) {
 	// check the certificate's expiry date
 	certLock.RLock()
 	if cert == nil || len(cert.Certificate) == 0 {
@@ -256,7 +257,7 @@ func maintainCertificate(path, url string) {
 
 		// fetch new certificate from vault
 		for {
-			if c, err := vault.FetchCertificate(path, url); err != nil {
+			if c, err := vault.FetchCertificate(path, body); err != nil {
 				log.Println("[ERROR]: Error fetching certificate from PKI backend", err.Error())
 
 			} else if len(c.Certificate) > 0 {
