@@ -455,7 +455,7 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		if tlsSkip == "1" {
 			result.Vault.Tls_skip_verify = true
 		} else if tlsSkip != "0" {
-			return fmt.Errorf("vault.%s: tls_disable can be 0 or 1", key)
+			return fmt.Errorf("vault.%s: tls_skip_verify can be 0 or 1", key)
 		}
 	}
 
