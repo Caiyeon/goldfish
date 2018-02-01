@@ -294,6 +294,13 @@ func TestConfigParser(t *testing.T) {
 			`)
 		So(err, ShouldBeNil)
 		So(cfg, ShouldNotBeNil)
+		So(cfg.Listener, ShouldNotBeNil)
+		So(cfg.Listener.Pki_cert, ShouldResemble, &Pki_certificate{
+			Pki_path:    "pki/issue/<role_name>",
+			Common_name: "goldfish.vault.service",
+			Alt_names:   []string{"goldfish.vault.srv", "goldfish.vault.ui.service"},
+			Ip_sans:     []string{"127.0.0.1", "172.0.0.1", "10.0.0.1"},
+		})
 	})
 
 	Convey("Providing a Let's Encrypt configuration should work", t, func() {
