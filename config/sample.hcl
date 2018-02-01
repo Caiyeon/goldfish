@@ -13,14 +13,14 @@ listener "tcp" {
 	tls_autoredirect = 0
 
 	# Option 1: local certificate
-	certificate {
+	certificate "local" {
 		cert_file = "/path/to/certificate.cert"
 		key_file  = "/path/to/keyfile.pem"
 	}
 
 	# Option 2: using Vault's PKI backend [Requires vault_token at launch time]
 	# goldfish will request new certificates at half-life and hot-reload,
-	pki_certificate {
+	pki_certificate "pki" {
 		# [Required]
 		pki_path    = "pki/issue/<role_name>"
 		common_name = "goldfish.vault.service"
