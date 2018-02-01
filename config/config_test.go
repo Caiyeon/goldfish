@@ -20,6 +20,7 @@ func TestConfigParser(t *testing.T) {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
 				address          = "127.0.0.1:8000"
+				tls_disable      = 1
 			}
 			vault {
 				address         = "http://127.0.0.1:8200"
@@ -30,9 +31,7 @@ func TestConfigParser(t *testing.T) {
 			Listener: &ListenerConfig {
 				Type:             "tcp",
 				Address:          "127.0.0.1:8000",
-				Tls_disable:      false,
-				Tls_cert_file:    "",
-				Tls_key_file:     "",
+				Tls_disable:      true,
 				Tls_autoredirect: false,
 			},
 			Vault: &VaultConfig {
@@ -42,34 +41,6 @@ func TestConfigParser(t *testing.T) {
 				Runtime_config:  "secret/goldfish",
 				Approle_login:   "auth/approle/login",
 				Approle_id:      "goldfish",
-			},
-		})
-	})
-
-	Convey("Parser should accept valid string - tls_autoredirect enabled (listener)", t, func() {
-		cfg, err := ParseConfig(`
-			listener "tcp" {
-				address          = "127.0.0.1:8000"
-				tls_autoredirect = 1
-			}
-			vault {
-				address         = "http://127.0.0.1:8200"
-			}
-			`)
-		So(err, ShouldBeNil)
-		So(cfg, ShouldResemble, &Config {
-			Listener: &ListenerConfig {
-				Type:        "tcp",
-				Address:     "127.0.0.1:8000",
-				Tls_disable: false,
-				Tls_autoredirect: true,
-			},
-			Vault: &VaultConfig {
-				Type:           "vault",
-				Address:        "http://127.0.0.1:8200",
-				Runtime_config: "secret/goldfish",
-				Approle_login:  "auth/approle/login",
-				Approle_id:     "goldfish",
 			},
 		})
 	})
@@ -90,32 +61,6 @@ func TestConfigParser(t *testing.T) {
 		So(err.Error(), ShouldContainSubstring, "invalid")
 	})
 
-	Convey("Parser should accept valid string - tls_skip_verify enabled (listener)", t, func() {
-		cfg, err := ParseConfig(`
-			listener "tcp" {
-				address          = "127.0.0.1:8000"
-			}
-			vault {
-				address         = "http://127.0.0.1:8200"
-				tls_skip_verify = 1
-			}
-			`)
-		So(err, ShouldBeNil)
-		So(cfg, ShouldResemble, &Config {
-			Listener: &ListenerConfig {
-				Type:        "tcp",
-				Address:     "127.0.0.1:8000",
-			},
-			Vault: &VaultConfig {
-				Type:            "vault",
-				Address:         "http://127.0.0.1:8200",
-				Tls_skip_verify: true,
-				Runtime_config:  "secret/goldfish",
-				Approle_login:   "auth/approle/login",
-				Approle_id:      "goldfish",
-			},
-		})
-	})
 
 	Convey("Parser should reject invalid strings - no listener config", t, func() {
 		cfg, err := ParseConfig(`
@@ -159,7 +104,7 @@ func TestConfigParser(t *testing.T) {
 	Convey("Parser should reject invalid listener - empty (invalid) address", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
-				address          = ""
+				address         = ""
 			}
 			vault {
 				address         = "http://127.0.0.1:8200"
@@ -277,23 +222,51 @@ func TestConfigParser(t *testing.T) {
 		So(cfg, ShouldBeNil)
 	})
 
-	Convey("Parser should reject invalid vault - invalid address", t, func() {
+	Convey("Parser should reject invalid vault - invalid tls_skip_verify", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
 				address          = "127.0.0.1:8000"
 			}
 			vault {
-				address          = "invalid"
+				address          = "http://127.0.0.1:8200"
+				tls_skip_verify  = "invalid"
 			}
 			`)
 		So(err, ShouldNotBeNil)
 		So(cfg, ShouldBeNil)
 	})
 
-	Convey("Parser should reject invalid vault - invalid tls_skip_verify", t, func() {
+	Convey("If tls is disabled, providing certificate config should raise errors", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
 				address          = "127.0.0.1:8000"
+				tls_disable      = 1
+				certificate "local" {
+					cert_file = "/path/to/certificate.cert"
+					key_file  = "/path/to/keyfile.pem"
+				}
+			}
+			vault {
+				address          = "http://127.0.0.1:8200"
+				tls_skip_verify  = "invalid"
+			}
+			`)
+		So(err, ShouldNotBeNil)
+		So(cfg, ShouldBeNil)
+	})
+
+	Convey("Providing multiple certificates should raise errors", t, func() {
+		cfg, err := ParseConfig(`
+			listener "tcp" {
+				address          = "127.0.0.1:8000"
+				certificate "local" {
+					cert_file = "/path/to/certificate.cert"
+					key_file  = "/path/to/keyfile.pem"
+				}
+				pki_certificate "local" {
+					pki_path    = "pki/issue/<role_name>"
+					common_name = "goldfish.vault.service"
+				}
 			}
 			vault {
 				address          = "http://127.0.0.1:8200"
@@ -343,8 +316,6 @@ func TestConfigParser(t *testing.T) {
 const defaultConfigString = `
 listener "tcp" {
 	address          = "127.0.0.1:8000"
-	tls_cert_file    = ""
-	tls_key_file     = ""
 	tls_disable      = 1
 	tls_autoredirect = 0
 }
@@ -387,21 +358,4 @@ var devParsedConfig = &Config {
 		Approle_id:     "goldfish",
 	},
 	DisableMlock: true,
-}
-
-var sampleParsedConfig = &Config {
-	Listener: &ListenerConfig {
-		Type:        "tcp",
-		Address:     "127.0.0.1:8000",
-		Tls_disable: true,
-	},
-	Vault: &VaultConfig {
-		Type:           "vault",
-		Address:        "http://127.0.0.1:8200",
-		Runtime_config: "secret/goldfish",
-		Approle_login:  "auth/approle/login",
-		Approle_id:     "goldfish",
-	},
-	DisableMlock: false,
-	DisableMlockRaw: 0,
 }
