@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 	"log"
-	"strings"
 	"sync"
 
 	"github.com/caiyeon/goldfish/config"
@@ -74,9 +73,9 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		}
 
 		// if cert file and key file are not provided, try using let's encrypt
-		if listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
+		if listener.Lets_encrypt_address != "" {
 			e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
-			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(listener.Address)
+			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(listener.Lets_encrypt_address )
 			e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
 				Code: 301,
 			}))
@@ -150,7 +149,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	}
 
 	// if this is the demo instance, using lets encrypt for certificate
-	if listener.Tls_PKI_path == "" && listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
+	if listener.Lets_encrypt_address != "" {
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
 		return
 	}
@@ -172,8 +171,8 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	}
 
 	// if loading certificate from local machine
-	if listener.Tls_PKI_path == "" {
-		c, err := tls.LoadX509KeyPair(listener.Tls_cert_file, listener.Tls_key_file)
+	if listener.Cert != nil {
+		c, err := tls.LoadX509KeyPair(listener.Cert.Cert_file, listener.Cert.Key_file)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
@@ -181,11 +180,15 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		certLock.Lock()
 		cert = &c
 		certLock.Unlock()
-	} else {
-		// if loading certificate from PKI backend
+	}
+
+	// if loading certificate from vault pki
+	if listener.Pki_cert != nil {
 		c, err := vault.FetchCertificate(
-			listener.Tls_PKI_path,
-			strings.Split(listener.Address, ":")[0],
+			listener.Pki_cert.Pki_path,
+			listener.Pki_cert.Common_name,
+			// listener.Pki_cert.Alt_names,
+			// listener.Pki_cert.Ip_sans,
 		)
 		if err != nil {
 			log.Fatalln(err.Error())
@@ -196,7 +199,12 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		certLock.Unlock()
 
 		// start background job to monitor certificate expiry and periodically renew
-		go maintainCertificate(listener.Tls_PKI_path, strings.Split(listener.Address, ":")[0])
+		go maintainCertificate(
+			listener.Pki_cert.Pki_path,
+			listener.Pki_cert.Common_name,
+			// listener.Pki_cert.Alt_names,
+			// listener.Pki_cert.Ip_sans,
+		)
 	}
 
 	// configure certificate load function and listen on https

@@ -21,12 +21,13 @@ type Config struct {
 }
 
 type ListenerConfig struct {
-	Type             string
-	Address          string
-	Tls_disable      bool
-	Tls_autoredirect bool
-	Cert             *Certificate
-	Pki_cert         *Pki_certificate
+	Type                 string
+	Address              string
+	Tls_disable          bool
+	Tls_autoredirect     bool
+	Cert                 *Certificate
+	Pki_cert             *Pki_certificate
+	Lets_encrypt_address string
 }
 
 type Certificate struct {
@@ -304,6 +305,14 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 				return fmt.Errorf("listener.%s: %s", key, err.Error())
 			}
 		}
+
+		if object := list.Filter("lets_encrypt"); len(object.Items) > 1 {
+			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
+		} else {
+			if err := parseLetsEncrypt(&result.Listener.Lets_encrypt_address, object.Items[0]); err != nil {
+				return fmt.Errorf("listener.%s: %s", key, err.Error())
+			}
+		}
 	}
 
 	return nil
@@ -368,6 +377,36 @@ func parsePkiCertificate(result *Pki_certificate, certificate *ast.ObjectItem) e
 	if !strings.Contains(result.Pki_path, "issue") {
 		return fmt.Errorf("certificate.%s: pki_path must be a full pki issuing path", key)
 	}
+
+	return nil
+}
+
+func parseLetsEncrypt(result *string, certificate *ast.ObjectItem) error {
+	if result == nil || certificate == nil {
+		return fmt.Errorf("Parsing lets_encrypt... arguments are nil")
+	}
+
+	key := "lets_encrypt"
+	if len(certificate.Keys) > 0 {
+		key = certificate.Keys[0].Token.Value().(string)
+	}
+
+	valid := []string{
+		"address",
+	}
+	if err := checkHCLKeys(certificate.Val, valid); err != nil {
+		return fmt.Errorf("lets_encrypt.%s: %s", key, err.Error())
+	}
+
+	var temp map[string]string
+	if err := hcl.DecodeObject(&result, certificate.Val); err != nil {
+		return fmt.Errorf("lets_encrypt.%s: %s", key, err.Error())
+	}
+
+	if temp["address"] == "" {
+		return fmt.Errorf("lets_encrypt.%s: address is mandatory", key)
+	}
+	*result = temp["address"]
 
 	return nil
 }
