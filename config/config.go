@@ -88,8 +88,12 @@ func LoadConfigDev() (*Config, chan struct{}, []string, string, error) {
 			Type:        "tcp",
 			Address:     "127.0.0.1:8000",
 			Tls_disable: true,
-			// // to use PKI for certs, set tls_disable to false, and uncomment:
-			// Tls_PKI_path: "pki/issue/goldfish",
+			// Pki_cert:    &Pki_certificate{
+			// 	Pki_path: "pki/issue/goldfish",
+			// 	Common_name: "localhost",
+			// 	Alt_names: []string{"vault-ui.io", "abc.com"},
+			// 	Ip_sans: []string{"10.0.0.1", "172.0.0.1", "127.0.0.1"},
+			// },
 		},
 		Vault: &VaultConfig{
 			Type:           "vault",
@@ -378,6 +382,10 @@ func parsePkiCertificate(result *Pki_certificate, certificate *ast.ObjectItem) e
 
 	if !strings.Contains(result.Pki_path, "issue") {
 		return fmt.Errorf("certificate.%s: pki_path must be a full pki issuing path", key)
+	}
+
+	if result.Common_name == "" {
+		return fmt.Errorf("certificate.%s: config requires common_name field", key)
 	}
 
 	return nil
