@@ -140,6 +140,26 @@ vagrant up --provision
 ```
 
 
+#### Compiling
+You'll need Go(v1.9), Nodejs (v8.2.0), Npm (v5)
+
+Note that using different versions (of nodeJS, especially) will cause differences in the final binary.
+
+```bash
+# download the source code
+go get -d github.com/caiyeon/goldfish
+cd $GOPATH/src/github.com/caiyeon/goldfish
+
+# resetting to a tagged version is recommended
+# no support will be given to arbitrary commits on the master branch
+git fetch --all --tags --prune
+git checkout tags/<version> # version could be, for example, v0.8.0
+
+# compile the binary
+sh build.sh
+```
+
+
 
 <!--
 -->
