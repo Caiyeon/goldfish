@@ -277,6 +277,22 @@ func TestConfigParser(t *testing.T) {
 		So(cfg, ShouldBeNil)
 	})
 
+	Convey("Providing an incomplete pki configuration", t, func() {
+		cfg, err := ParseConfig(`
+			listener "tcp" {
+				address          = "127.0.0.1:8000"
+				pki_certificate "pki" {
+					pki_path    = "pki/issue/<role_name>"
+				}
+			}
+			vault {
+				address          = "http://127.0.0.1:8200"
+			}
+			`)
+		So(err, ShouldNotBeNil)
+		So(cfg, ShouldBeNil)
+	})
+
 	Convey("Providing a full pki certificate config", t, func() {
 		cfg, err := ParseConfig(`
 			listener "tcp" {
