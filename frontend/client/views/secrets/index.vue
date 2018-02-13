@@ -29,14 +29,6 @@
               </div>
             </div>
 
-            <!-- manual insertion button: to be implemented later -->
-            <!-- <a class="button is-primary is-outlined">
-              <span class="icon is-small">
-                <i class="fa fa-plus"></i>
-              </span>
-              <span>Insert Secret</span>
-            </a> -->
-
             <!-- Actions on current path -->
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
