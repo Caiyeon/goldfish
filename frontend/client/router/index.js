@@ -11,7 +11,7 @@ export default new Router({
     {
       name: 'Home',
       path: '/',
-      component: require('../views/Home')
+      component: require('../views/Home.vue').default
     },
     ...generateRoutesFromMenu(menuModule.state.items),
     {
