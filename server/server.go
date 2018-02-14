@@ -105,6 +105,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	e.GET("/v1/token/accessors", handlers.GetTokenAccessors())
 	e.POST("/v1/token/lookup-accessor", handlers.LookupTokenByAccessor())
 	e.POST("/v1/token/revoke-accessor", handlers.RevokeTokenByAccessor())
+	e.POST("/v1/token/revoke-self", handlers.RevokeSelf())
 	e.POST("/v1/token/create", handlers.CreateToken())
 	e.GET("/v1/token/listroles", handlers.ListRoles())
 	e.GET("/v1/token/role", handlers.GetRole())
