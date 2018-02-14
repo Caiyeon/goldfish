@@ -193,12 +193,15 @@
                 </tbody>
               </table>
               <p v-if="session !== null" class="control">
-                <button class="button is-warning" @click="logout()">
-                  Logout
-                </button>
                 <button v-if="renewable" class="button is-primary"
                 @click="renewLogin()">
                   Renew
+                </button>
+                <button class="button is-warning" @click="logout(false)">
+                  Forget Token
+                </button>
+                <button class="button is-warning" @click="logout(true)">
+                  Revoke Token
                 </button>
               </p>
             </div>
@@ -430,7 +433,7 @@ export default {
       })
       .catch((error) => {
         // to avoid ambiguity, current session should be purged when new login fails
-        this.logout()
+        this.logout(false)
         this.$onError(error)
         if (this.bCustomPath && error.response.status === 400 &&
           error.response.data.error === 'Vault:  missing client token') {
@@ -444,7 +447,24 @@ export default {
       })
     },
 
-    logout: function () {
+    logout: function (revoke) {
+      // if user wants to revoke token
+      if (revoke) {
+        this.$http.post('/v1/token/revoke-self', {}, {
+          headers: {'X-Vault-Token': this.session ? this.session.token : ''}
+        })
+        .then((response) => {
+          // notify user, and clear inputs
+          this.$notify({
+            title: 'Token revoked!',
+            message: '',
+            type: 'success'
+          })
+        })
+        .catch((error) => {
+          this.$onError(error)
+        })
+      }
       // purge session from localstorage
       window.localStorage.removeItem('session')
       // mutate vuex state
