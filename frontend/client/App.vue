@@ -58,6 +58,15 @@ export default {
   animation-duration: .377s;
 }
 
+// import bulma initial variables
+@import "~bulma/sass/utilities/initial-variables";
+@import "~bulma/sass/utilities/functions";
+@import "~bulma/sass/utilities/derived-variables.sass";
+
+// set custom color scheme
+$navbar-dropdown-item-hover-color: $link;
+
+// import the rest of bulma
 @import '~bulma';
 
 $fa-font-path: '~font-awesome/fonts/';

@@ -1,7 +1,7 @@
 <template>
   <section class="hero is-bold app-navbar animated" :class="{ slideInDown: show, slideOutDown: !show }">
     <div class="hero-head">
-      <nav class="navbar">
+      <nav class="navbar is-transparent">
 
         <div class="navbar-brand">
           <a class="navbar-item" href="/">
