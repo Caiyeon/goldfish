@@ -151,7 +151,8 @@ export default {
       profileDropdown: false,
       position: ['center', 'bottom', 'center', 'top'],
       now: moment(),
-      latestRelease: {}
+      latestRelease: {},
+      expirationWarning: false
     }
   },
 
@@ -160,6 +161,31 @@ export default {
     setInterval(() => {
       this.now = moment()
     }, 1000)
+
+    // check every 30s if the user's token will expire in 10 mins
+    setInterval(() => {
+      if (this.session === null || this.session['token_expiry'] === 'never') {
+        return
+      }
+      // if token will expire in 10 minutes
+      let tokenExpires = moment(this.session['token_expiry'], 'ddd, h:mm:ss A MMMM Do YYYY')
+      if (tokenExpires.diff(this.now) < 600000) {
+        // show user warning
+        if (!this.expirationWarning) {
+          this.$message({
+            message: 'Your token expires in 10 minutes',
+            type: 'warning',
+            duration: 0,
+            showCloseButton: true
+          })
+          // set warning flag true so that user does not continue to get warnings
+          this.expirationWarning = true
+        }
+      } else {
+        // if user's token has been renewed after warning, reset warning flag
+        this.expirationWarning = false
+      }
+    }, 30000)
 
     // if session cookie is still valid, load session data
     let raw = window.localStorage.getItem('session')
