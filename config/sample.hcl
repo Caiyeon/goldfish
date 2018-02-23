@@ -2,7 +2,7 @@
 listener "tcp" {
 	# [Required] [Format: "address", "address:port", or ":port"]
 	# goldfish's listening address and/or port. Simply ":443" would suffice.
-	address          = "127.0.0.1:8000"
+	address          = ":8000"
 
 	# [Optional] [Default: 0] [Allowed values: 0, 1]
 	# set to 1 to disable tls & https
