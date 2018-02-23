@@ -30,4 +30,4 @@ RUN chmod +x ./entrypoint.sh
 EXPOSE 8000
 
 #Default command to run
-CMD /app/goldfish -config=/app/config.hcl -token=${VAULT_TOKEN}
+CMD /app/goldfish -config=/app/docker.hcl -token=${VAULT_TOKEN}

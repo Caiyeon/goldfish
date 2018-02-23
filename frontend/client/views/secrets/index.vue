@@ -29,14 +29,6 @@
               </div>
             </div>
 
-            <!-- manual insertion button: to be implemented later -->
-            <!-- <a class="button is-primary is-outlined">
-              <span class="icon is-small">
-                <i class="fa fa-plus"></i>
-              </span>
-              <span>Insert Secret</span>
-            </a> -->
-
             <!-- Actions on current path -->
             <a v-if="editMode === false && currentPathType === 'Path'"
               class="button is-info is-small is-marginless"
@@ -100,7 +92,7 @@
             </a>
 
             <p v-if="editMode && currentPathType === 'Secret'" class="help is-info">
-              Shift + enter to insert multiple lines
+              Inputs are multi-line by default. Press tab to complete a key-value pair.
             </p>
           </div>
 
@@ -143,8 +135,11 @@
                   <!-- Editable key field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input class="input is-small" type="text"
-                      placeholder="" v-model="entry.path" style="font-family: monospace;">
+                      <textarea style="font-family: monospace; padding: 3.5px 6.5px 3.5px 6.5px;"
+                        v-bind:rows="String(entry.path).split('\n').length"
+                        placeholder="" v-model="entry.path"
+                        class="textarea is-small" type="text">
+                      </textarea>
                     </p>
                   </td>
                   <!-- View-only -->
@@ -167,15 +162,8 @@
                   <!-- Editable value field -->
                   <td v-if="editMode && currentPathType === 'Secret'">
                     <p class="control">
-                      <input style="font-family: monospace;"
+                      <textarea style="font-family: monospace; padding: 3.5px 6.5px 3.5px 6.5px;"
                         v-focus
-                        v-if="String(entry.desc).split('\n').length < 2"
-                        class="input is-small" type="text" placeholder="" v-model="entry.desc"
-                        v-on:keyup.shift.enter="entry.desc = entry.desc + '\n'"
-                        v-on:keyup.enter="$refs.newKey.focus()">
-                      <textarea style="font-family: monospace;"
-                        v-focus
-                        v-else
                         v-bind:rows="String(entry.desc).split('\n').length"
                         class="textarea is-small" type="text" placeholder="" v-model="entry.desc">
                       </textarea>
@@ -215,35 +203,36 @@
                 <!-- new key value pair insertion row -->
                 <tr
                   v-if="editMode && currentPathType === 'Secret'"
-                  @keyup.enter="addKeyValue()"
                 >
                   <td width="68">
                   </td>
                   <td>
                     <p class="control">
-                    <input v-focus
-                      class="input is-small"
-                      style="font-family: monospace;"
+                    <textarea style="font-family: monospace; padding: 3.5px 6.5px 3.5px 6.5px;"
+                      class="textarea is-small"
                       type="text"
-                      ref="newKey"
+                      ref="newKeyField"
                       placeholder="Add a key"
+                      v-bind:rows="String(newKey).split('\n').length"
                       v-model="newKey"
                       v-bind:class="[
                         newKey === '' ? '' : 'is-success',
-                        newKeyExists ? 'is-danger' : '']"
-                    >
+                        newKeyExists ? 'is-danger' : '']">
+                    </textarea>
                     </p>
                   </td>
                   <td>
                     <p class="control">
-                    <input
-                      class="input is-small"
-                      style="font-family: monospace;"
+                    <textarea style="font-family: monospace; padding: 3.5px 6.5px 3.5px 6.5px;"
+                      class="textarea is-small"
                       type="text"
                       placeholder="Add a value"
+                      ref="newValueField"
+                      v-bind:rows="String(newValue).split('\n').length"
                       v-model="newValue"
-                      v-bind:class="[newValue === '' ? '' : 'is-success']"
-                    >
+                      v-on:keydown.tab.exact.prevent="addKeyValue()"
+                      v-bind:class="[newValue === '' ? '' : 'is-success']">
+                    </textarea>
                     </p>
                   </td>
                 </tr>
@@ -321,7 +310,6 @@ export default {
       confirmDelete: [],
       confirmDeleteSecrets: false,
       selectedRows: [],
-      lastSelectedRow: 0,
       sortKey: {
         key: '',
         order: ''
@@ -498,6 +486,7 @@ export default {
           message: 'Key is required',
           type: 'warning'
         })
+        this.$refs.newKeyField.focus()
         return
       }
       if (this.newKeyExists) {
@@ -506,6 +495,7 @@ export default {
           message: 'Key already exists',
           type: 'warning'
         })
+        this.$refs.newKeyField.focus()
         return
       }
       // insert new key value pair to local table (don't write it to server yet)
@@ -518,7 +508,8 @@ export default {
       this.newKey = ''
       this.newValue = ''
       // reset focus to key input
-      this.$refs.newKey.focus()
+      // using nextTick because vuejs mount order comes after focus
+      this.$nextTick(() => this.$refs.newKeyField.focus())
     },
 
     startEdit: function () {

@@ -74,9 +74,9 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		}
 
 		// if cert file and key file are not provided, try using let's encrypt
-		if listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
+		if listener.Lets_encrypt_address != "" {
 			e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
-			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(listener.Address)
+			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(listener.Lets_encrypt_address )
 			e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
 				Code: 301,
 			}))
@@ -105,6 +105,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	e.GET("/v1/token/accessors", handlers.GetTokenAccessors())
 	e.POST("/v1/token/lookup-accessor", handlers.LookupTokenByAccessor())
 	e.POST("/v1/token/revoke-accessor", handlers.RevokeTokenByAccessor())
+	e.POST("/v1/token/revoke-self", handlers.RevokeSelf())
 	e.POST("/v1/token/create", handlers.CreateToken())
 	e.GET("/v1/token/listroles", handlers.ListRoles())
 	e.GET("/v1/token/role", handlers.GetRole())
@@ -150,7 +151,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	}
 
 	// if this is the demo instance, using lets encrypt for certificate
-	if listener.Tls_PKI_path == "" && listener.Tls_cert_file == "" && listener.Tls_key_file == "" {
+	if listener.Lets_encrypt_address != "" {
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
 		return
 	}
@@ -172,8 +173,8 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 	}
 
 	// if loading certificate from local machine
-	if listener.Tls_PKI_path == "" {
-		c, err := tls.LoadX509KeyPair(listener.Tls_cert_file, listener.Tls_key_file)
+	if listener.Cert != nil {
+		c, err := tls.LoadX509KeyPair(listener.Cert.Cert_file, listener.Cert.Key_file)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
@@ -181,12 +182,23 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		certLock.Lock()
 		cert = &c
 		certLock.Unlock()
-	} else {
-		// if loading certificate from PKI backend
-		c, err := vault.FetchCertificate(
-			listener.Tls_PKI_path,
-			strings.Split(listener.Address, ":")[0],
-		)
+	}
+
+	// if loading certificate from vault pki
+	if listener.Pki_cert != nil {
+		// construct body for pki generation
+		body := map[string]interface{}{
+			"common_name": listener.Pki_cert.Common_name,
+			"format": "pem",
+		}
+		if len(listener.Pki_cert.Alt_names) > 0 {
+			body["alt_names"] = strings.Join(listener.Pki_cert.Alt_names, ",")
+		}
+		if len(listener.Pki_cert.Ip_sans) > 0 {
+			body["ip_sans"] = strings.Join(listener.Pki_cert.Ip_sans, ",")
+		}
+
+		c, err := vault.FetchCertificate(listener.Pki_cert.Pki_path, body)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
@@ -196,7 +208,7 @@ func StartListener(listener config.ListenerConfig, assets *rice.Box) {
 		certLock.Unlock()
 
 		// start background job to monitor certificate expiry and periodically renew
-		go maintainCertificate(listener.Tls_PKI_path, strings.Split(listener.Address, ":")[0])
+		go maintainCertificate(listener.Pki_cert.Pki_path, body)
 	}
 
 	// configure certificate load function and listen on https
@@ -225,7 +237,7 @@ func GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	return cert, nil
 }
 
-func maintainCertificate(path, url string) {
+func maintainCertificate(path string, body map[string]interface{}) {
 	// check the certificate's expiry date
 	certLock.RLock()
 	if cert == nil || len(cert.Certificate) == 0 {
@@ -246,7 +258,7 @@ func maintainCertificate(path, url string) {
 
 		// fetch new certificate from vault
 		for {
-			if c, err := vault.FetchCertificate(path, url); err != nil {
+			if c, err := vault.FetchCertificate(path, body); err != nil {
 				log.Println("[ERROR]: Error fetching certificate from PKI backend", err.Error())
 
 			} else if len(c.Certificate) > 0 {

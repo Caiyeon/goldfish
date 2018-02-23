@@ -176,7 +176,7 @@ func RenewSelf() echo.HandlerFunc {
 		}
 		defer auth.Clear()
 
-		// verify auth details and create client access token
+		// verify auth details and renew access token
 		resp, err := auth.RenewSelf()
 		if err != nil {
 			return parseError(c, err)
@@ -187,6 +187,29 @@ func RenewSelf() echo.HandlerFunc {
 				"meta":     resp.Auth.Metadata,
 				"policies": resp.Auth.Policies,
 				"ttl":      resp.Auth.LeaseDuration,
+			},
+		})
+	}
+}
+
+func RevokeSelf() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// fetch auth from header or cookie
+		auth := getSession(c)
+		if auth == nil {
+			return nil
+		}
+		defer auth.Clear()
+
+		// verify auth details and revoke self
+		err := auth.RevokeSelf()
+		if err != nil {
+			return parseError(c, err)
+		}
+
+		return c.JSON(http.StatusOK, H{
+			"result": map[string]interface{}{
+				"status": "success",
 			},
 		})
 	}

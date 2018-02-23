@@ -21,13 +21,25 @@ type Config struct {
 }
 
 type ListenerConfig struct {
-	Type             string
-	Address          string
-	Tls_disable      bool
-	Tls_cert_file    string
-	Tls_key_file     string
-	Tls_autoredirect bool
-	Tls_PKI_path     string
+	Type                 string
+	Address              string
+	Tls_disable          bool
+	Tls_autoredirect     bool
+	Cert                 *Certificate
+	Pki_cert             *Pki_certificate
+	Lets_encrypt_address string
+}
+
+type Certificate struct {
+	Cert_file string
+	Key_file  string
+}
+
+type Pki_certificate struct {
+	Pki_path    string
+	Common_name string
+	Alt_names   []string
+	Ip_sans     []string
 }
 
 type VaultConfig struct {
@@ -76,8 +88,12 @@ func LoadConfigDev() (*Config, chan struct{}, []string, string, error) {
 			Type:        "tcp",
 			Address:     "127.0.0.1:8000",
 			Tls_disable: true,
-			// // to use PKI for certs, set tls_disable to false, and uncomment:
-			// Tls_PKI_path: "pki/issue/goldfish",
+			// Pki_cert:    &Pki_certificate{
+			// 	Pki_path: "pki/issue/goldfish",
+			// 	Common_name: "localhost",
+			// 	Alt_names: []string{"vault-ui.io", "abc.com"},
+			// 	Ip_sans: []string{"10.0.0.1", "172.0.0.1", "127.0.0.1"},
+			// },
 		},
 		Vault: &VaultConfig{
 			Type:           "vault",
@@ -190,68 +206,217 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 	if len(listener.Keys) > 0 {
 		key = listener.Keys[0].Token.Value().(string)
 	}
+	result.Listener.Type = key
 
 	valid := []string{
 		"address",
 		"tls_disable",
-		"tls_cert_file",
-		"tls_key_file",
 		"tls_autoredirect",
-		"tls_pki_path",
+		"certificate",
+		"pki_certificate",
+		"lets_encrypt",
 	}
 	if err := checkHCLKeys(listener.Val, valid); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
 	}
 
-	var m map[string]string
-	if err := hcl.DecodeObject(&m, listener.Val); err != nil {
+	var temp map[string]interface{}
+	if err := hcl.DecodeObject(&temp, listener.Val); err != nil {
 		return fmt.Errorf("listener.%s: %s", key, err.Error())
 	}
 
-	// check and enforce field values
-	result.Listener.Type = strings.ToLower(key)
-
-	if address, ok := m["address"]; !ok || address == "" {
-		return fmt.Errorf("listener.%s: address is required", key)
+	// map configurations to struct
+	if raw, ok := temp["address"]; ok {
+		if result.Listener.Address, ok = raw.(string); !ok {
+			return fmt.Errorf("listener.%s: address must be a string", key)
+		}
 	} else {
-		result.Listener.Address = address
+		return fmt.Errorf("listener.%s: address is required", key)
 	}
 
-	if certFile, ok := m["tls_cert_file"]; ok {
-		result.Listener.Tls_cert_file = certFile
-	}
-	if keyFile, ok := m["tls_key_file"]; ok {
-		result.Listener.Tls_key_file = keyFile
-	}
-
-	if tlsDisable, ok := m["tls_disable"]; ok {
-		if tlsDisable == "1" {
-			result.Listener.Tls_disable = true
-		} else if tlsDisable != "0" {
-			return fmt.Errorf("listener.%s: tls_disable can be 0 or 1", key)
-		}
-	}
-
-	if redirect, ok := m["tls_autoredirect"]; ok {
-		if redirect == "1" {
-			if result.Listener.Tls_disable {
-				return fmt.Errorf("listener.%s: tls_autoredirect conflicts with tls_disable", key)
+	if raw, ok := temp["tls_disable"]; ok {
+		if b, ok := raw.(int); ok {
+			if b == 1 {
+				result.Listener.Tls_disable = true
+			} else if b != 0 {
+				return fmt.Errorf("listener.%s: tls_disable must be 0 or 1", key)
 			}
-			result.Listener.Tls_autoredirect = true
-		} else if redirect != "0" {
-			return fmt.Errorf("listener.%s: tls_autoredirect can be 0 or 1", key)
+		} else {
+			return fmt.Errorf("listener.%s: tls_disable must be 0 or 1", key)
 		}
 	}
 
-	if pki, ok := m["tls_pki_path"]; ok && pki != "" {
-		if result.Listener.Tls_cert_file != "" || result.Listener.Tls_key_file != "" {
-			return fmt.Errorf("listener.%s: tls_pki_path conflicts with tls_cert_file and tls_key_file", key)
+	if raw, ok := temp["tls_autoredirect"]; ok {
+		if b, ok := raw.(int); ok {
+			if b == 1 {
+				result.Listener.Tls_autoredirect = true
+			} else if b != 0 {
+				return fmt.Errorf("listener.%s: tls_autoredirect must be 0 or 1", key)
+			}
+		} else {
+			return fmt.Errorf("listener.%s: tls_autoredirect must be 0 or 1", key)
 		}
-		if !strings.Contains(pki, "issue") {
-			return fmt.Errorf("listener.%s: tls_pki_path must be a full pki issuing path", key)
-		}
-		result.Listener.Tls_PKI_path = pki
 	}
+
+	// check for configuration conflicts
+	if result.Listener.Tls_disable && result.Listener.Tls_autoredirect {
+		return fmt.Errorf("listener.%s: tls_autoredirect conflicts with tls_disable", key)
+	}
+
+	cert_options := []string{"certificate", "pki_certificate", "lets_encrypt"}
+
+	if result.Listener.Tls_disable {
+		for _, opt := range cert_options {
+			if _, exists := temp[opt]; exists {
+				return fmt.Errorf("listener.%s: tls_disable conflicts with %s", key, opt)
+			}
+		}
+	}
+
+	if !result.Listener.Tls_disable {
+		cert_count := 0
+		for _, opt := range cert_options {
+			if _, exists := temp[opt]; exists {
+				cert_count = cert_count + 1
+			}
+		}
+		if cert_count > 1 {
+			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
+		}
+		if cert_count < 1 {
+			return fmt.Errorf("listener.%s: tls is enabled but no certificate option is provided", key)
+		}
+
+		// parse the provided certificate option
+		obj, ok := listener.Val.(*ast.ObjectType)
+		if !ok {
+			return fmt.Errorf("listener.%s: no child objects found, but expected certificates", key)
+		}
+
+		list := obj.List
+		if object := list.Filter("certificate"); len(object.Items) > 1 {
+			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
+		} else if len(object.Items) == 1 {
+			result.Listener.Cert = &Certificate{}
+			if err := parseCertificate(result.Listener.Cert, object.Items[0]); err != nil {
+				return fmt.Errorf("listener.%s: %s", key, err.Error())
+			}
+		}
+
+		if object := list.Filter("pki_certificate"); len(object.Items) > 1 {
+			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
+		} else if len(object.Items) == 1 {
+			result.Listener.Pki_cert = &Pki_certificate{}
+			if err := parsePkiCertificate(result.Listener.Pki_cert, object.Items[0]); err != nil {
+				return fmt.Errorf("listener.%s: %s", key, err.Error())
+			}
+		}
+
+		if object := list.Filter("lets_encrypt"); len(object.Items) > 1 {
+			return fmt.Errorf("listener.%s: multiple certificates are not supported", key)
+		} else if len(object.Items) == 1 {
+			if err := parseLetsEncrypt(&result.Listener.Lets_encrypt_address, object.Items[0]); err != nil {
+				return fmt.Errorf("listener.%s: %s", key, err.Error())
+			}
+		}
+	}
+
+	return nil
+}
+
+func parseCertificate(result *Certificate, certificate *ast.ObjectItem) error {
+	if result == nil || certificate == nil {
+		return fmt.Errorf("Parsing certificate... arguments are nil")
+	}
+
+	key := "certificate"
+	if len(certificate.Keys) > 0 {
+		key = certificate.Keys[0].Token.Value().(string)
+	}
+
+	valid := []string{
+		"cert_file",
+		"key_file",
+	}
+	if err := checkHCLKeys(certificate.Val, valid); err != nil {
+		return fmt.Errorf("certificate.%s: %s", key, err.Error())
+	}
+
+	if err := hcl.DecodeObject(result, certificate.Val); err != nil {
+		return fmt.Errorf("certificate.%s: %s", key, err.Error())
+	}
+
+	if result.Cert_file == "" {
+		return fmt.Errorf("certificate.%s: cert_file must be provided", key)
+	}
+	if result.Key_file == "" {
+		return fmt.Errorf("certificate.%s: key_file must be provided", key)
+	}
+
+	return nil
+}
+
+func parsePkiCertificate(result *Pki_certificate, certificate *ast.ObjectItem) error {
+	if result == nil || certificate == nil {
+		return fmt.Errorf("Parsing pki_certificate... arguments are nil")
+	}
+
+	key := "pki"
+	if len(certificate.Keys) > 0 {
+		key = certificate.Keys[0].Token.Value().(string)
+	}
+
+	valid := []string{
+		"pki_path",
+		"common_name",
+		"alt_names",
+		"ip_sans",
+	}
+	if err := checkHCLKeys(certificate.Val, valid); err != nil {
+		return fmt.Errorf("certificate.%s: %s", key, err.Error())
+	}
+
+	if err := hcl.DecodeObject(result, certificate.Val); err != nil {
+		return fmt.Errorf("certificate.%s: %s", key, err.Error())
+	}
+
+	if !strings.Contains(result.Pki_path, "issue") {
+		return fmt.Errorf("certificate.%s: pki_path must be a full pki issuing path", key)
+	}
+
+	if result.Common_name == "" {
+		return fmt.Errorf("certificate.%s: config requires common_name field", key)
+	}
+
+	return nil
+}
+
+func parseLetsEncrypt(result *string, certificate *ast.ObjectItem) error {
+	if result == nil || certificate == nil {
+		return fmt.Errorf("Parsing lets_encrypt... arguments are nil")
+	}
+
+	key := "lets_encrypt"
+	if len(certificate.Keys) > 0 {
+		key = certificate.Keys[0].Token.Value().(string)
+	}
+
+	valid := []string{
+		"address",
+	}
+	if err := checkHCLKeys(certificate.Val, valid); err != nil {
+		return fmt.Errorf("lets_encrypt.%s: %s", key, err.Error())
+	}
+
+	var temp map[string]string
+	if err := hcl.DecodeObject(&temp, certificate.Val); err != nil {
+		return fmt.Errorf("lets_encrypt.%s: %s", key, err.Error())
+	}
+
+	if temp["address"] == "" {
+		return fmt.Errorf("lets_encrypt.%s: address is mandatory", key)
+	}
+	*result = temp["address"]
 
 	return nil
 }
@@ -300,7 +465,7 @@ func parseVault(result *Config, vault *ast.ObjectItem) error {
 		if tlsSkip == "1" {
 			result.Vault.Tls_skip_verify = true
 		} else if tlsSkip != "0" {
-			return fmt.Errorf("vault.%s: tls_disable can be 0 or 1", key)
+			return fmt.Errorf("vault.%s: tls_skip_verify can be 0 or 1", key)
 		}
 	}
 

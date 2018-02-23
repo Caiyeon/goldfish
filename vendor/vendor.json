@@ -1064,12 +1064,12 @@
 			"revisionTime": "2017-06-05T02:18:34Z"
 		},
 		{
-			"checksumSHA1": "QbuVB345lmOxKrfhpbup5BF4tXU=",
+			"checksumSHA1": "i8fvHFHuQ5vSq+ciT5JXqh5du2I=",
 			"path": "github.com/hashicorp/vault",
-			"revision": "bdac1854478538052ba5b7ec9a9ec688d35a3335",
-			"revisionTime": "2017-11-14T16:57:40Z",
-			"version": "=v0.9.0",
-			"versionExact": "v0.9.0"
+			"revision": "5acd6a21d5a69ab49d0f7c0bf540123a9b2c696d",
+			"revisionTime": "2018-01-28T20:34:14Z",
+			"version": "=v0.9.3",
+			"versionExact": "v0.9.3"
 		},
 		{
 			"checksumSHA1": "apHfq5OQNTMw8IG8KkhMfAv2UU0=",
