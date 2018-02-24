@@ -198,7 +198,7 @@
                   Renew
                 </button>
                 <button class="button is-warning" @click="logout(false)">
-                  Forget Token
+                  Logout
                 </button>
                 <button class="button is-warning" @click="logout(true)">
                   Revoke Token
