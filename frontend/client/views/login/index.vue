@@ -460,15 +460,15 @@ export default {
             message: '',
             type: 'success'
           })
+          // purge session from localstorage
+          window.localStorage.removeItem('session')
+          // mutate vuex state
+          this.$store.commit('clearSession')
         })
         .catch((error) => {
           this.$onError(error)
         })
       }
-      // purge session from localstorage
-      window.localStorage.removeItem('session')
-      // mutate vuex state
-      this.$store.commit('clearSession')
     },
 
     clearFormData: function () {
