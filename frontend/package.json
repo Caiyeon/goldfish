@@ -1,6 +1,6 @@
 {
   "name": "goldfish",
-  "version": "0.9.0",
+  "version": "0.9.1-dev",
   "description": "A HashiCorp Vault UI",
   "repository": "caiyeon/goldfish",
   "homepage": "",

@@ -119,7 +119,7 @@ func main() {
 	os.Exit(0)
 }
 
-const versionString = "Goldfish version: v0.9.0"
+const versionString = "Goldfish version: v0.9.1-dev"
 
 const devInitString = `
 
