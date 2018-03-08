@@ -177,7 +177,8 @@
                   <!-- Save some space for deletion button -->
                   <td width="68">
                     <!-- Deleting a key-value pair in edit mode -->
-                    <a v-if="editMode && currentPathType === 'Secret'" @click="deleteItem(index)">
+                    <a v-if="editMode && currentPathType === 'Secret'"
+                      @click="deleteKeyPair(entry)">
                     <span class="icon">
                       <i class="fa fa-times-circle"></i>
                     </span>
@@ -384,6 +385,13 @@ export default {
 
     deleteItem: function (index) {
       this.tableData.splice(index, 1)
+    },
+
+    deleteKeyPair: function (entry) {
+      let index = _.findIndex(this.tableData, entry)
+      if (index !== -1) {
+        this.deleteItem(index)
+      }
     },
 
     pushPath: function (path) {
