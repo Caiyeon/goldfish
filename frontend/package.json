@@ -43,7 +43,7 @@
     "hint.css": "^2.4.1",
     "lodash": "^4.17.4",
     "mdi": "^1.8.36",
-    "moment": "^2.18.1",
+    "moment": "^2.19.3",
     "vue": "^2.5.13",
     "vue-bulma-expanding": "^0.0.1",
     "vue-bulma-message": "^1.1.1",
