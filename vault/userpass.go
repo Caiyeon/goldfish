@@ -33,17 +33,31 @@ func (auth AuthInfo) ListUserpassUsers() ([]UserpassUser, error) {
 	if !ok {
 		return nil, errors.New("Failed to convert response")
 	}
-
-	// fetch each user's details
-	users := make([]UserpassUser, len(usernames))
+	
+	results := make([]UserpassUser, len(usernames))
 	for i, username := range usernames {
-		users[i].Name = username.(string)
-		resp, err := logical.Read("auth/userpass/users/" + users[i].Name)
-		if err == nil {
-			if b, err := json.Marshal(resp.Data); err == nil {
-				json.Unmarshal(b, &users[i])
-			}
+		results[i].Name = username.(string)
+
+		// fetch user's policies and groups
+		resp, err := logical.Read("auth/userpass/users/" + results[i].Name)
+		if err != nil || resp == nil {
+			continue
 		}
+
+		if raw, ok := resp.Data["policies"]; ok {
+			// vault v0.8.3 and higher returns an array of strings
+			if policies, ok := raw.([]interface{}); ok {
+				for _, p := range policies {
+					if s, ok := p.(string); ok {
+						results[i].Policies = append(results[i].Policies, s)
+					                            }
+				                            }
+        	}
+            }
 	}
-	return users, nil
-}
+	
+	return results, nil
+	
+ }
+	
+
