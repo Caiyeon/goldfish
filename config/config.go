@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -230,6 +231,8 @@ func parseListener(result *Config, listener *ast.ObjectItem) error {
 		if result.Listener.Address, ok = raw.(string); !ok {
 			return fmt.Errorf("listener.%s: address must be a string", key)
 		}
+	} else if os.Getenv("PORT") {
+		result.Listener.Address = os.Getenv("PORT")
 	} else {
 		return fmt.Errorf("listener.%s: address is required", key)
 	}
