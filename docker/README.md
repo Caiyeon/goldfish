@@ -1,29 +1,40 @@
-# Running with docker-compose
+### Experimental Docker Image
 
-Quickly start up a Vault and Goldfish stack using [docker-compose](https://github.com/docker/compose). This is meant as a template for deploying to different orchestration environments for production use.
+This docker build is currently experimental.
 
-This is similar to a [production deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment).
+https://hub.docker.com/r/caiyeon/goldfish/
 
-To launch:
+To build:
 ```bash
-docker-compose up
+# 1. Build the docker image
+docker build -t caiyeon/goldfish:<version> .
+# or: pull the image from docker hub
+docker pull caiyeon/goldfish:<version>
+
+# 2. Create a config.hcl with your desired configuration (see wiki)
+# set the file to an environment variable to be passed to docker later
+export GOLDFISH_CONFIG=$(cat config.hcl)
+
+# 3. Generate a token (or skip if you want to bootstrap goldfish later)
+export GOLDFISH_TOKEN=<see wiki for details>
+
+# 4. Set a port to expose
+export GOLDFISH_PORT=8000
+
+# 5. Run (note double quotation marks around config env - preserves newlines)
+docker run -it --rm -p ${GOLDFISH_PORT}:${GOLDFISH_PORT} \
+    -e GOLDFISH_PORT=${GOLDFISH_PORT} \
+    -e GOLDFISH_TOKEN=${GOLDFISH_TOKEN} \
+    -e GOLDFISH_CONFIG="${GOLDFISH_CONFIG}" \
+    caiyeon/goldfish:<version>
 ```
 
-Go to http://localhost:8000 in a browser and log in with token `goldfish`
+---
 
-## Dockerfile.compose
-Builds a container to run the Goldfish, designed to run within a docker-compose stack.
+To run in standalone dev mode:
 
-- Downloads versioned binary from [Goldfish Github releases](https://github.com/Caiyeon/goldfish/releases) (`GOLDFISH_VERSION` variable)
-- Exposes port 8000
-- Starts Goldfish with the the config file `docker.hcl` and `VAULT_DEV_ROOT_TOKEN_ID=goldfish`
-
-## Using docker-compose
-Use [docker-compose](https://github.com/docker/compose) to deploy a stack locally.
-
-Stack details:
-- [Official Vault container](https://hub.docker.com/_/vault/) setting default `VAULT_DEV_ROOT_TOKEN_ID=goldfish`
-- Goldfish [Goldfish release](https://github.com/Caiyeon/goldfish/releases) set in `Dockefile.compose`
-- Runs with `entrypoint.sh` to configure Vault for Goldfish
-  - Runs [production deployment](https://github.com/Caiyeon/goldfish/wiki/Production-Deployment) commands and configures [Goldfish Policy](https://github.com/Caiyeon/goldfish/blob/master/vagrant/policies/goldfish.hcl) using the [Vault HTTP API](https://www.vaultproject.io/api/index.html) instead of the `vault` binary.
-- Uses `docker.hcl` for Goldfish configuration
+Note: this will NOT work in OSX due to network being inside the docker VM
+```bash
+docker pull caiyeon/goldfish:<version>
+docker run -it --rm --network=host caiyeon/goldfish:<version>
+```
