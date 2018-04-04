@@ -4,7 +4,6 @@ This docker build is currently experimental.
 
 https://hub.docker.com/r/caiyeon/goldfish/
 
-To build:
 ```bash
 # 1. Build the docker image
 docker build -t caiyeon/goldfish:<version> .
