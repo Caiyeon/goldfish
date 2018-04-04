@@ -48,6 +48,7 @@
                       <option v-bind:value="'Github'">Github</option>
                       <option v-bind:value="'LDAP'">LDAP</option>
                       <option v-bind:value="'Okta'">Okta</option>
+                      <option v-bind:value="'RADIUS'">RADIUS</option>
                     </select>
                   </div>
                 </div>
@@ -125,6 +126,26 @@
 
               <!-- Okta login form -->
               <div v-if="type === 'Okta'" class="field">
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="text" placeholder="Username" v-model="ID">
+                    <span class="icon is-small is-left">
+                      <i class="fa fa-user-circle-o"></i>
+                    </span>
+                  </p>
+                </div>
+                <div class="field">
+                  <p class="control has-icons-left">
+                    <input class="input" type="password" placeholder="Password" v-model="password">
+                    <span class="icon is-small is-left">
+                      <i class="fa fa-lock"></i>
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- RADIUS login form -->
+              <div v-if="type === 'RADIUS'" class="field">
                 <div class="field">
                   <p class="control has-icons-left">
                     <input class="input" type="text" placeholder="Username" v-model="ID">

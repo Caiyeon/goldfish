@@ -44,7 +44,7 @@ func (auth *AuthInfo) Login() (map[string]interface{}, error) {
 	}
 
 	// if logging in for the first time with these auth backends
-	if t == "userpass" || t == "ldap" || t == "github" || t == "okta" {
+	if t == "userpass" || t == "ldap" || t == "github" || t == "okta" || t == "radius" {
 		// fetch a client token by writing to vault auth backend
 		loginPath := "auth/" + t + "/login/" + auth.ID
 
@@ -106,4 +106,5 @@ var LoginMap = map[string]string{
 	"github": "token",
 	"ldap": "password",
 	"okta": "password",
+	"radius": "password",
 }
