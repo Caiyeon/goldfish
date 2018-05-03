@@ -1,3 +1,13 @@
+!IMPORTANT!
+
+Goldfish has known compatibility issues with vault v0.10.0 and above.
+If you are using vault v0.10.0 or above:
+Please attach a report to this thread instead of opening a new issue
+https://github.com/Caiyeon/goldfish/issues/277
+
+
+
+
 ### Bug report:
 
 <!-- Prefix issue title with "Bug: <very short summary>" -->
