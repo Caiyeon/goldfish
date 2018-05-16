@@ -15,7 +15,7 @@ docker pull caiyeon/goldfish:<version>
 export GOLDFISH_CONFIG=$(cat config.hcl)
 
 # 3. Generate a token (or skip if you want to bootstrap goldfish later)
-export GOLDFISH_TOKEN=<see wiki for details>
+export VAULT_TOKEN=<see wiki for details>
 
 # 4. Set a port to expose
 export GOLDFISH_PORT=8000
@@ -23,8 +23,8 @@ export GOLDFISH_PORT=8000
 # 5. Run (note double quotation marks around config env - preserves newlines)
 docker run -it --rm -p ${GOLDFISH_PORT}:${GOLDFISH_PORT} \
     -e GOLDFISH_PORT=${GOLDFISH_PORT} \
-    -e GOLDFISH_TOKEN=${GOLDFISH_TOKEN} \
     -e GOLDFISH_CONFIG="${GOLDFISH_CONFIG}" \
+    -e VAULT_TOKEN=${VAULT_TOKEN} \
     caiyeon/goldfish:<version>
 ```
 
