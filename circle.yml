@@ -10,7 +10,7 @@ jobs:
       - run:
           name: Run integration tests
           command: |
-            go build -v -a github.com/Caiyeon/goldfish
+            go build -v -a github.com/caiyeon/goldfish
             ./goldfish --version
             go test -race -p 1 ./...
 
