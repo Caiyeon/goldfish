@@ -1,36 +1,56 @@
-dependencies:
-  override:
-    # force clean cache
-    - rm -rf /home/ubuntu/.go_workspace/src
-    # make parent folder (since it shouldn't exist now)
-    - mkdir -p /home/ubuntu/.go_workspace/src/github.com/caiyeon/goldfish
-    # copy cloned folder into $GOPATH so vendor folder will work
-    - cd .. && mv -f goldfish /home/ubuntu/.go_workspace/src/github.com/caiyeon
+version: 2
 
-test:
-  override:
-    - ? |
-        cd /home/ubuntu/.go_workspace/src/github.com/caiyeon/goldfish
+jobs:
+  integration_tests:
+    working_directory: /go/src/github.com/caiyeon/goldfish
+    docker:
+      - image: circleci/golang:1.10.2-browsers
+    steps:
+      - checkout
+      - run:
+          name: Run integration tests
+          command: go test -race -p 1 ./...
+      - run:
+          name: Build binary without frontend
+          command: |
+            go build -v -a github.com/caiyeon/goldfish
+            ./goldfish --version
 
-        # compile server binary and run acceptance tests
-        if [ "$CIRCLE_NODE_INDEX" -eq "0" ]; then
-          go build -v -a github.com/caiyeon/goldfish
-          ./goldfish --version
-          go test -race -p 1 $(go list ./... | grep -v /vendor/)
+  compile:
+    working_directory: /go/src/github.com/caiyeon/goldfish
+    docker:
+      - image: circleci/golang:1.10.2-browsers
+    steps:
+      - checkout
+      - run:
+          name: Install nvm, node, and npm
+          command: |
+            wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+            echo 'export NVM_DIR=$HOME/.nvm' >> $BASH_ENV
+            touch $HOME/.nvmrc
+            echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
 
-        # compile frontend static folder from scratch
-        elif [ "$CIRCLE_NODE_INDEX" -eq "1" ]; then
-          cd frontend
-          nvm install v8.2.0
-          sudo -E env "PATH=$PATH" npm install -g cross-env
-          npm link webpack
-          rm -rf node_modules
-          npm cache clean --force
-          npm install
-          cd ..
-          sh build.sh
-          mv goldfish-linux-amd64 $CIRCLE_ARTIFACTS
-          mv goldfish-windows-amd64.exe $CIRCLE_ARTIFACTS
-        fi
-      :
-          parallel: true # make full use of 2 containers
+      - run:
+          name: Compile frontend and final binary
+          command: |
+            cd frontend
+            nvm install v8.2.0
+            sudo -E env "PATH=$PATH" npm install -g cross-env
+            npm link webpack
+            rm -rf node_modules
+            npm cache clean --force
+            npm install
+            cd ..
+            sh build.sh
+
+      - store_artifacts:
+          path: goldfish-windows-amd64.exe
+      - store_artifacts:
+          path: goldfish-linux-amd64
+
+workflows:
+  version: 2
+  test_and_compile:
+    jobs:
+      - integration_tests
+      - compile
