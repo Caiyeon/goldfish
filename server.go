@@ -94,7 +94,7 @@ func main() {
 	if !devMode {
 		staticAssets, err = rice.FindBox("public")
 		if err != nil {
-			log.Fatalf("[ERROR]: Static assets not found. Build them with npm first.", err.Error())
+			log.Fatalf("[ERROR]: Static assets not found. Build them with npm first. \n%s", err.Error())
 		}
 	}
 	go server.StartListener(*cfg.Listener, staticAssets)
