@@ -2,7 +2,7 @@ version: 2
 
 jobs:
   integration_tests:
-    working_directory: /go/src/github.com/Caiyeon/goldfish
+    working_directory: /go/src/github.com/caiyeon/goldfish
     docker:
       - image: circleci/golang:1.10.2-browsers
     steps:
@@ -15,7 +15,7 @@ jobs:
             go test -race -p 1 ./...
 
   compile:
-    working_directory: /go/src/github.com/Caiyeon/goldfish
+    working_directory: /go/src/github.com/caiyeon/goldfish
     docker:
       - image: circleci/golang:1.10.2-browsers
     steps:
